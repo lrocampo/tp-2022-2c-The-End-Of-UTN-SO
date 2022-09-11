@@ -9,5 +9,7 @@
 #define KERNEL_INCLUDE_KERNEL_H_
 
 #include <stdio.h>
+#include <commons/string.h>
+#include "../../static/include/utils/socket.h"
 
 #endif /* KERNEL_INCLUDE_KERNEL_H_ */

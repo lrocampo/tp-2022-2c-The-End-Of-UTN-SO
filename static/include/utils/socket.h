@@ -41,6 +41,9 @@ void* recibir_buffer(int*, int);
 void* serializar_paquete(t_paquete*, int);
 void eliminar_paquete(t_paquete*);
 void liberar_conexion(int);
+int recibir_operacion(int);
+
+
 
 
 

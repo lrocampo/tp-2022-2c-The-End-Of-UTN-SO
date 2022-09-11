@@ -12,15 +12,21 @@ int main(void){
 
 	char* string = string_new();
 	int conexion;
-	char* ip;
-	char* puerto;
-	char* valor;
+	char* ip = IP;
+	char* puerto = PUERTO;
+	char* valor = "consola";
 	string_append(&string,"consola2\n");
 	puts(string);
 
-	puts(IP);
+	//puts(IP);
 
-	//conexion = crear_conexion(ip, puerto);
+	conexion = crear_conexion(ip, puerto);
+
+	enviar_mensaje(valor, conexion);
+
+	liberar_conexion(conexion);
+	puts("termino consola\n");
+
 
 	return 0;
 }
