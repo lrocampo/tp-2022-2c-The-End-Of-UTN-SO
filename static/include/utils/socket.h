@@ -1,51 +1,25 @@
-#ifndef STATIC_SOCKET_H_
-#define STATIC_SOCKET_H_
+/*
+ * socket.h
+ *
+ *  Created on: Sep 12, 2022
+ *      Author: utnso
+ */
 
-#include<stdio.h>
+#ifndef INCLUDE_UTILS_SOCKET_H_
+#define INCLUDE_UTILS_SOCKET_H_
+
 #include<stdlib.h>
+#include<signal.h>
 #include<unistd.h>
 #include<sys/socket.h>
 #include<netdb.h>
 #include<string.h>
+#include<commons/log.h>
+#include<utils/comunicacion.h>
 
-#define IP "127.0.0.1"
-#define PUERTO "3000"
-
-typedef enum
-{
-	MENSAJE,
-	PAQUETE
-}op_code;
-
-typedef struct
-{
-	int size;
-	void* stream;
-} t_buffer;
-
-typedef struct
-{
-	op_code codigo_operacion;
-	t_buffer* buffer;
-} t_paquete;
-
-
-
-
-int crear_conexion(char*, char*);
-void enviar_mensaje(char*, int);
+int crear_conexion( char* , char* );
+void liberar_conexion(int socket_cliente);
 int iniciar_servidor(void);
 int esperar_cliente(int);
-void recibir_mensaje(int);
-void* recibir_buffer(int*, int);
-void* serializar_paquete(t_paquete*, int);
-void eliminar_paquete(t_paquete*);
-void liberar_conexion(int);
-int recibir_operacion(int);
 
-
-
-
-
-
-#endif
+#endif /* INCLUDE_UTILS_SOCKET_H_ */

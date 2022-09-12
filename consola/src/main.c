@@ -1,12 +1,4 @@
-/*
- * consola.c
- *
- *  Created on: Sep 11, 2022
- *      Author: utnso
- */
-
-#include "../include/consola.h"
-
+#include <consola.h>
 
 int main(void){
 
@@ -14,7 +6,7 @@ int main(void){
 	int conexion;
 	char* ip = IP;
 	char* puerto = PUERTO;
-	char* valor = "consola";
+	char* valor = "holis, soy la consola";
 	string_append(&string,"consola2\n");
 	puts(string);
 

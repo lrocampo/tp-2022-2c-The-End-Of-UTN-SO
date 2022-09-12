@@ -1,15 +1,15 @@
 /*
  * consola.h
  *
- *  Created on: Sep 11, 2022
+ *  Created on: Sep 12, 2022
  *      Author: utnso
  */
 
-#ifndef CONSOLA_INCLUDE_CONSOLA_H_
-#define CONSOLA_INCLUDE_CONSOLA_H_
+#ifndef INCLUDE_CONSOLA_H_
+#define INCLUDE_CONSOLA_H_
 
-#include <stdio.h>
+#include <utils/comunicacion.h>
+#include <utils/socket.h>
 #include <commons/string.h>
-#include "../../static/include/utils/socket.h"
 
-#endif /* CONSOLA_INCLUDE_CONSOLA_H_ */
+#endif /* INCLUDE_CONSOLA_H_ */

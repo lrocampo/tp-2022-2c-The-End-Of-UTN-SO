@@ -1,11 +1,4 @@
-/*
- * kernel.c
- *
- *  Created on: Sep 11, 2022
- *      Author: utnso
- */
-
-#include "../include/kernel.h"
+#include <kernel.h>
 
 int main(void){
 
@@ -31,4 +24,3 @@ int main(void){
 
 	return EXIT_SUCCESS;
 }
-
