@@ -15,7 +15,7 @@
 #include <commons/string.h>
 #include <stdio.h>
 
-#define RUTA_LOGGER_CONSOLA "/home/utnso/tp-2022-2c-The-End-Of-UTN-SO/consola/consola.log"
+#define RUTA_LOGGER_CONSOLA "../consola.log"
 #define NOMBRE_MODULO "Consola"
 
 t_log *consola_logger;

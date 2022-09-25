@@ -5,7 +5,7 @@
  *      Author: utnso
  */
 
-#include "../include/memoria.h"
+#include <memoria.h>
 
 int main(void){
 

@@ -4,7 +4,7 @@
  *  Created on: Sep 11, 2022
  *      Author: utnso
  */
-#include "../include/cpu.h"
+#include <cpu.h>
 
 int main(void){
 	t_cpu_config* cpu_config;
@@ -44,7 +44,6 @@ int main(void){
 			default:
 				break;
 			}
-			break;
 		}
 
 	/*while(1){

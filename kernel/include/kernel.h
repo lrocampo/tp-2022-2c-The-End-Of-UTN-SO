@@ -13,9 +13,12 @@
 #include <utils/logger.h>
 #include <utils/utiles_config.h>
 #include <commons/string.h>
+#include <commons/collections/list.h>
 #include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <stdlib.h>
-#define RUTA_LOGGER_KERNEL "/home/utnso/tp-2022-2c-The-End-Of-UTN-SO/kernel/kernel.log"
+#define RUTA_LOGGER_KERNEL "../kernel.log"
 #define NOMBRE_MODULO "Kernel"
 #define RUTA_KERNEL_CONFIG "./src/kernel.config"
 
@@ -25,6 +28,11 @@ int conexion_cpu_interrupt;
 //t_socket* socketEscucha;
 t_log *kernel_logger;
 
+t_list* pcbs;
+sem_t procesos;
+
 int inicializar();
+void* atender_consola(void* cliente_fd);
+void* atender_cpu_dispatch(void* arg);
 
 #endif /* KERNEL_INCLUDE_KERNEL_H_ */

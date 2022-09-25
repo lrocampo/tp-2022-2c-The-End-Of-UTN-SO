@@ -32,7 +32,8 @@ int main(int argc, char **argv){
 
 	conexion = crear_conexion(consola_config->ip, consola_config->puerto);
 
-	enviar_mensaje(valor, conexion);	
+	enviar_mensaje(valor, conexion);
+	sleep(20);	
 	printf("Soy consola. Envie el siguiente mensaje a kernel: %s\n", valor);
 	liberar_conexion(conexion);
 	puts("termino consola\n");

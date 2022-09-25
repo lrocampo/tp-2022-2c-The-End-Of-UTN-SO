@@ -47,7 +47,7 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			t_cpu_config* cpu_config;
 			cpu_config = malloc(sizeof(t_cpu_config));
 			cpu_config->ip_cpu = strdup(config_get_string_value(config, "IP_CPU"));
-			cpu_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEl"));
+			cpu_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
 			cpu_config->puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
 			cpu_config->puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
 			
