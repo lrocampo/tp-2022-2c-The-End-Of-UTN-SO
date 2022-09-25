@@ -9,7 +9,7 @@
 
 t_log* logger;
 
-int iniciar_servidor(void)
+int iniciar_servidor(char* ip, char* puerto)
 {
 	int socket_servidor;
 
@@ -20,7 +20,7 @@ int iniciar_servidor(void)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	getaddrinfo(IP, PUERTO, &hints, &servinfo);
+	getaddrinfo(ip, puerto, &hints, &servinfo);
 
 	// Creamos el socket de escucha del servidor
 	socket_servidor =  socket(servinfo->ai_family,

@@ -1,0 +1,29 @@
+{
+	"folders": [
+		{
+			"path": "consola"
+		},
+		{
+			"path": "cpu"
+		},
+		{
+			"path": "kernel"
+		},
+		{
+			"path": "memoria"
+		},
+		{
+			"path": "static"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"socket.h": "c",
+			"string.h": "c",
+			"logger.h": "c",
+			"consola.h": "c",
+			"kernel.h": "c",
+			"stdio.h": "c"
+		}
+	}
+}

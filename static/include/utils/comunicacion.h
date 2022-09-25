@@ -14,9 +14,6 @@
 #include<sys/socket.h>
 #include<string.h>
 
-#define IP "127.0.0.1"
-#define PUERTO "3000"
-
 typedef enum
 {
 	MENSAJE,
@@ -35,15 +32,11 @@ typedef struct
 	t_buffer* buffer;
 } t_paquete;
 
-
-
-
 void enviar_mensaje(char*, int);
 void recibir_mensaje(int);
 void* recibir_buffer(int*, int);
 void* serializar_paquete(t_paquete*, int);
 void eliminar_paquete(t_paquete*);
 int recibir_operacion(int);
-
 
 #endif /* INCLUDE_SOCKET_COMUNICACION_H_ */
