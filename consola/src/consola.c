@@ -12,9 +12,11 @@
 
 int main(int argc, char **argv){
 
-	// if(argc != 3){
-	// 	return EXIT_FAILURE;
-	// }
+	// una vez que tengamos el archivo de instrucciones, seria != 3. Por ahora lo dejamos asi:
+	if(argc != 2){ 
+		puts("Argumentos invalidos!");
+		return EXIT_FAILURE;
+	}
 
 	t_consola_config* consola_config;
 
