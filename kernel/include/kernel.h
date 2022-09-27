@@ -15,7 +15,7 @@
 #include <commons/string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define RUTA_LOGGER_KERNEL "/home/utnso/tp-2022-2c-The-End-Of-UTN-SO/kernel/kernel.log"
+#define RUTA_LOGGER_KERNEL "./kernel.log"
 #define NOMBRE_MODULO "Kernel"
 #define RUTA_KERNEL_CONFIG "./src/kernel.config"
 
