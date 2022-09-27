@@ -15,6 +15,7 @@ typedef struct {
     char* puerto_escucha;
 	char* puerto_cpu_dispatch;
 	char* puerto_cpu_interrupt;
+	int grado_multiprogramacion;
 } t_kernel_config;
 
 typedef struct {

@@ -24,7 +24,9 @@
 			"consola.h": "c",
 			"kernel.h": "c",
 			"stdio.h": "c",
-			"comunicacion.h": "c"
+			"comunicacion.h": "c",
+			"contexto.h": "c",
+			"cpu.h": "c"
 		}
 	}
 }

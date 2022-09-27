@@ -10,6 +10,7 @@
 
 #include <commons/collections/list.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 typedef struct {
 	uint32_t ax;
@@ -19,11 +20,11 @@ typedef struct {
 }registros_de_proposito_general;
 
 typedef enum{
-	NUEVO,
-	LISTO,
+	NEW,
+	READY,
 	EXEC,
-	BLOQUEADO,
-	FINALIZADO
+	BLOCK,
+	EXIT
 } estado_proceso;
 
 typedef struct {
