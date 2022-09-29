@@ -51,6 +51,15 @@ void eliminar_paquete(t_paquete* paquete)
 	free(paquete);
 }
 
+void enviar_paquete(t_paquete* paquete, int socket_cliente)
+{
+	int bytes = paquete->buffer->size + 2*sizeof(int);
+	void* a_enviar = serializar_paquete(paquete, bytes);
+
+	send(socket_cliente, a_enviar, bytes, 0);
+	free(a_enviar);
+}
+
 void* recibir_buffer(int* size, int socket_cliente)
 {
 	void * buffer;
@@ -82,4 +91,38 @@ int recibir_operacion(int socket_cliente)
 	}
 }
 
+void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
+{
+	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
 
+	memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
+	memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), valor, tamanio);
+
+	paquete->buffer->size += tamanio + sizeof(int);
+}
+
+void new_buffer(t_paquete *paquete)
+{
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 0;
+    paquete->buffer->stream = NULL;
+}
+
+t_paquete* new_paquete_con_codigo_de_operacion(int codigo) {
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+
+    paquete->codigo_operacion = codigo;
+    crear_buffer(paquete);
+    return paquete;
+}
+
+void serializar_instrucciones(t_list *instrucciones, t_paquete *paquete){
+
+	for(int i=0; i<list_size(instrucciones); i++) {
+		instruccion *instr = list_get(instrucciones, i);
+		agregar_a_paquete(paquete, &(instr->operacion), sizeof(cod_operacion));
+		agregar_a_paquete(paquete, &(instr->parametro1), sizeof(char*));
+		agregar_a_paquete(paquete, &(instr->parametro2), sizeof(char*));
+	}
+
+}

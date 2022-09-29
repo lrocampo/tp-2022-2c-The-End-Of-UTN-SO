@@ -26,7 +26,9 @@
 			"stdio.h": "c",
 			"comunicacion.h": "c",
 			"contexto.h": "c",
-			"cpu.h": "c"
+			"cpu.h": "c",
+			"consola_parser.h": "c",
+			"list.h": "c"
 		}
 	}
 }

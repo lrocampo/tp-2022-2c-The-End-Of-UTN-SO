@@ -13,6 +13,7 @@
 #include <utils/utiles_config.h>
 #include <utils/logger.h>
 #include <commons/string.h>
+#include <consola_parser.h>
 #include <stdio.h>
 
 #define RUTA_LOGGER_CONSOLA "./consola.log"
