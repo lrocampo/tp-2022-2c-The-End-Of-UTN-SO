@@ -28,7 +28,9 @@
 			"contexto.h": "c",
 			"cpu.h": "c",
 			"consola_parser.h": "c",
-			"list.h": "c"
+			"list.h": "c",
+			"log.h": "c",
+			"utiles_config.h": "c"
 		}
 	}
 }

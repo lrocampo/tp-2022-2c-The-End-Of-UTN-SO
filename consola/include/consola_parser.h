@@ -6,10 +6,11 @@
 #include <utils/contexto.h>
 #include <stdio.h>
 #include <commons/string.h>
+#include <commons/error.h>
 
 
 t_list* obtener_pseudocodigo(char*);
-char *leerArchivo (char*);
+char *leer_archivo_pseudocodigo (char*);
 instruccion* new_instruccion(cod_operacion, char*, char*);
 
 #endif

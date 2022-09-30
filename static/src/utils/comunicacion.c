@@ -7,6 +7,43 @@
 
 #include <utils/comunicacion.h>
 
+
+/* OPERACIONES */
+
+int recibir_operacion(int socket_cliente)
+{
+	int cod_op;
+	if (recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL) > 0)
+		return cod_op;
+	else
+	{
+		close(socket_cliente);
+		return -1;
+	}
+}
+
+/* BUFFER */
+
+void *recibir_buffer(int *size, int socket_cliente)
+{
+	void *buffer;
+
+	recv(socket_cliente, size, sizeof(int), MSG_WAITALL);
+	buffer = malloc(*size);
+	recv(socket_cliente, buffer, *size, MSG_WAITALL);
+
+	return buffer;
+}
+
+void new_buffer(t_paquete *paquete)
+{
+	paquete->buffer = malloc(sizeof(t_buffer));
+	paquete->buffer->size = 0;
+	paquete->buffer->stream = NULL;
+}
+
+/* MENSAJES */
+
 void enviar_mensaje(char *mensaje, int socket_cliente)
 {
 	t_paquete *paquete = malloc(sizeof(t_paquete));
@@ -26,6 +63,16 @@ void enviar_mensaje(char *mensaje, int socket_cliente)
 	free(a_enviar);
 	eliminar_paquete(paquete);
 }
+
+void recibir_mensaje(t_log* logger, int socket_cliente)
+{
+	int size;
+	char *buffer = recibir_buffer(&size, socket_cliente);
+	log_debug(logger,"Se recibio el siguiente mensaje: %s",buffer);
+	free(buffer);
+}
+
+/* PAQUETES */
 
 void *serializar_paquete(t_paquete *paquete, int bytes)
 {
@@ -58,9 +105,57 @@ void enviar_paquete(t_paquete *paquete, int socket_cliente)
 	free(a_enviar);
 }
 
+t_list* recibir_paquete_con_funcion(int socket_cliente, void* (*funcion_deserializar)(void*,int*))
+{
+	int desplazamiento = 0;
+	int size;
+	void * buffer;
+	t_list* valores = list_create();
+	void* valor;
+
+	buffer = recibir_buffer(&size, socket_cliente);
+
+	while(desplazamiento < size)
+	{
+		valor = funcion_deserializar(buffer, &desplazamiento);	 
+		list_add(valores, valor);
+	}
+	free(buffer);
+	return valores;
+}
+
+void agregar_a_paquete(t_paquete *paquete, void *valor, int tamanio)
+{
+	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
+
+	memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
+	memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), valor, tamanio);
+
+	paquete->buffer->size += tamanio + sizeof(int);
+}
+
+t_paquete *new_paquete_con_codigo_de_operacion(int codigo)
+{
+	t_paquete *paquete = malloc(sizeof(t_paquete));
+
+	paquete->codigo_operacion = codigo;
+	new_buffer(paquete);
+	return paquete;
+}
+
+void agregar_valor_a_paquete(t_paquete *paquete, void *valor, int tamanio)
+{
+	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio);
+	memcpy(paquete->buffer->stream + paquete->buffer->size, valor, tamanio);
+
+	paquete->buffer->size += tamanio;
+}
+
+/* PAQUETE_INSTRUCCIONES */
+
 void enviar_instrucciones(t_list *instrucciones, int socket_cliente)
 {
-	t_paquete *paquete = new_paquete_con_codigo_de_operacion(PAQUETE);
+	t_paquete *paquete = new_paquete_con_codigo_de_operacion(PAQUETE_INSTRUCCIONES);
 
 	empaquetar_instrucciones(instrucciones, paquete);
 
@@ -68,6 +163,77 @@ void enviar_instrucciones(t_list *instrucciones, int socket_cliente)
 	eliminar_paquete(paquete);
 }
 
+void empaquetar_instrucciones(t_list *instrucciones, t_paquete *paquete)
+{
+	int cantidad_instrucciones = list_size(instrucciones);
+
+	for (int i = 0; i < cantidad_instrucciones; i++)
+	{
+		instruccion *instruccion = list_get(instrucciones, i);
+		serializar_instruccion(instruccion, paquete);
+	}
+}
+
+void serializar_instruccion(instruccion *instruccion, t_paquete *paquete)
+{
+	agregar_valor_a_paquete(paquete, &(instruccion->operacion), sizeof(cod_operacion));
+	agregar_a_paquete(paquete, instruccion->parametro1, strlen(instruccion->parametro1) + 1);
+	agregar_a_paquete(paquete, instruccion->parametro2, strlen(instruccion->parametro1) + 1);
+	free(instruccion);
+}
+
+void* deserializar_instruccion(void* buffer, int* desplazamiento)
+{
+	instruccion* nueva_instruccion = malloc(sizeof(instruccion)); 
+	int tamanio = 0;
+
+	memcpy(&(nueva_instruccion->operacion), buffer + *desplazamiento, sizeof(cod_operacion));
+	*desplazamiento += sizeof(cod_operacion);
+
+	memcpy(&(tamanio), buffer + *desplazamiento, sizeof(int));
+	*desplazamiento += sizeof(int);
+
+	nueva_instruccion->parametro1 = malloc(tamanio);
+
+	memcpy(nueva_instruccion->parametro1, buffer + *desplazamiento, tamanio);
+	*desplazamiento += tamanio;
+
+	memcpy(&(tamanio), buffer + *desplazamiento, sizeof(int));
+	*desplazamiento += sizeof(int);
+
+	nueva_instruccion->parametro2 = malloc(tamanio);
+
+	memcpy(nueva_instruccion->parametro2, buffer + *desplazamiento, tamanio);
+	*desplazamiento += tamanio;
+
+	return (void*) nueva_instruccion;
+}
+
+/* NO SE USA (pero no borrar todavia)*/
+
+// t_list* recibir_paquete(int socket_cliente, )
+// {
+// 	int size;
+// 	int desplazamiento = 0;
+// 	void * buffer;
+// 	t_list* valores = list_create();
+// 	int tamanio;
+
+// 	buffer = recibir_buffer(&size, socket_cliente);
+// 	while(desplazamiento < size)
+// 	{
+// 		memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
+// 		desplazamiento+=sizeof(int);
+// 		char* valor = malloc(tamanio);
+// 		memcpy(valor, buffer+desplazamiento, tamanio);
+// 		desplazamiento+=tamanio;
+// 		list_add(valores, valor);
+// 	}
+// 	free(buffer);
+// 	return valores;
+// }
+
+/*
 t_list *deserializar_instrucciones(int socket_cliente)
 {
 	int size;
@@ -113,142 +279,4 @@ t_list *deserializar_instrucciones(int socket_cliente)
 	}
 	free(buffer);
 	return valores;
-}
-
-// t_list* recibir_paquete(int socket_cliente)
-// {
-// 	int size;
-// 	int desplazamiento = 0;
-// 	void * buffer;
-// 	t_list* valores = list_create();
-// 	int tamanio;
-
-// 	buffer = recibir_buffer(&size, socket_cliente);
-// 	while(desplazamiento < size)
-// 	{
-// 		memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
-// 		desplazamiento+=sizeof(int);
-// 		char* valor = malloc(tamanio);
-// 		memcpy(valor, buffer+desplazamiento, tamanio);
-// 		desplazamiento+=tamanio;
-// 		list_add(valores, valor);
-// 	}
-// 	free(buffer);
-// 	return valores;
-// }
-
-// t_list* recibir_paquete(int socket_cliente, )
-// {
-// 	int size;
-// 	int desplazamiento = 0;
-// 	void * buffer;
-// 	t_list* valores = list_create();
-// 	int tamanio;
-
-// 	buffer = recibir_buffer(&size, socket_cliente);
-// 	while(desplazamiento < size)
-// 	{
-// 		memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
-// 		desplazamiento+=sizeof(int);
-// 		char* valor = malloc(tamanio);
-// 		memcpy(valor, buffer+desplazamiento, tamanio);
-// 		desplazamiento+=tamanio;
-// 		list_add(valores, valor);
-// 	}
-// 	free(buffer);
-// 	return valores;
-// }
-
-void *recibir_buffer(int *size, int socket_cliente)
-{
-	void *buffer;
-
-	recv(socket_cliente, size, sizeof(int), MSG_WAITALL);
-	buffer = malloc(*size);
-	recv(socket_cliente, buffer, *size, MSG_WAITALL);
-
-	return buffer;
-}
-
-void recibir_mensaje(int socket_cliente)
-{
-	int size;
-	char *buffer = recibir_buffer(&size, socket_cliente);
-	puts(buffer);
-	free(buffer);
-}
-
-int recibir_operacion(int socket_cliente)
-{
-	int cod_op;
-	if (recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL) > 0)
-		return cod_op;
-	else
-	{
-		close(socket_cliente);
-		return -1;
-	}
-}
-
-void agregar_a_paquete(t_paquete *paquete, void *valor, int tamanio)
-{
-	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
-
-	memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
-	memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), valor, tamanio);
-
-	paquete->buffer->size += tamanio + sizeof(int);
-}
-
-void new_buffer(t_paquete *paquete)
-{
-	paquete->buffer = malloc(sizeof(t_buffer));
-	paquete->buffer->size = 0;
-	paquete->buffer->stream = NULL;
-}
-
-t_paquete *new_paquete_con_codigo_de_operacion(int codigo)
-{
-	t_paquete *paquete = malloc(sizeof(t_paquete));
-
-	paquete->codigo_operacion = codigo;
-	new_buffer(paquete);
-	return paquete;
-}
-
-void empaquetar_instrucciones(t_list *instrucciones, t_paquete *paquete)
-{
-	int cantidad_instrucciones = list_size(instrucciones);
-	// memcpy(paquete->buffer->stream, &cantidad_instrucciones, sizeof(int)); // primero se copia el tamnio de la lista para despues ir agregando los otros campos de la lista
-	// paquete->buffer->size += sizeof(int);
-
-	for (int i = 0; i < cantidad_instrucciones; i++)
-	{
-		instruccion *instruccion = list_get(instrucciones, i);
-		serializar_instruccion(instruccion, paquete);
-	}
-	puts("salimossss");
-}
-
-void serializar_instruccion(instruccion *instruccion, t_paquete *paquete)
-{
-	puts(string_itoa(instruccion->operacion));
-	puts(instruccion->parametro1);
-	// int parametro1_tamanio = string_length(instr->parametro1);
-	// int parametro2_tamanio = string_length(instr->parametro2);
-	// agregar_a_paquete(paquete, &(instruccion->operacion), sizeof(cod_operacion));
-	// agregar_a_paquete(paquete, &(parametro1_tamanio), sizeof(int));
-	agregar_valor_a_paquete(paquete, &(instruccion->operacion), sizeof(cod_operacion));
-	agregar_a_paquete(paquete, instruccion->parametro1, strlen(instruccion->parametro1) + 1);
-	// agregar_a_paquete(paquete, &(parametro2_tamanio), sizeof(int));
-	agregar_a_paquete(paquete, instruccion->parametro2, strlen(instruccion->parametro1) + 1);
-	free(instruccion);
-}
-
-void agregar_valor_a_paquete(t_paquete *paquete, void *valor, int tamanio)
-{
-	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio);
-	memcpy(paquete->buffer->stream + paquete->buffer->size, valor, tamanio);
-
-	paquete->buffer->size += tamanio;
-}
+}*/

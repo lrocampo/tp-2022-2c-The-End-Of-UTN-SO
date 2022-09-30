@@ -4,7 +4,6 @@
     t_list *pseudocodigo = list_create();
     char* param1;
     char* param2;
-    puts("obteniendo pseudocodigo");
     char **instructions_array = string_split(instructions_string, "\n");
     int size = string_array_size(instructions_array);
     for(int i = 0; i < size; i++){    
@@ -39,29 +38,26 @@
             param1 = NULL;
             param2 = NULL;
             list_add(pseudocodigo, (void*)new_instruccion(EXIT, param1, param2));
-            puts("EEEEEEXIT");
         }
         else {
-            perror("Error al leer la instruccion");
-            exit(1);
+            error_show("Error al leer la instruccion: %d\n",i);
+            exit(EXIT_FAILURE);
         }
         free(palabras);
-            puts("BUENO AVER");
-
     }
     return pseudocodigo;
 }
 
  /// ** Manejo de arhchivo *** ///
-char *leerArchivo (char *ruta)
+char *leer_archivo_pseudocodigo (char *ruta)
 {
 	char pathInstrucciones[100];
 	strcpy(pathInstrucciones, ruta);
-    puts(ruta);
 	FILE *archivo = fopen(pathInstrucciones, "r"); /// declaro el archivo y lo leo
 	if (archivo == NULL)
     {
-        perror("Error al abrir el archivo.\n");
+        error_show("Error al abrir el archivo.\n");
+        exit(EXIT_FAILURE);
     }
 
 	//posiciono el puntero para obtener el total de elementos del archivo
@@ -74,11 +70,11 @@ char *leerArchivo (char *ruta)
 
 	if(cantElementos != cantElementosLeidos )
 	{
-		perror("Error leyendo el archivo.\n") ;
+		error_show("Error leyendo el archivo.\n");
+        exit(EXIT_FAILURE);
 	}
 
 	fclose(archivo);
-    // log_info(consola_logger,"\nSe ha leido el archivo de instrucciones correctamente.\n");
     return arrayDinamico;
 }
 

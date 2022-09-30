@@ -6,7 +6,6 @@
  */
 #include <utils/utiles_config.h>
 
-// WIP
 bool validar_configuracion(t_config* config) {
 	return (config_keys_amount(config) > 0);
 }
@@ -18,9 +17,10 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 	char* config_path = strdup(path_archivo);
 	config = config_create(config_path);
 	if (!validar_configuracion(config)) {
-		printf("ERROR: No se encontró el archivo de configuración.");
+		error_show("No se encontró el archivo de configuración.");
 		free(config_path);
 		config_destroy(config);
+		exit(EXIT_FAILURE);
 	}
 
 	switch (tipo_archivo) {
@@ -60,8 +60,8 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			return cpu_config;
 
 		default:
-			printf("ERROR cargando configuracion tipo de archivo invalido");
 			config_destroy(config);
-			return 1;
+			error_show("cargando configuracion tipo de archivo invalido");
+			exit(EXIT_FAILURE);
 	}
 }

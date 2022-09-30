@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 #define RUTA_LOGGER_CONSOLA "./consola.log"
+#define RUTA_LOGGER_DEBUG_CONSOLA "./consola_db.log"
 #define NOMBRE_MODULO "Consola"
 
 t_log *consola_logger;

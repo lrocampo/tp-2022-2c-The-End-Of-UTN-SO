@@ -12,43 +12,45 @@
 int main(int argc, char **argv) {
 
 	if(argc != 3){ 
-		puts("Argumentos invalidos!");
+		error_show("Argumentos invalidos!");
 		return EXIT_FAILURE;
 	}
 
 	t_consola_config* consola_config;
-
-	char *ruta_config = strdup(argv[1]); 
-
+	char* ruta_config = strdup(argv[1]); 
 	char* ruta_instrucciones = strdup(argv[2]);
+	int kernel_fd;
+	char* valor = "consola";
+	t_list* instrucciones;
 
-	consola_logger = iniciar_logger(RUTA_LOGGER_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
-	log_info(consola_logger,"Arrancando consola...\n");
+	/* LOGGER DE ENTREGA */
+	//consola_logger = iniciar_logger(RUTA_LOGGER_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
+	
+	/* LOGGER DE DEBUG */
+	consola_logger = iniciar_logger(RUTA_LOGGER_DEBUG_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
+
+	log_debug(consola_logger,"Arrancando consola...");
 
 	consola_config = cargar_configuracion(ruta_config, CONSOLA);
+	log_debug(consola_logger,"Configuracion cargada correctamente");
 
-	int conexion;
-	char* valor = "consola";
+	kernel_fd = crear_conexion(consola_config->ip, consola_config->puerto);
+	log_debug(consola_logger,"Conexion creada correctamente");
 
-	conexion = crear_conexion(consola_config->ip, consola_config->puerto);
+	char *instrucciones_string = leer_archivo_pseudocodigo(ruta_instrucciones);
+	log_debug(consola_logger,"Archivo de pseudocodigo leido correctamente");
 
-	char *instrucciones_string = leerArchivo(ruta_instrucciones);
-	t_list *instrucciones = obtener_pseudocodigo(instrucciones_string);
-	puts("pseudocodigo");
-	
-	puts("new paquete");
-	// agregar_a_paquete(paquete, instrucciones, deberia andar solo); ver que onda con esto
+	instrucciones = obtener_pseudocodigo(instrucciones_string);
+	log_debug(consola_logger,"Instrucciones parseadas correctamente");
 
-	enviar_instrucciones(instrucciones, conexion);
+	enviar_instrucciones(instrucciones, kernel_fd);
+	log_debug(consola_logger,"Instrucciones enviadas");
 
-	//enviar_paquete(paquete, conexion);
-
-	enviar_mensaje(valor, conexion);
+	enviar_mensaje(valor, kernel_fd);
 	sleep(20);	
-	printf("Soy consola. Envie el siguiente mensaje a kernel: %s\n", valor);
-	liberar_conexion(conexion);
-	puts("termino consola\n");
+	log_debug(consola_logger, "Soy consola. Envie el siguiente mensaje a kernel: %s", valor);
+	liberar_conexion(kernel_fd);
+	log_debug(consola_logger, "termino consola"); 
 
-
-	return 0;
+	return EXIT_SUCCESS;
 }

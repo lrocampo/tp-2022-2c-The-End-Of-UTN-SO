@@ -20,6 +20,7 @@
 #include <semaphore.h>
 #include <stdlib.h>
 #define RUTA_LOGGER_KERNEL "./kernel.log"
+#define RUTA_LOGGER_DEBUG_KERNEL "./kernel_db.log"
 #define NOMBRE_MODULO "Kernel"
 #define RUTA_KERNEL_CONFIG "./src/kernel.config"
 
@@ -29,7 +30,7 @@ int conexion_cpu_interrupt;
 //t_socket* socketEscucha;
 t_log *kernel_logger;
 
-t_queue* pcbs;
+t_queue* cola_new_pcbs;
 sem_t consolas;
 sem_t multiprogramacion;
 uint32_t pid_actual;
