@@ -9,7 +9,7 @@
 
 int main(void){
 	pcbs = queue_create();
-	char* interrupcion = "interrupcion";
+	//char* interrupcion = "interrupcion";
 	char* dispatch = "dispatch";
 	t_kernel_config* kernel_config;
 
@@ -22,30 +22,13 @@ int main(void){
 
 	sem_init(&multiprogramacion,0,kernel_config->grado_multiprogramacion);
 	
-	int server_fd = iniciar_servidor(kernel_config->ip_kernel, kernel_config->puerto_escucha);
+	kernel_server_fd = iniciar_servidor(kernel_config->ip_kernel, kernel_config->puerto_escucha);
 
 	printf("Soy Kernel. Esperando conexion...\n");
 
 	conexion_cpu_dispatch = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch);
 
-	puts("estoy por concetarme con el cpu");
-
-	pthread_t thread_cpu_dispatch;
-	
-	pthread_create(&thread_cpu_dispatch, NULL, &atender_cpu_dispatch, NULL);
-
-	puts("hilo creado");
-
-	while(1){
-
-	int cliente_fd = esperar_cliente(server_fd);
-	puts("se conecto un cliente");
-	pthread_t thread_consola;
-	
-	pthread_create(&thread_consola, NULL, &atender_consola, (void*) cliente_fd);
-	pthread_detach(thread_consola);
-
-	}
+	planificacion_init();
 
 //////////////////////////////
 
@@ -68,20 +51,37 @@ int main(void){
 	return EXIT_SUCCESS;
 }
 
-void* atender_consola(void* cliente_fd){
+void* atender_consola(void* p){
+	int consola_fd = *(int *) p;
+	free(p);
+	t_pcb* pcb;
+	t_list* instrucciones = list_create();
 		while(1){
-		int cod_op = recibir_operacion((int) cliente_fd);
+		int cod_op = recibir_operacion(consola_fd);
 		switch (cod_op) {
 		case MENSAJE:
 			puts("Recibi el siguiente mensaje de una consola:");
-			recibir_mensaje((int) cliente_fd);
-			t_pcb* pcb = pcb_create();
+			recibir_mensaje((int) (intptr_t) consola_fd);
+			pcb = pcb_create();
 			queue_push(pcbs,pcb);
 			log_info(kernel_logger,"Se crea el proceso <PID> en NEW");
 			sem_post(&consolas);
 			break;
+		case PAQUETE:
+			instrucciones = deserializar_instrucciones(consola_fd);
+			instruccion* ins = list_get(instrucciones,0);
+			puts(string_itoa(ins->operacion));
+			puts(ins->parametro1);
+			puts(ins->parametro2);
+			puts("ola");
+			printf("tamanio lista %d",list_size(instrucciones));
+			list_iterate(instrucciones, (void*) iterator);
+			pcb = pcb_create();
+			pcb->estado = NEW;
+			queue_push(pcbs,pcb);
+			break;
 		case -1:
-			return EXIT_FAILURE;
+			return (void*) EXIT_FAILURE;
 		default:
 			puts("Termino kernel\n");
 			break;
@@ -106,4 +106,34 @@ void* atender_cpu_dispatch(void* arg){
 		// recv (esperas pcb)
 
 	}
+}
+
+void planificacion_init() {
+	int *p = malloc(sizeof(int));
+	
+	puts("estoy por concetarme con el cpu");
+
+	pthread_t thread_cpu_dispatch;
+	
+	pthread_create(&thread_cpu_dispatch, NULL, &atender_cpu_dispatch, NULL);
+
+	puts("hilo creado");
+
+	// Long-term scheduler
+	while(1){
+
+		int consola_fd = esperar_cliente(kernel_server_fd);
+		puts("se conecto un cliente");
+		pthread_t thread_consola;
+		*p = consola_fd;
+		pthread_create(&thread_consola, NULL, &atender_consola, /*(void*)*/ p);
+		pthread_detach(thread_consola);
+
+	}
+}
+
+void iterator(instruccion* value) {
+	log_info(kernel_logger,"%d", value->operacion);
+	log_info(kernel_logger,"%s", value->parametro1);
+	log_info(kernel_logger,"%s", value->parametro2);
 }

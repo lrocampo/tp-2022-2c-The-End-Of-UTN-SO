@@ -13,12 +13,6 @@
 #include <stdlib.h>
 
 typedef struct {
-	int operacion;
-	char* parametro1;
-	char* parametro2;
-} instruccion;
-
-typedef struct {
 	uint32_t ax;
 	uint32_t bx;
 	uint32_t cx;
@@ -30,7 +24,7 @@ typedef enum{
 	READY,
 	EXEC,
 	BLOCK,
-	EXIT
+	FINISH
 } estado_proceso;
 
 typedef enum{
@@ -41,6 +35,12 @@ typedef enum{
 	IO,
 	EXIT
 } cod_operacion;
+
+typedef struct {
+	cod_operacion operacion;
+	char* parametro1;
+	char* parametro2;
+} instruccion;
 
 typedef struct {
 	uint32_t nro_segmento;

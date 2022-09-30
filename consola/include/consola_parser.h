@@ -10,6 +10,7 @@
 
 t_list* obtener_pseudocodigo(char*);
 char *leerArchivo (char*);
+instruccion* new_instruccion(cod_operacion, char*, char*);
 
 #endif
 

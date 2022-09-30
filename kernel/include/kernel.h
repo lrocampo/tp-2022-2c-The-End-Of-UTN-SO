@@ -34,10 +34,11 @@ sem_t consolas;
 sem_t multiprogramacion;
 uint32_t pid_actual;
 pthread_mutex_t pid_mutex;
+int kernel_server_fd;
 
-
-int inicializar();
+void planificacion_init();
 void* atender_consola(void* cliente_fd);
 void* atender_cpu_dispatch(void* arg);
+void iterator(instruccion* );
 
 #endif /* KERNEL_INCLUDE_KERNEL_H_ */

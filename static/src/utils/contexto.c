@@ -1,3 +1,10 @@
+/*
+ * contexto.c
+ *
+ *  Created on: Sep 12, 2022
+ *      Author: utnso
+ */
+
 #include <utils/contexto.h>
 
 t_pcb* pcb_create(){

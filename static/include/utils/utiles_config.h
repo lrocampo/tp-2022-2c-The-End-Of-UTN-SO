@@ -1,5 +1,5 @@
-#ifndef UTILES_CONFIG_H_
-#define UTILES_CONFIG_H_
+#ifndef INCLUDE_UTILS_UTILES_CONFIG_H_
+#define INCLUDE_UTILS_UTILES_CONFIG_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,4 +38,4 @@ typedef enum {
 
 void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo);
 
-#endif
+#endif /* INCLUDE_UTILS_UTILES_CONFIG_H_ */

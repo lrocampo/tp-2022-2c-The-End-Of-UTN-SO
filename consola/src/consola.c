@@ -11,8 +11,7 @@
 
 int main(int argc, char **argv) {
 
-	// una vez que tengamos el archivo de instrucciones, seria != 3. Por ahora lo dejamos asi:
-	if(argc != 2){ 
+	if(argc != 3){ 
 		puts("Argumentos invalidos!");
 		return EXIT_FAILURE;
 	}
@@ -35,14 +34,14 @@ int main(int argc, char **argv) {
 
 	char *instrucciones_string = leerArchivo(ruta_instrucciones);
 	t_list *instrucciones = obtener_pseudocodigo(instrucciones_string);
-
-	t_paquete *paquete = new_paquete_con_codigo_de_operacion(PAQUETE);
-
+	puts("pseudocodigo");
+	
+	puts("new paquete");
 	// agregar_a_paquete(paquete, instrucciones, deberia andar solo); ver que onda con esto
 
-	serializar_instrucciones(instrucciones, paquete);
+	enviar_instrucciones(instrucciones, conexion);
 
-	enviar_paquete(paquete, conexion);
+	//enviar_paquete(paquete, conexion);
 
 	enviar_mensaje(valor, conexion);
 	sleep(20);	
