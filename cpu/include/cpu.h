@@ -20,6 +20,6 @@
 #define RUTA_CPU_CONFIG "./src/cpu.config"
 
 t_log *cpu_logger;
-
+void ejecutar(t_pcb*);
 
 #endif /* CPU_INCLUDE_CPU_H_ */

@@ -21,7 +21,9 @@ int main(void){
 	log_debug(cpu_logger,"Configuracion cargada correctamente");
 
 	int server_fd_dispatch = iniciar_servidor(cpu_config->ip_cpu, cpu_config->puerto_escucha_dispatch);
-
+	if(server_fd_dispatch == -1){
+		return EXIT_FAILURE;
+	}
 	int cliente_fd_dispatch = esperar_cliente(server_fd_dispatch);
 	log_debug(cpu_logger,"Se conecto un cliente a DISPATCH");
 	
@@ -40,10 +42,18 @@ int main(void){
 	*/
 
 	while(1){
+			t_pcb* pcb_to_exec;
 			int cod_op = recibir_operacion(cliente_fd_dispatch);
 			switch (cod_op) {
 			case MENSAJE:
 				recibir_mensaje(cpu_logger, cliente_fd_dispatch);
+				break;
+			case PCB:
+				pcb_to_exec = recibir_pcb(cliente_fd_dispatch);
+				log_debug(cpu_logger, "Recibi pcb con pid: %d",pcb_to_exec->pid);
+				log_debug(cpu_logger, "PCB RECIBIDA:\n %s", pcb_to_string(pcb_to_exec));
+				ejecutar(pcb_to_exec);
+				enviar_pcb(pcb_to_exec, cliente_fd_dispatch);
 				break;
 			case -1:
 				log_debug(cpu_logger, "El cliente se desconecto de DISPATCH");
@@ -70,6 +80,12 @@ int main(void){
 	log_debug(cpu_logger,"termino cpu\n");
 
 	return EXIT_SUCCESS;
+}
+
+void ejecutar(t_pcb* pcb){
+	sleep(5);
+	printf("%d\n", list_size(pcb->instrucciones));
+	pcb->program_counter = list_size(pcb->instrucciones); 
 }
 
 

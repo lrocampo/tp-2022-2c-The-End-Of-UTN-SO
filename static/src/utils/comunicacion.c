@@ -124,7 +124,7 @@ t_list* recibir_paquete_con_funcion(int socket_cliente, void* (*funcion_deserial
 	return valores;
 }
 
-void agregar_a_paquete(t_paquete *paquete, void *valor, int tamanio)
+void agregar_a_paquete_con_header(t_paquete *paquete, void *valor, int tamanio)
 {
 	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
 
@@ -177,13 +177,14 @@ void empaquetar_instrucciones(t_list *instrucciones, t_paquete *paquete)
 void serializar_instruccion(instruccion *instruccion, t_paquete *paquete)
 {
 	agregar_valor_a_paquete(paquete, &(instruccion->operacion), sizeof(cod_operacion));
-	agregar_a_paquete(paquete, instruccion->parametro1, strlen(instruccion->parametro1) + 1);
-	agregar_a_paquete(paquete, instruccion->parametro2, strlen(instruccion->parametro1) + 1);
+	agregar_a_paquete_con_header(paquete, instruccion->parametro1, strlen(instruccion->parametro1) + 1);
+	agregar_a_paquete_con_header(paquete, instruccion->parametro2, strlen(instruccion->parametro1) + 1);
 	free(instruccion);
 }
 
 void* deserializar_instruccion(void* buffer, int* desplazamiento)
 {
+	puts("intentando");
 	instruccion* nueva_instruccion = malloc(sizeof(instruccion)); 
 	int tamanio = 0;
 
@@ -206,8 +207,101 @@ void* deserializar_instruccion(void* buffer, int* desplazamiento)
 	memcpy(nueva_instruccion->parametro2, buffer + *desplazamiento, tamanio);
 	*desplazamiento += tamanio;
 
+
 	return (void*) nueva_instruccion;
 }
+
+/* PAQUETE_PCB */
+
+void enviar_pcb(t_pcb* pcb, int socket_cliente)
+{
+	t_paquete *paquete = new_paquete_con_codigo_de_operacion(PCB);
+
+	empaquetar_pcb(pcb, paquete);
+
+	enviar_paquete(paquete, socket_cliente);
+	eliminar_paquete(paquete);
+}
+
+void empaquetar_pcb(t_pcb* pcb,t_paquete* paquete){
+	int cantidad_instrucciones = list_size(pcb->instrucciones);
+	agregar_valor_a_paquete(paquete, &(pcb->pid), sizeof(u_int32_t));
+	agregar_valor_a_paquete(paquete, &(pcb->program_counter), sizeof(u_int32_t));
+	agregar_valor_a_paquete(paquete, &(pcb->estado), sizeof(estado_proceso));
+	empaquetar_tabla_segmentos(pcb->tabla, paquete);
+	empaquetar_registros(pcb->registros, paquete);
+	agregar_valor_a_paquete(paquete, &(cantidad_instrucciones), sizeof(int));
+	empaquetar_instrucciones(pcb->instrucciones, paquete);
+}
+
+void empaquetar_tabla_segmentos(tabla_de_segmentos tabla,t_paquete* paquete){
+	agregar_valor_a_paquete(paquete, &(tabla.indice_tabla_paginas), sizeof(u_int32_t));
+	agregar_valor_a_paquete(paquete, &(tabla.nro_segmento), sizeof(u_int32_t));
+	agregar_valor_a_paquete(paquete, &(tabla.tamanio_segmento), sizeof(u_int32_t));
+}
+
+void empaquetar_registros(registros_de_proposito_general registros, t_paquete* paquete){
+	agregar_valor_a_paquete(paquete, &(registros.ax), sizeof(u_int32_t));
+	agregar_valor_a_paquete(paquete, &(registros.bx), sizeof(u_int32_t));
+	agregar_valor_a_paquete(paquete, &(registros.cx), sizeof(u_int32_t));
+	agregar_valor_a_paquete(paquete, &(registros.dx), sizeof(u_int32_t));
+}
+
+t_pcb* recibir_pcb(int socket_cliente){
+	int desplazamiento = 0;
+	int size;
+	int cantidad_instrucciones;
+	void * buffer;
+	t_list* lista_instrucciones = list_create();
+
+	buffer = recibir_buffer(&size, socket_cliente);
+
+	t_pcb* nueva_pcb = malloc(sizeof(t_pcb)); 
+
+	memcpy(&(nueva_pcb->pid), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->program_counter), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->estado), buffer + desplazamiento, sizeof(estado_proceso));
+	desplazamiento += sizeof(estado_proceso);
+
+	memcpy(&(nueva_pcb->tabla.indice_tabla_paginas), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->tabla.nro_segmento), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->tabla.tamanio_segmento), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->registros.ax), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->registros.bx), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->registros.cx), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->registros.dx), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(cantidad_instrucciones), buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	for(int i = 0; i < cantidad_instrucciones; i++){
+		void* nueva_instruccion = deserializar_instruccion(buffer, &desplazamiento);
+		list_add(lista_instrucciones, nueva_instruccion);
+	}
+	nueva_pcb->instrucciones = lista_instrucciones;
+	puts("instrucciones deserializadas");
+	free(buffer);
+	return nueva_pcb;
+
+}
+
 
 /* NO SE USA (pero no borrar todavia)*/
 

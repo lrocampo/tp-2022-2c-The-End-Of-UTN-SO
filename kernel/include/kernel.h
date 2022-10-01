@@ -27,19 +27,24 @@
 int conexion_cpu_dispatch;
 int conexion_cpu_interrupt;
 
-//t_socket* socketEscucha;
-t_log *kernel_logger;
+t_log* kernel_logger;
 
 t_queue* cola_new_pcbs;
+t_queue* cola_exit_pcbs;
+t_queue* cola_ready_pcbs;
+
 sem_t consolas;
 sem_t multiprogramacion;
 uint32_t pid_actual;
 pthread_mutex_t pid_mutex;
+pthread_mutex_t cola_new_pcbs_mutex;
 int kernel_server_fd;
 
-void planificacion_init();
+void planificacion_init(t_kernel_config*);
 void* atender_consola(void* cliente_fd);
 void* atender_cpu_dispatch(void* arg);
 void iterator(instruccion* );
+u_int32_t siguiente_pid();
+void dirigir_pcb(t_pcb* pcb);
 
 #endif /* KERNEL_INCLUDE_KERNEL_H_ */
