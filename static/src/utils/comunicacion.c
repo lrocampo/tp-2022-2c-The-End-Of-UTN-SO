@@ -178,13 +178,12 @@ void serializar_instruccion(instruccion *instruccion, t_paquete *paquete)
 {
 	agregar_valor_a_paquete(paquete, &(instruccion->operacion), sizeof(cod_operacion));
 	agregar_a_paquete_con_header(paquete, instruccion->parametro1, strlen(instruccion->parametro1) + 1);
-	agregar_a_paquete_con_header(paquete, instruccion->parametro2, strlen(instruccion->parametro1) + 1);
+	agregar_a_paquete_con_header(paquete, instruccion->parametro2, strlen(instruccion->parametro2) + 1);
 	free(instruccion);
 }
 
 void* deserializar_instruccion(void* buffer, int* desplazamiento)
 {
-	puts("intentando");
 	instruccion* nueva_instruccion = malloc(sizeof(instruccion)); 
 	int tamanio = 0;
 
@@ -296,7 +295,6 @@ t_pcb* recibir_pcb(int socket_cliente){
 		list_add(lista_instrucciones, nueva_instruccion);
 	}
 	nueva_pcb->instrucciones = lista_instrucciones;
-	puts("instrucciones deserializadas");
 	free(buffer);
 	return nueva_pcb;
 

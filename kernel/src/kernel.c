@@ -58,9 +58,15 @@ void* atender_consola(void* p){
 			list_iterate(instrucciones, (void*) iterator);
 			pcb = pcb_create(instrucciones, siguiente_pid());
 			pthread_mutex_lock(&cola_new_pcbs_mutex);
+			// Agregar pcb a cola new
 			queue_push(cola_new_pcbs,pcb);
 			pthread_mutex_unlock(&cola_new_pcbs_mutex);
 			log_info(kernel_logger,"Se crea el proceso %d en NEW", pcb->pid);
+			// Si el grado de multiprogramacion lo permite, lo pasa a ready
+			sem_wait(&multiprogramacion);
+			pcb = queue_pop(cola_new_pcbs);
+			pcb->estado = READY;
+			queue_push(cola_ready_pcbs, pcb);
 			sem_post(&consolas);
 			break;
 		case -1:
@@ -85,10 +91,9 @@ void* atender_cpu_dispatch(void* arg){
 	while(1){
 		// planificar
 		sem_wait(&consolas);
-		t_pcb* pcb = queue_pop(cola_new_pcbs);
-		sem_wait(&multiprogramacion);
-		pcb->estado = READY;
+		t_pcb *pcb = queue_pop(cola_ready_pcbs);
 		log_debug(kernel_logger,"Estado PCB: %d",pcb->estado);
+		// 
 		enviar_pcb(pcb, conexion_cpu_dispatch);
 		int cod_op = recibir_operacion(conexion_cpu_dispatch);
 		switch (cod_op)
@@ -116,20 +121,32 @@ void* atender_cpu_dispatch(void* arg){
 	}
 }
 
+void* rajar_pcb(void* arg) {
+	while(1) {
+		sem_wait(&procesos_finalizados);
+		t_pcb* pcb = queue_pop(cola_exit_pcbs);
+		log_debug(kernel_logger,"PCB con id: %d ha finalizado.",pcb->pid);
+	}
+}
+
 void planificacion_init(t_kernel_config* kernel_config) {
 	cola_new_pcbs = queue_create();
 	cola_exit_pcbs = queue_create();
+	cola_ready_pcbs = queue_create();
 	int *p = malloc(sizeof(int));
 	sem_init(&consolas,0,0);
 	sem_init(&multiprogramacion,0,kernel_config->grado_multiprogramacion);
+	sem_init(&procesos_finalizados, 0, 0);
 	pthread_mutex_init(&pid_mutex, NULL);
 	pthread_mutex_init(&cola_new_pcbs_mutex, NULL);
 	pid_actual = 0;
 
 	pthread_t thread_cpu_dispatch;
+	pthread_t thread_rajar_pcb;
 	pthread_create(&thread_cpu_dispatch, NULL, &atender_cpu_dispatch, NULL);
+	pthread_create(&thread_rajar_pcb, NULL, &rajar_pcb, NULL);
 
-	// Long-term scheduler
+	
 	while(1){
 		log_debug(kernel_logger,"Soy Kernel. Esperando conexion...");
 		int consola_fd = esperar_cliente(kernel_server_fd);
@@ -157,9 +174,14 @@ void dirigir_pcb(t_pcb* pcb){
 	puts("llegue");
 	switch(ultima_instruccion->operacion){
 		case EXIT:
+		// De quien es responsabilidad cambiar el estado de un pcb? Dentro de que funcion?
+		// Como se supone que vamos a abstraer y separar la plani de largo y la plani de corto?
+		// Por que a veces los modulos se conectan bien y otras veces mal.
+		// Hay que detachear los demas threads? cpu dispatch, cpu interrupt, rajar_pcb?
 			pcb->estado = FINISH_EXIT;
 			queue_push(cola_exit_pcbs,pcb);
 			log_info(kernel_logger,"PID: <PID> - Estado Anterior: <ESTADO_ANTERIOR> - Estado Actual: <ESTADO_ACTUAL>");
+			sem_post(&procesos_finalizados);
 			break;
 		default:
 			pcb->estado = READY;
