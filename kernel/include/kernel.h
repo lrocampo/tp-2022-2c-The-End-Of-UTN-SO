@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdlib.h>
+
 #define RUTA_LOGGER_KERNEL "./kernel.log"
 #define RUTA_LOGGER_DEBUG_KERNEL "./kernel_db.log"
 #define NOMBRE_MODULO "Kernel"

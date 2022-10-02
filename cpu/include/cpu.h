@@ -14,6 +14,7 @@
 #include <utils/logger.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #define RUTA_LOGGER_CPU "./cpu.log"
 #define RUTA_LOGGER_DEBUG_CPU "./cpu_db.log"
 #define NOMBRE_MODULO "CPU"
