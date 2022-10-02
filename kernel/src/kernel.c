@@ -178,6 +178,8 @@ void dirigir_pcb(t_pcb* pcb){
 		// Como se supone que vamos a abstraer y separar la plani de largo y la plani de corto?
 		// Por que a veces los modulos se conectan bien y otras veces mal.
 		// Hay que detachear los demas threads? cpu dispatch, cpu interrupt, rajar_pcb?
+		// Como se espera (en que orden) que se levanten los modulos? Para la entrega final.
+		// mediano plazo
 			pcb->estado = FINISH_EXIT;
 			queue_push(cola_exit_pcbs,pcb);
 			log_info(kernel_logger,"PID: <PID> - Estado Anterior: <ESTADO_ANTERIOR> - Estado Actual: <ESTADO_ACTUAL>");
