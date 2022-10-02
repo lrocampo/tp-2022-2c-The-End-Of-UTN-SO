@@ -1,5 +1,5 @@
-#ifndef STATIC_SOCKET_H_
-#define STATIC_SOCKET_H_
+#ifndef INCLUDE_UTILS_SOCKET_H_
+#define INCLUDE_UTILS_SOCKET_H_ 
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -15,4 +15,4 @@ int iniciar_servidor(char*, char*);
 int esperar_cliente(int);
 void liberar_conexion(int);
 
-#endif
+#endif /* INCLUDE_UTILS_SOCKET_H_ */

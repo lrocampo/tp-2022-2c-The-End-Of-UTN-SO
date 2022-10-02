@@ -1,23 +1,27 @@
+/*
+ * utiles_config.c
+ *
+ *  Created on: Sep 12, 2022
+ *      Author: utnso
+ */
 #include <utils/utiles_config.h>
 
-// WIP
-// bool validar_configuracion(t_config* config) {
-// 	return (config_keys_amount(config) > 0);
-// }
+bool validar_configuracion(t_config* config) {
+	return (config_keys_amount(config) > 0);
+}
 
 //Levanta todos los datos que necesitamos del config
 void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 	t_config *config;
 
-	char* config_path;
-	config_path = string_new();
-	string_append(&config_path, path_archivo);
+	char* config_path = strdup(path_archivo);
 	config = config_create(config_path);
-	// if (!validar_configuracion(config)) {
-	// 	printf("ERROR: No se encontró el archivo de configuración.");
-	// 	free(config_path);
-	// 	free(config); //Libero la memoria de config
-	// }
+	if (!validar_configuracion(config)) {
+		error_show("No se encontró el archivo de configuración.");
+		free(config_path);
+		config_destroy(config);
+		exit(EXIT_FAILURE);
+	}
 
 	switch (tipo_archivo) {
 		case CONSOLA:
@@ -37,7 +41,7 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			kernel_config->puerto_escucha = strdup(config_get_string_value(config, "PUERTO_ESCUCHA"));
 			kernel_config->puerto_cpu_dispatch = strdup(config_get_string_value(config, "PUERTO_CPU_DISPATCH"));
 			kernel_config->puerto_cpu_interrupt = strdup(config_get_string_value(config, "PUERTO_CPU_INTERRUPT"));
-			
+			kernel_config->grado_multiprogramacion = config_get_int_value(config, "GRADO_MAX_MULTIPROGRAMACION");
 			// TODO: Componer la configuracion del resto
 
 			config_destroy(config);
@@ -47,7 +51,7 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			t_cpu_config* cpu_config;
 			cpu_config = malloc(sizeof(t_cpu_config));
 			cpu_config->ip_cpu = strdup(config_get_string_value(config, "IP_CPU"));
-			cpu_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEl"));
+			cpu_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
 			cpu_config->puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
 			cpu_config->puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
 			
@@ -56,8 +60,8 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			return cpu_config;
 
 		default:
-			printf("ERROR cargando configuracion tipo de archivo invalido");
 			config_destroy(config);
-			return 1;
+			error_show("cargando configuracion tipo de archivo invalido");
+			exit(EXIT_FAILURE);
 	}
 }

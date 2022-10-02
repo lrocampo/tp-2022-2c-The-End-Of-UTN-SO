@@ -1,5 +1,5 @@
-#ifndef UTILES_CONFIG_H_
-#define UTILES_CONFIG_H_
+#ifndef INCLUDE_UTILS_UTILES_CONFIG_H_
+#define INCLUDE_UTILS_UTILES_CONFIG_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +7,7 @@
 #include <commons/string.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
+#include <commons/error.h>
 #include <string.h>
 
 typedef struct {
@@ -15,6 +16,7 @@ typedef struct {
     char* puerto_escucha;
 	char* puerto_cpu_dispatch;
 	char* puerto_cpu_interrupt;
+	int grado_multiprogramacion;
 } t_kernel_config;
 
 typedef struct {
@@ -37,4 +39,4 @@ typedef enum {
 
 void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo);
 
-#endif
+#endif /* INCLUDE_UTILS_UTILES_CONFIG_H_ */

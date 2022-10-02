@@ -6,37 +6,51 @@
  */
 
 #include <consola.h>
-#include <consola_parser.h>
 
 // ./consola.out ruta/del/config ruta/de/las/instrucciones  
 
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
 
-	// una vez que tengamos el archivo de instrucciones, seria != 3. Por ahora lo dejamos asi:
-	if(argc != 2){ 
-		puts("Argumentos invalidos!");
+	if(argc != 3){ 
+		error_show("Argumentos invalidos!");
 		return EXIT_FAILURE;
 	}
 
 	t_consola_config* consola_config;
+	char* ruta_config = strdup(argv[1]); 
+	char* ruta_instrucciones = strdup(argv[2]);
+	int kernel_fd;
+	char* valor = "consola";
+	t_list* instrucciones;
 
-	char *ruta_config = strdup(argv[1]); 
+	/* LOGGER DE ENTREGA */
+	//consola_logger = iniciar_logger(RUTA_LOGGER_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
+	
+	/* LOGGER DE DEBUG */
+	consola_logger = iniciar_logger(RUTA_LOGGER_DEBUG_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
 
-	consola_logger = iniciar_logger(RUTA_LOGGER_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
-	log_info(consola_logger,"Arrancando consola...\n");
+	log_debug(consola_logger,"Arrancando consola...");
 
 	consola_config = cargar_configuracion(ruta_config, CONSOLA);
+	log_debug(consola_logger,"Configuracion cargada correctamente");
 
-	int conexion;
-	char* valor = "consola";
+	kernel_fd = crear_conexion(consola_config->ip, consola_config->puerto);
+	log_debug(consola_logger,"Conexion creada correctamente");
 
-	conexion = crear_conexion(consola_config->ip, consola_config->puerto);
+	char *instrucciones_string = leer_archivo_pseudocodigo(ruta_instrucciones);
+	log_debug(consola_logger,"Archivo de pseudocodigo leido correctamente");
 
-	enviar_mensaje(valor, conexion);	
-	printf("Soy consola. Envie el siguiente mensaje a kernel: %s\n", valor);
-	liberar_conexion(conexion);
-	puts("termino consola\n");
+	instrucciones = obtener_pseudocodigo(instrucciones_string);
+	log_debug(consola_logger,"Instrucciones parseadas correctamente");
 
+	enviar_instrucciones(instrucciones, kernel_fd);
+	log_debug(consola_logger,"Instrucciones enviadas");
 
-	return 0;
+	enviar_mensaje(valor, kernel_fd);
+	sleep(20);	
+	log_debug(consola_logger, "Soy consola. Envie el siguiente mensaje a kernel: %s", valor);
+	liberar_conexion(kernel_fd);
+	log_debug(consola_logger, "termino consola"); 
+
+	return EXIT_SUCCESS;
 }

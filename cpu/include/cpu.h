@@ -14,11 +14,13 @@
 #include <utils/logger.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #define RUTA_LOGGER_CPU "./cpu.log"
+#define RUTA_LOGGER_DEBUG_CPU "./cpu_db.log"
 #define NOMBRE_MODULO "CPU"
 #define RUTA_CPU_CONFIG "./src/cpu.config"
 
 t_log *cpu_logger;
-
+void ejecutar(t_pcb*);
 
 #endif /* CPU_INCLUDE_CPU_H_ */
