@@ -7,13 +7,15 @@
 
 #include <utils/contexto.h>
 
-t_pcb* pcb_create(t_list* instrucciones, uint32_t pid){
+t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
     t_pcb* pcb = malloc(sizeof(t_pcb));
 
     pcb->estado = NEW;
     pcb->instrucciones = instrucciones;
     pcb->pid = pid;
+    pcb->socket_consola = socket;
     pcb->program_counter = 0;
+    pcb->interrupcion = false;
     pcb->registros.ax = 0;
     pcb->registros.bx = 0;
     pcb->registros.cx = 0;
@@ -56,10 +58,12 @@ char* pcb_to_string(t_pcb* pcb){
 
     int cantidad_instrucciones = list_size(pcb->instrucciones);
     string_append_with_format(&pcb_string,
-        "PID: %d\nPC: %d\nESTADO: %s\n\nAX= %d BX= %d \nCX= %d DX= %d \n\nIDX: %d  N.PAG: %d  TAM: %d\n\n",
+        "PID: %d\nPPID: %d\nPC: %d\nESTADO: %s\nINTERRUPCION: %d\n\nAX= %d BX= %d \nCX= %d DX= %d \n\nIDX: %d  N.PAG: %d  TAM: %d\n\n",
         pcb->pid,
+        pcb->socket_consola,
         pcb->program_counter,
         pcb_estado,
+        pcb->interrupcion,
         pcb->registros.ax,
         pcb->registros.bx,
         pcb->registros.cx,
