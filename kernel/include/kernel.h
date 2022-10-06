@@ -30,11 +30,16 @@ int conexion_cpu_interrupt;
 
 t_log* kernel_logger;
 
+t_queue* cola_consolas;
 t_queue* cola_new_pcbs;
 t_queue* cola_exit_pcbs;
-t_queue* cola_ready_pcbs;
+t_queue* cola_ready_FIFO_pcbs;
+t_queue* cola_ready_RR_pcbs;
+
+t_queue* cola_ready_pcbs; // despues la borramos
 
 sem_t consolas;
+sem_t conexiones;
 sem_t multiprogramacion;
 sem_t procesos_finalizados; // existe alguna convencion para el nombre de los semaforos de sincro?
 uint32_t pid_actual;
@@ -43,10 +48,12 @@ pthread_mutex_t cola_new_pcbs_mutex;
 int kernel_server_fd;
 
 void planificacion_init(t_kernel_config*);
-void* atender_consola(void* cliente_fd);
+//void* atender_consola(void* cliente_fd);
 void* atender_cpu_dispatch(void* arg);
 void iterator(instruccion* );
 u_int32_t siguiente_pid();
 void dirigir_pcb(t_pcb* pcb);
+void* atender_consolas();
+void esperar_conexiones();
 
 #endif /* KERNEL_INCLUDE_KERNEL_H_ */

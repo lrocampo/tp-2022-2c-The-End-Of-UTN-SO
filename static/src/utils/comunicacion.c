@@ -227,6 +227,8 @@ void empaquetar_pcb(t_pcb* pcb,t_paquete* paquete){
 	agregar_valor_a_paquete(paquete, &(pcb->pid), sizeof(u_int32_t));
 	agregar_valor_a_paquete(paquete, &(pcb->program_counter), sizeof(u_int32_t));
 	agregar_valor_a_paquete(paquete, &(pcb->estado), sizeof(estado_proceso));
+	agregar_valor_a_paquete(paquete, &(pcb->socket_consola), sizeof(int));
+	agregar_valor_a_paquete(paquete, &(pcb->interrupcion), sizeof(bool));
 	empaquetar_tabla_segmentos(pcb->tabla, paquete);
 	empaquetar_registros(pcb->registros, paquete);
 	agregar_valor_a_paquete(paquete, &(cantidad_instrucciones), sizeof(int));
@@ -265,6 +267,12 @@ t_pcb* recibir_pcb(int socket_cliente){
 
 	memcpy(&(nueva_pcb->estado), buffer + desplazamiento, sizeof(estado_proceso));
 	desplazamiento += sizeof(estado_proceso);
+
+	memcpy(&(nueva_pcb->socket_consola), buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	memcpy(&(nueva_pcb->interrupcion), buffer + desplazamiento, sizeof(bool));
+	desplazamiento += sizeof(bool);
 
 	memcpy(&(nueva_pcb->tabla.indice_tabla_paginas), buffer + desplazamiento, sizeof(u_int32_t));
 	desplazamiento += sizeof(u_int32_t);
