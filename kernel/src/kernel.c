@@ -109,6 +109,7 @@ void planificacion_init(t_kernel_config* kernel_config) {
 	sem_init(&procesos_finalizados, 0, 0);
 	pthread_mutex_init(&pid_mutex, NULL);
 	pthread_mutex_init(&cola_consolas_mutex, NULL);
+	pthread_mutex_init(&cola_ready_pcbs_mutex, NULL);
 	pid_actual = 0;
 
 	pthread_t thread_cpu_dispatch;
@@ -197,13 +198,11 @@ void* atender_consolas(void* arg){
 				log_info(kernel_logger,"Se crea el proceso %d en NEW", pcb->pid);
 				// Si el grado de multiprogramacion lo permite, lo pasa a ready
 				sem_wait(&multiprogramacion);
-				// mutex
 				pcb = queue_pop(cola_new_pcbs);
-				// mutex
 				pcb->estado = READY;
-				// mutex
+				pthread_mutex_lock(&cola_ready_pcbs_mutex);
 				queue_push(cola_ready_pcbs, pcb);
-				// mutex
+				pthread_mutex_unlock(&cola_ready_pcbs_mutex);
 				sem_post(&consolas);
 				break;
 			case -1:
