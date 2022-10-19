@@ -57,7 +57,7 @@ void* atender_cpu_dispatch(void*);
 void iterator(instruccion* );
 u_int32_t siguiente_pid();
 void dirigir_pcb(t_pcb*);
-void mover_pcb_de_new_a_ready();
+void agregar_pcb_a_ready();
 void* atender_consolas();
 void esperar_conexiones();
 
