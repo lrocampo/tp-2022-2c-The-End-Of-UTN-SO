@@ -109,6 +109,7 @@ void planificacion_init(t_kernel_config* kernel_config) {
 	sem_init(&procesos_finalizados, 0, 0);
 	pthread_mutex_init(&pid_mutex, NULL);
 	pthread_mutex_init(&cola_new_pcbs_mutex, NULL);
+	pthread_mutex_init(&cola_consolas_mutex, NULL);
 	pid_actual = 0;
 
 	pthread_t thread_cpu_dispatch;
@@ -162,13 +163,13 @@ void dirigir_pcb(t_pcb* pcb){
 
 void esperar_conexiones(){
 	cola_consolas = queue_create();
-
 	while(1){
 		log_debug(kernel_logger,"Soy Kernel. Esperando conexion...");
 		int consola_fd = esperar_cliente(kernel_server_fd);
 		log_debug(kernel_logger, "se conecto un cliente");
-		// mutex
+		pthread_mutex_lock(&cola_consolas_mutex);
 		queue_push(cola_consolas, (void*) (intptr_t) consola_fd);
+		pthread_mutex_unlock(&cola_consolas_mutex);
 		// mutex
 		sem_post(&conexiones);
 	}
@@ -179,9 +180,9 @@ void* atender_consolas(void* arg){
 	t_list* instrucciones;
 	while(1){
 		sem_wait(&conexiones);
-		// mutex
+		pthread_mutex_lock(&cola_consolas_mutex);
 		int consola_fd = (int) (intptr_t) queue_pop(cola_consolas);
-		//mutex
+		pthread_mutex_unlock(&cola_consolas_mutex);
 		int cod_op = recibir_operacion(consola_fd);
 		switch (cod_op) {
 			case MENSAJE:

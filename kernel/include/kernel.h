@@ -45,6 +45,7 @@ sem_t procesos_finalizados; // existe alguna convencion para el nombre de los se
 uint32_t pid_actual;
 pthread_mutex_t pid_mutex;
 pthread_mutex_t cola_new_pcbs_mutex;
+pthread_mutex_t cola_consolas_mutex;
 int kernel_server_fd;
 
 void planificacion_init(t_kernel_config*);
