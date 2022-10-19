@@ -28,7 +28,8 @@ t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
 }
 
 void pcb_destroy(t_pcb* pcb){
-
+    list_destroy_and_destroy_elements(pcb->instrucciones, free);
+    free(pcb);
 }
 
 char* estado_to_string(estado_proceso estado){
