@@ -10,7 +10,7 @@ int main(void){
 	t_cpu_config* cpu_config;
 
 	/* LOGGER DE ENTREGA */
-	cpu_logger = iniciar_logger(RUTA_LOGGER_CPU, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
+	/* cpu_logger = iniciar_logger(RUTA_LOGGER_CPU, NOMBRE_MODULO, 1, LOG_LEVEL_INFO); */
 
 	/* LOGGER DE DEBUG */
 	cpu_logger = iniciar_logger(RUTA_LOGGER_DEBUG_CPU, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
@@ -51,9 +51,12 @@ int main(void){
 			case PCB:
 				pcb_to_exec = recibir_pcb(cliente_fd_dispatch);
 				log_debug(cpu_logger, "Recibi pcb con pid: %d",pcb_to_exec->pid);
-				log_debug(cpu_logger, "PCB RECIBIDA:\n %s", pcb_to_string(pcb_to_exec));
+				char* pcb_string = pcb_to_string(pcb_to_exec);
+				log_debug(cpu_logger, "PCB RECIBIDA:\n %s", pcb_string);
 				ejecutar(pcb_to_exec);
 				enviar_pcb(pcb_to_exec, cliente_fd_dispatch);
+				free(pcb_string);
+				pcb_destroy(pcb_to_exec);
 				break;
 			case -1:
 				log_debug(cpu_logger, "El cliente se desconecto de DISPATCH");
@@ -78,7 +81,7 @@ int main(void){
 			}
 */
 	log_debug(cpu_logger,"termino cpu\n");
-
+	log_destroy(cpu_logger);
 	return EXIT_SUCCESS;
 }
 

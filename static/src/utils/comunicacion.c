@@ -179,7 +179,6 @@ void serializar_instruccion(instruccion *instruccion, t_paquete *paquete)
 	agregar_valor_a_paquete(paquete, &(instruccion->operacion), sizeof(cod_operacion));
 	agregar_a_paquete_con_header(paquete, instruccion->parametro1, strlen(instruccion->parametro1) + 1);
 	agregar_a_paquete_con_header(paquete, instruccion->parametro2, strlen(instruccion->parametro2) + 1);
-	free(instruccion);
 }
 
 void* deserializar_instruccion(void* buffer, int* desplazamiento)
@@ -298,14 +297,16 @@ t_pcb* recibir_pcb(int socket_cliente){
 	memcpy(&(cantidad_instrucciones), buffer + desplazamiento, sizeof(int));
 	desplazamiento += sizeof(int);
 
+	void* nueva_instruccion;
 	for(int i = 0; i < cantidad_instrucciones; i++){
-		void* nueva_instruccion = deserializar_instruccion(buffer, &desplazamiento);
+		nueva_instruccion = deserializar_instruccion(buffer, &desplazamiento);
 		list_add(lista_instrucciones, nueva_instruccion);
+		// TODO: FALTA LIBERAR MEMORIA NUEVA INSTRUCCIon
 	}
+
 	nueva_pcb->instrucciones = lista_instrucciones;
 	free(buffer);
 	return nueva_pcb;
-
 }
 
 

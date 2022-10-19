@@ -76,6 +76,7 @@ char* pcb_to_string(t_pcb* pcb){
         for(int i = 0; i < cantidad_instrucciones; i++){
             char* instruccion = instruccion_to_string(list_get(pcb->instrucciones, i));
             string_append_with_format(&pcb_string,"%s\n",instruccion);
+            free(instruccion);
         }
 
     return pcb_string;
@@ -109,5 +110,6 @@ char* instruccion_to_string(instruccion* instruccion){
         string_append(&instruccion_string,"UNKNOWN");
         break;
     }
+
     return instruccion_string;
 }
