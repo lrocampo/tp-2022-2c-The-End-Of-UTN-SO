@@ -48,12 +48,16 @@ pthread_mutex_t cola_consolas_mutex;
 pthread_mutex_t cola_ready_pcbs_mutex;
 int kernel_server_fd;
 
+void crear_colas_pcbs();
+void inicializar_semaforos(t_kernel_config*); 
+void crear_threads();
 void planificacion_init(t_kernel_config*);
 //void* atender_consola(void* cliente_fd);
-void* atender_cpu_dispatch(void* arg);
+void* atender_cpu_dispatch(void*);
 void iterator(instruccion* );
 u_int32_t siguiente_pid();
-void dirigir_pcb(t_pcb* pcb);
+void dirigir_pcb(t_pcb*);
+void mover_pcb_de_new_a_ready(t_pcb*);
 void* atender_consolas();
 void esperar_conexiones();
 

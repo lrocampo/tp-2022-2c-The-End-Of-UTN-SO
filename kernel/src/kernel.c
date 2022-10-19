@@ -96,13 +96,13 @@ void* rajar_pcb(void* arg) {
 	}
 }
 
-void planificacion_init(t_kernel_config* kernel_config) {
-	
+void crear_colas_pcbs() {
 	cola_new_pcbs = queue_create();
 	cola_exit_pcbs = queue_create();
 	cola_ready_pcbs = queue_create();
+}
 
-	//colas_init(kernel_config);
+void inicializar_semaforos(t_kernel_config* kernel_config) {
 	sem_init(&conexiones,0,0);
 	sem_init(&consolas,0,0);
 	sem_init(&multiprogramacion,0,kernel_config->grado_multiprogramacion);
@@ -110,8 +110,9 @@ void planificacion_init(t_kernel_config* kernel_config) {
 	pthread_mutex_init(&pid_mutex, NULL);
 	pthread_mutex_init(&cola_consolas_mutex, NULL);
 	pthread_mutex_init(&cola_ready_pcbs_mutex, NULL);
-	pid_actual = 0;
+}
 
+void crear_threads() {
 	pthread_t thread_cpu_dispatch;
 	pthread_t thread_consola;
 	pthread_t thread_rajar_pcb;
@@ -121,6 +122,18 @@ void planificacion_init(t_kernel_config* kernel_config) {
 	pthread_detach(thread_consola);
 	pthread_detach(thread_cpu_dispatch);
 	pthread_detach(thread_rajar_pcb);
+}
+
+void planificacion_init(t_kernel_config* kernel_config) {
+	
+	crear_colas_pcbs();
+
+	inicializar_semaforos(kernel_config);
+	
+	/* Al encender el kernel, arrancamos con pid 0 */
+	pid_actual = 0;
+
+	crear_threads();
 }
 
 void iterator(instruccion* value) {
@@ -175,6 +188,14 @@ void esperar_conexiones(){
 	}
 }
 
+void mover_pcb_de_new_a_ready(t_pcb* pcb) {
+	pcb = queue_pop(cola_new_pcbs);
+	pcb->estado = READY;
+	pthread_mutex_lock(&cola_ready_pcbs_mutex);
+	queue_push(cola_ready_pcbs, pcb);
+	pthread_mutex_unlock(&cola_ready_pcbs_mutex);
+}
+
 void* atender_consolas(void* arg){ 
 	t_pcb* pcb;
 	t_list* instrucciones;
@@ -198,11 +219,7 @@ void* atender_consolas(void* arg){
 				log_info(kernel_logger,"Se crea el proceso %d en NEW", pcb->pid);
 				// Si el grado de multiprogramacion lo permite, lo pasa a ready
 				sem_wait(&multiprogramacion);
-				pcb = queue_pop(cola_new_pcbs);
-				pcb->estado = READY;
-				pthread_mutex_lock(&cola_ready_pcbs_mutex);
-				queue_push(cola_ready_pcbs, pcb);
-				pthread_mutex_unlock(&cola_ready_pcbs_mutex);
+				mover_pcb_de_new_a_ready(pcb);
 				sem_post(&consolas);
 				break;
 			case -1:
@@ -212,10 +229,10 @@ void* atender_consolas(void* arg){
 				error_show("Operacion desconocida");
 				break;
 		}
-
-		
 	}
 }
+
+
 
 // void colas_init(t_kernel_config* kernel_config){
 	
