@@ -188,8 +188,8 @@ void esperar_conexiones(){
 	}
 }
 
-void mover_pcb_de_new_a_ready(t_pcb* pcb) {
-	pcb = queue_pop(cola_new_pcbs);
+void mover_pcb_de_new_a_ready() {
+	t_pcb* pcb = queue_pop(cola_new_pcbs);
 	pcb->estado = READY;
 	pthread_mutex_lock(&cola_ready_pcbs_mutex);
 	queue_push(cola_ready_pcbs, pcb);
@@ -219,7 +219,7 @@ void* atender_consolas(void* arg){
 				log_info(kernel_logger,"Se crea el proceso %d en NEW", pcb->pid);
 				// Si el grado de multiprogramacion lo permite, lo pasa a ready
 				sem_wait(&multiprogramacion);
-				mover_pcb_de_new_a_ready(pcb);
+				mover_pcb_de_new_a_ready();
 				sem_post(&consolas);
 				break;
 			case -1:
