@@ -96,13 +96,13 @@ void* rajar_pcb(void* arg) {
 	}
 }
 
-void crear_colas_pcbs() {
+void colas_init() {
 	cola_new_pcbs = queue_create();
 	cola_exit_pcbs = queue_create();
 	cola_ready_pcbs = queue_create();
 }
 
-void inicializar_semaforos(t_kernel_config* kernel_config) {
+void semaforos_init(t_kernel_config* kernel_config) {
 	sem_init(&conexiones,0,0);
 	sem_init(&consolas,0,0);
 	sem_init(&multiprogramacion,0,kernel_config->grado_multiprogramacion);
@@ -112,7 +112,7 @@ void inicializar_semaforos(t_kernel_config* kernel_config) {
 	pthread_mutex_init(&cola_ready_pcbs_mutex, NULL);
 }
 
-void crear_threads() {
+void threads_init() {
 	pthread_t thread_cpu_dispatch;
 	pthread_t thread_consola;
 	pthread_t thread_rajar_pcb;
@@ -126,14 +126,14 @@ void crear_threads() {
 
 void planificacion_init(t_kernel_config* kernel_config) {
 	
-	crear_colas_pcbs();
+	colas_init();
 
-	inicializar_semaforos(kernel_config);
+	semaforos_init(kernel_config);
 	
 	/* Al encender el kernel, arrancamos con pid 0 */
 	pid_actual = 0;
 
-	crear_threads();
+	threads_init();
 }
 
 void iterator(instruccion* value) {
