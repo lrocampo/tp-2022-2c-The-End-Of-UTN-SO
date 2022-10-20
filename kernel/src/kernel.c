@@ -64,7 +64,9 @@ void* atender_cpu_dispatch(void* arg){
 		{
 		case PCB:
 			pcb = recibir_pcb(conexion_cpu_dispatch);
-			log_debug(kernel_logger,"PCB Recibida\n: %s",pcb_to_string(pcb));
+			char* pcb_string = pcb_to_string(pcb);
+			log_debug(kernel_logger,"PCB Recibida\n: %s", pcb_string);
+			free(pcb_string);
 			break;
 		
 		default:
@@ -143,7 +145,6 @@ void iterator(instruccion* value) {
 void dirigir_pcb(t_pcb* pcb){
 
 	int ultima_instruccion_idx = pcb->program_counter - 1;
-	puts(string_itoa(ultima_instruccion_idx));
 
 	instruccion* ultima_instruccion = list_get(pcb->instrucciones,ultima_instruccion_idx);
 	switch(ultima_instruccion->operacion){
