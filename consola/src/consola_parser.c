@@ -43,8 +43,12 @@
             error_show("Error al leer la instruccion: %d\n",i);
             exit(EXIT_FAILURE);
         }
-        free(palabras);
+        string_array_destroy(palabras);
+        free(param1);
+        free(param2);
     }
+
+    string_array_destroy(instructions_array);
     return pseudocodigo;
 }
 
