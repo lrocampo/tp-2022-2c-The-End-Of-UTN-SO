@@ -7,7 +7,7 @@
 #include <cpu.h>
 
 int main(void){
-	t_cpu_config* cpu_config;
+	//t_cpu_config* cpu_config;
 
 	/* LOGGER DE ENTREGA */
 	/* cpu_logger = iniciar_logger(RUTA_LOGGER_CPU, NOMBRE_MODULO, 1, LOG_LEVEL_INFO); */

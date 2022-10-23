@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	t_consola_config* consola_config;
+	
 	char* ruta_config = strdup(argv[1]); 
 	char* ruta_instrucciones = strdup(argv[2]);
 	int kernel_fd;

@@ -22,7 +22,6 @@ t_algoritmo config_get_algoritmo_enum(t_config* config){
 	else if(strcmp(algoritmo_string,"FEEDBACK") == 0){
 		algoritmo = FEEDBACK;
 	}
-	puts("por salir");
 	free(algoritmo_string);
 	return algoritmo;
 }
@@ -59,9 +58,7 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			kernel_config->puerto_cpu_dispatch = strdup(config_get_string_value(config, "PUERTO_CPU_DISPATCH"));
 			kernel_config->puerto_cpu_interrupt = strdup(config_get_string_value(config, "PUERTO_CPU_INTERRUPT"));
 			kernel_config->grado_multiprogramacion = config_get_int_value(config, "GRADO_MAX_MULTIPROGRAMACION");
-			puts("llegue aca");
 			kernel_config->algoritmo = config_get_algoritmo_enum(config);
-			puts("llegue aca tambien");
 
 			// TODO: Componer la configuracion del resto
 

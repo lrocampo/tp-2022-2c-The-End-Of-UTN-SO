@@ -21,5 +21,6 @@
 #define NOMBRE_MODULO "Consola"
 
 t_log *consola_logger;
+t_consola_config* consola_config;
 
 #endif /* CONSOLA_INCLUDE_CONSOLA_H_ */

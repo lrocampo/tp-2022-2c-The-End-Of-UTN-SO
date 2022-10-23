@@ -37,7 +37,7 @@ t_queue* cola_exit_pcbs;
 t_queue* cola_ready_FIFO_pcbs;
 t_queue* cola_ready_RR_pcbs;
 
-t_queue* cola_ready_pcbs; // despues la borramos
+// t_queue* cola_ready_pcbs; // despues la borramos
 
 sem_t consolas;
 sem_t conexiones;
@@ -46,7 +46,9 @@ sem_t procesos_finalizados; // existe alguna convencion para el nombre de los se
 uint32_t pid_actual;
 pthread_mutex_t pid_mutex;
 pthread_mutex_t cola_consolas_mutex;
-pthread_mutex_t cola_ready_pcbs_mutex;
+// pthread_mutex_t cola_ready_pcbs_mutex;// desp vuela
+pthread_mutex_t cola_ready_RR_pcbs_mutex;
+pthread_mutex_t cola_ready_FIFO_pcbs_mutex;
 int kernel_server_fd;
 
 void colas_init();
@@ -61,5 +63,8 @@ void dirigir_pcb(t_pcb*);
 void agregar_pcb_a_ready();
 void* atender_consolas();
 void esperar_conexiones();
+void push_ready_pcb(t_pcb*);
+t_pcb* pop_ready_pcb();
+void cambiar_estado(t_pcb*, estado_proceso);
 
 #endif /* KERNEL_INCLUDE_KERNEL_H_ */

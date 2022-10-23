@@ -29,8 +29,6 @@ int main(void){
 	log_debug(kernel_logger,"Conexion creada correctamente con CPU DISPATCH");
 	}
 	// TODO: conexion_cpu_interrupt = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt);
-	puts("ALGORITMO");
-	printf("%d",kernel_config->algoritmo);
 
 	planificacion_init(/*kernel_config*/);
 
@@ -56,10 +54,13 @@ void* atender_cpu_dispatch(void* arg){
 	while(1){
 		// planificar
 		sem_wait(&consolas);
-		t_pcb *pcb = queue_pop(cola_ready_pcbs);
+		t_pcb *pcb = pop_ready_pcb();
+		//t_pcb *pcb = queue_pop(cola_ready_pcbs);
 		log_debug(kernel_logger,"Estado PCB: %d",pcb->estado);
 		// 
+		cambiar_estado(pcb, EXEC);
 		enviar_pcb(pcb, conexion_cpu_dispatch);
+		pcb_destroy(pcb);
 		int cod_op = recibir_operacion(conexion_cpu_dispatch);
 		switch (cod_op)
 		{
@@ -100,7 +101,10 @@ void* rajar_pcb(void* arg) {
 void colas_init() {
 	cola_new_pcbs = queue_create();
 	cola_exit_pcbs = queue_create();
-	cola_ready_pcbs = queue_create();
+	// cola_ready_pcbs = queue_create();
+	cola_ready_FIFO_pcbs = queue_create();
+	cola_ready_RR_pcbs = queue_create();
+
 }
 
 void semaforos_init() {
@@ -109,8 +113,11 @@ void semaforos_init() {
 	sem_init(&multiprogramacion,0,kernel_config->grado_multiprogramacion);
 	sem_init(&procesos_finalizados, 0, 0);
 	pthread_mutex_init(&pid_mutex, NULL);
-	pthread_mutex_init(&cola_consolas_mutex, NULL);
-	pthread_mutex_init(&cola_ready_pcbs_mutex, NULL);
+	// pthread_mutex_init(&cola_consolas_mutex, NULL);
+	// pthread_mutex_init(&cola_ready_pcbs_mutex, NULL);
+	pthread_mutex_init(&cola_ready_RR_pcbs_mutex, NULL);
+	pthread_mutex_init(&cola_ready_FIFO_pcbs_mutex, NULL);
+
 }
 
 void threads_init() {
@@ -150,9 +157,9 @@ void dirigir_pcb(t_pcb* pcb){
 	instruccion* ultima_instruccion = list_get(pcb->instrucciones,ultima_instruccion_idx);
 	switch(ultima_instruccion->operacion){
 		case EXIT:
-			pcb->estado = FINISH_EXIT;
+			cambiar_estado(pcb, FINISH_EXIT);
 			queue_push(cola_exit_pcbs,pcb);
-			log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", pcb->pid);
+			//log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", pcb->pid);
 			sem_post(&procesos_finalizados);
 			break;
 		case IO:
@@ -165,9 +172,11 @@ void dirigir_pcb(t_pcb* pcb){
 				// manejar quantum
 				log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCK", pcb->pid);
 			} else {
-				pcb->estado = READY;
-				queue_push(cola_ready_pcbs,pcb);
-				log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: READY", pcb->pid);
+				push_ready_pcb(pcb);
+				cambiar_estado(pcb, READY);
+				// pcb->estado = READY;
+				// queue_push(cola_ready_pcbs,pcb);
+				//log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: READY", pcb->pid);
 			}
 			break;
 	}
@@ -188,12 +197,12 @@ void esperar_conexiones(){
 	}
 }
 
-void agregar_pcb_a_ready(t_pcb* pcb) {
-	pcb->estado = READY;
-	pthread_mutex_lock(&cola_ready_pcbs_mutex);
-	queue_push(cola_ready_pcbs, pcb);
-	pthread_mutex_unlock(&cola_ready_pcbs_mutex);
-}
+// void agregar_pcb_a_ready(t_pcb* pcb) {
+// 	pcb->estado = READY;
+// 	pthread_mutex_lock(&cola_ready_pcbs_mutex);
+// 	queue_push(cola_ready_pcbs, pcb);
+// 	pthread_mutex_unlock(&cola_ready_pcbs_mutex);
+// }
 
 void* atender_consolas(void* arg){ 
 	t_pcb* pcb;
@@ -210,7 +219,6 @@ void* atender_consolas(void* arg){
 				break;
 			case PAQUETE_INSTRUCCIONES:
 				instrucciones = recibir_paquete_con_funcion(consola_fd, deserializar_instruccion);
-				//instrucciones = deserializar_instrucciones(consola_fd);
 				log_debug(kernel_logger, "Recibí %d instrucciones", list_size(instrucciones));
 				list_iterate(instrucciones, (void*) iterator);
 				pcb = pcb_create(instrucciones, siguiente_pid(), consola_fd);
@@ -220,7 +228,9 @@ void* atender_consolas(void* arg){
 				// Si el grado de multiprogramacion lo permite, lo pasa a ready
 				sem_wait(&multiprogramacion);
 				t_pcb* pcb = queue_pop(cola_new_pcbs);
-				agregar_pcb_a_ready(pcb);
+				push_ready_pcb(pcb);
+				cambiar_estado(pcb, READY);
+				//agregar_pcb_a_ready(pcb);
 				sem_post(&consolas);
 				break;
 			case -1:
@@ -233,17 +243,44 @@ void* atender_consolas(void* arg){
 	}
 }
 
-// void push_pcb(t_pcb* pcb){
-// 	switch (kernel_config->algoritmo)
-// 	{
-// 	case FIFO:
-// 		/* code */
-// 		break;
+t_pcb* pop_ready_pcb(){
+	t_pcb* pcb;
+
+	if((kernel_config->algoritmo == FEEDBACK
+	&& !queue_is_empty(cola_ready_RR_pcbs))
+	|| kernel_config->algoritmo == RR){
+		pthread_mutex_lock(&cola_ready_RR_pcbs_mutex);
+		pcb = queue_pop(cola_ready_RR_pcbs);
+		pthread_mutex_unlock(&cola_ready_RR_pcbs_mutex);
+	} else {
+		pthread_mutex_lock(&cola_ready_FIFO_pcbs_mutex);
+		pcb = queue_pop(cola_ready_FIFO_pcbs);
+		pthread_mutex_unlock(&cola_ready_FIFO_pcbs_mutex);
+	}
+
+	return pcb;
+
+}
+
+void push_ready_pcb(t_pcb* pcb){
+	if((kernel_config->algoritmo == FEEDBACK 
+	&& pcb->estado == NEW)
+	|| kernel_config->algoritmo == RR) {
+		pthread_mutex_lock(&cola_ready_RR_pcbs_mutex);
+		queue_push(cola_ready_RR_pcbs,pcb);
+		pthread_mutex_unlock(&cola_ready_RR_pcbs_mutex);
+	} else {
+		pthread_mutex_lock(&cola_ready_FIFO_pcbs_mutex);
+		queue_push(cola_ready_FIFO_pcbs,pcb);
+		pthread_mutex_unlock(&cola_ready_FIFO_pcbs_mutex);
+	}
 	
-// 	default:
-// 		break;
-// 	}
-// }
+}
+
+void cambiar_estado(t_pcb* pcb, estado_proceso nuevo_estado){
+	log_info(kernel_logger,"PID: %d - Estado Anterior: %d - Estado Actual: %d", pcb->pid, pcb->estado, nuevo_estado);
+	pcb->estado = nuevo_estado;
+}
 
 // void colas_init(t_kernel_config* kernel_config){
 	

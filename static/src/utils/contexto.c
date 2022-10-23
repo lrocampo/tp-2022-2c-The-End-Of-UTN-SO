@@ -17,6 +17,7 @@ void instruccion_destroy(void* _instruccion){
 t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
     t_pcb* pcb = malloc(sizeof(t_pcb));
 
+    pcb->estado_anterior = NEW;
     pcb->estado = NEW;
     pcb->instrucciones = instrucciones;
     pcb->pid = pid;

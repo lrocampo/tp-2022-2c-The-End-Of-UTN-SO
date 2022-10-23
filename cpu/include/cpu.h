@@ -21,6 +21,8 @@
 #define RUTA_CPU_CONFIG "./src/cpu.config"
 
 t_log *cpu_logger;
+t_cpu_config* cpu_config;
+
 void ejecutar(t_pcb*);
 
 #endif /* CPU_INCLUDE_CPU_H_ */
