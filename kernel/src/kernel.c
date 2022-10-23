@@ -10,7 +10,6 @@
 // CONSOLA_FD PUEDE SER PPID
 
 int main(void){
-	t_kernel_config* kernel_config;
 	
 	/* LOGGER DE ENTREGA */
 	//kernel_logger = iniciar_logger(RUTA_LOGGER_KERNEL, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
@@ -30,8 +29,10 @@ int main(void){
 	log_debug(kernel_logger,"Conexion creada correctamente con CPU DISPATCH");
 	}
 	// TODO: conexion_cpu_interrupt = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt);
+	puts("ALGORITMO");
+	printf("%d",kernel_config->algoritmo);
 
-	planificacion_init(kernel_config);
+	planificacion_init(/*kernel_config*/);
 
 	esperar_conexiones();
 
@@ -102,7 +103,7 @@ void colas_init() {
 	cola_ready_pcbs = queue_create();
 }
 
-void semaforos_init(t_kernel_config* kernel_config) {
+void semaforos_init() {
 	sem_init(&conexiones,0,0);
 	sem_init(&consolas,0,0);
 	sem_init(&multiprogramacion,0,kernel_config->grado_multiprogramacion);
@@ -124,11 +125,11 @@ void threads_init() {
 	pthread_detach(thread_rajar_pcb);
 }
 
-void planificacion_init(t_kernel_config* kernel_config) {
+void planificacion_init(/*t_kernel_config* kernel_config*/) {
 	
 	colas_init();
 
-	semaforos_init(kernel_config);
+	semaforos_init();
 	
 	/* Al encender el kernel, arrancamos con pid 0 */
 	pid_actual = 0;
@@ -151,7 +152,7 @@ void dirigir_pcb(t_pcb* pcb){
 		case EXIT:
 			pcb->estado = FINISH_EXIT;
 			queue_push(cola_exit_pcbs,pcb);
-			log_info(kernel_logger,"PID: <PID> - Estado Anterior: <ESTADO_ANTERIOR> - Estado Actual: <ESTADO_ACTUAL>");
+			log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", pcb->pid);
 			sem_post(&procesos_finalizados);
 			break;
 		case IO:
@@ -162,11 +163,11 @@ void dirigir_pcb(t_pcb* pcb){
 			if(pcb->interrupcion){
 				pcb->estado = BLOCK;
 				// manejar quantum
-				log_info(kernel_logger,"PID: <PID> - Estado Anterior: <ESTADO_ANTERIOR> - Estado Actual: <ESTADO_ACTUAL>");
+				log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCK", pcb->pid);
 			} else {
 				pcb->estado = READY;
 				queue_push(cola_ready_pcbs,pcb);
-				log_info(kernel_logger,"PID: <PID> - Estado Anterior: <ESTADO_ANTERIOR> - Estado Actual: <ESTADO_ACTUAL>");
+				log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: READY", pcb->pid);
 			}
 			break;
 	}
@@ -209,6 +210,7 @@ void* atender_consolas(void* arg){
 				break;
 			case PAQUETE_INSTRUCCIONES:
 				instrucciones = recibir_paquete_con_funcion(consola_fd, deserializar_instruccion);
+				//instrucciones = deserializar_instrucciones(consola_fd);
 				log_debug(kernel_logger, "Recibí %d instrucciones", list_size(instrucciones));
 				list_iterate(instrucciones, (void*) iterator);
 				pcb = pcb_create(instrucciones, siguiente_pid(), consola_fd);
@@ -231,7 +233,17 @@ void* atender_consolas(void* arg){
 	}
 }
 
-
+// void push_pcb(t_pcb* pcb){
+// 	switch (kernel_config->algoritmo)
+// 	{
+// 	case FIFO:
+// 		/* code */
+// 		break;
+	
+// 	default:
+// 		break;
+// 	}
+// }
 
 // void colas_init(t_kernel_config* kernel_config){
 	

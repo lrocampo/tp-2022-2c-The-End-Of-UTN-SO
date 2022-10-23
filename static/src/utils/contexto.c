@@ -7,6 +7,13 @@
 
 #include <utils/contexto.h>
 
+void instruccion_destroy(void* _instruccion){
+    instruccion* ins = (instruccion*) _instruccion;
+    free( ins ->parametro1);
+    free(ins ->parametro2);
+    free(ins);
+}
+
 t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
     t_pcb* pcb = malloc(sizeof(t_pcb));
 
@@ -28,7 +35,7 @@ t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
 }
 
 void pcb_destroy(t_pcb* pcb){
-    list_destroy_and_destroy_elements(pcb->instrucciones, free);
+    list_destroy_and_destroy_elements(pcb->instrucciones, instruccion_destroy);
     free(pcb);
 }
 

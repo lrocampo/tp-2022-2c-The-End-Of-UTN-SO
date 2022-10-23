@@ -10,6 +10,9 @@
 #include <commons/error.h>
 #include <string.h>
 
+typedef enum {
+	FIFO, RR, FEEDBACK
+} t_algoritmo;
 typedef struct {
 	char* ip_cpu;
     char* ip_kernel;
@@ -17,6 +20,8 @@ typedef struct {
 	char* puerto_cpu_dispatch;
 	char* puerto_cpu_interrupt;
 	int grado_multiprogramacion;
+	t_algoritmo algoritmo;
+
 } t_kernel_config;
 
 typedef struct {

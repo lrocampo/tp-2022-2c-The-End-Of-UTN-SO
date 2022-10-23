@@ -29,6 +29,7 @@ int conexion_cpu_dispatch;
 int conexion_cpu_interrupt;
 
 t_log* kernel_logger;
+t_kernel_config* kernel_config;
 
 t_queue* cola_consolas;
 t_queue* cola_new_pcbs;
@@ -49,9 +50,9 @@ pthread_mutex_t cola_ready_pcbs_mutex;
 int kernel_server_fd;
 
 void colas_init();
-void semaforos_init(t_kernel_config*); 
+void semaforos_init(); 
 void threads_init();
-void planificacion_init(t_kernel_config*);
+void planificacion_init();
 //void* atender_consola(void* cliente_fd);
 void* atender_cpu_dispatch(void*);
 void iterator(instruccion* );
