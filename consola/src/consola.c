@@ -52,5 +52,9 @@ int main(int argc, char **argv) {
 	liberar_conexion(kernel_fd);
 	log_debug(consola_logger, "termino consola"); 
 
+	free(ruta_config);
+	free(ruta_instrucciones);
+	free(instrucciones_string);
+
 	return EXIT_SUCCESS;
 }

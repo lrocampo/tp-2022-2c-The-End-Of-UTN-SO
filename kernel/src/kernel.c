@@ -24,18 +24,14 @@ int main(void){
 	
 	kernel_server_fd = iniciar_servidor(kernel_config->ip_kernel, kernel_config->puerto_escucha);
 
-	conexion_cpu_dispatch = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch);
-	if(conexion_cpu_dispatch != -1){
-	log_debug(kernel_logger,"Conexion creada correctamente con CPU DISPATCH");
-	}
-	// TODO: conexion_cpu_interrupt = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt);
+	iniciar_conexiones_con_cpu();
 
 	planificacion_init(/*kernel_config*/);
 
 	esperar_conexiones();
 
 	liberar_conexion(conexion_cpu_dispatch);
-	// TODO: liberar_conexion(conexion_cpu_interrupt);
+	liberar_conexion(conexion_cpu_interrupt);
 	
 	log_debug(kernel_logger,"Termino Kernel");
 
@@ -50,6 +46,18 @@ u_int32_t siguiente_pid(){
 	return siguiente_pid;
 }
 
+void iniciar_conexiones_con_cpu() {
+	conexion_cpu_dispatch = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch);
+	if(conexion_cpu_dispatch != -1){
+	log_debug(kernel_logger,"Conexion creada correctamente con CPU DISPATCH");
+	}
+
+	conexion_cpu_interrupt = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt);
+		if(conexion_cpu_interrupt != -1){
+		log_debug(kernel_logger,"Conexion creada correctamente con CPU INTERRUPT");
+	}
+}
+
 void* atender_cpu_dispatch(void* arg){
 	while(1){
 		// planificar
@@ -62,24 +70,18 @@ void* atender_cpu_dispatch(void* arg){
 		enviar_pcb(pcb, conexion_cpu_dispatch);
 		pcb_destroy(pcb);
 		int cod_op = recibir_operacion(conexion_cpu_dispatch);
-		switch (cod_op)
-		{
-		case PCB:
+		if(cod_op == PCB) {
 			pcb = recibir_pcb(conexion_cpu_dispatch);
 			char* pcb_string = pcb_to_string(pcb);
 			log_debug(kernel_logger,"PCB Recibida\n: %s", pcb_string);
 			free(pcb_string);
-			break;
-		
-		default:
-			puts("error");
-			break;
+		}
+		else {
+			error_show("Error.");
 		}
 		
-		//
-		
 		dirigir_pcb(pcb);
-		//pcb_destroy(pcb);
+		pcb_destroy(pcb);
 		//enviar_mensaje("dispatch", conexion_cpu_dispatch);
 
 		// envias pcb elegido
@@ -87,6 +89,11 @@ void* atender_cpu_dispatch(void* arg){
 		// recv (esperas pcb)
 
 	}
+}
+
+
+void* atender_cpu_interrupt(void* arg){
+	puts("Hola! Soy hilo cpu interrupt");
 }
 
 void* rajar_pcb(void* arg) {
@@ -122,9 +129,11 @@ void semaforos_init() {
 
 void threads_init() {
 	pthread_t thread_cpu_dispatch;
+	pthread_t thread_cpu_interrupt;
 	pthread_t thread_consola;
 	pthread_t thread_rajar_pcb;
 	pthread_create(&thread_cpu_dispatch, NULL, &atender_cpu_dispatch, NULL);
+	pthread_create(&thread_cpu_interrupt, NULL, &atender_cpu_interrupt, NULL);
 	pthread_create(&thread_rajar_pcb, NULL, &rajar_pcb, NULL);
 	pthread_create(&thread_consola, NULL, &atender_consolas, NULL);
 	pthread_detach(thread_consola);
@@ -168,7 +177,7 @@ void dirigir_pcb(t_pcb* pcb){
 			break;
 		default:
 			if(pcb->interrupcion){
-				pcb->estado = BLOCK;
+				pcb->estado = READY;
 				// manejar quantum
 				log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCK", pcb->pid);
 			} else {

@@ -14,6 +14,7 @@
 #include <utils/logger.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #define RUTA_LOGGER_CPU "./cpu.log"
 #define RUTA_LOGGER_DEBUG_CPU "./cpu_db.log"
@@ -22,7 +23,17 @@
 
 t_log *cpu_logger;
 t_cpu_config* cpu_config;
+int server_fd_dispatch;
+int cliente_fd_dispatch;
+bool interrupcion;
 
+pthread_mutex_t interrupcion_mutex;
+
+// Contexto de ejecucion
+registros_de_proposito_general registros_cpu;
+
+void iniciar_ciclo_de_instruccion(t_pcb*);
+void* atender_kernel_interrupt(void* arg);
 void ejecutar(t_pcb*);
 
 #endif /* CPU_INCLUDE_CPU_H_ */

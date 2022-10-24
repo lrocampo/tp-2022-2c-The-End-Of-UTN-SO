@@ -65,7 +65,6 @@ typedef struct {
 	t_list * instrucciones;
 	tabla_de_segmentos tabla;
 	registros_de_proposito_general registros;
-	estado_proceso estado_anterior;
 }t_pcb;
 
 t_pcb* pcb_create(t_list*, uint32_t, int);
@@ -73,5 +72,6 @@ void pcb_destroy(t_pcb*);
 char* estado_to_string(estado_proceso);
 char* pcb_to_string(t_pcb* pcb);
 char* instruccion_to_string(instruccion*);
+void instruccion_destroy(void*);
 
 #endif /* INCLUDE_UTILS_CONTEXTO_H_ */

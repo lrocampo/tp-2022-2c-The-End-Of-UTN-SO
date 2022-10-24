@@ -23,7 +23,8 @@ typedef enum
 	MENSAJE,
 	PAQUETE,
 	PAQUETE_INSTRUCCIONES,
-	PCB
+	PCB,
+	INTERRUPCION
 }op_code;
 
 typedef struct

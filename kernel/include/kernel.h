@@ -51,12 +51,14 @@ pthread_mutex_t cola_ready_RR_pcbs_mutex;
 pthread_mutex_t cola_ready_FIFO_pcbs_mutex;
 int kernel_server_fd;
 
+void iniciar_conexiones_con_cpu();
 void colas_init();
 void semaforos_init(); 
 void threads_init();
 void planificacion_init();
 //void* atender_consola(void* cliente_fd);
 void* atender_cpu_dispatch(void*);
+void* atender_cpu_interrupt(void*);
 void iterator(instruccion* );
 u_int32_t siguiente_pid();
 void dirigir_pcb(t_pcb*);
