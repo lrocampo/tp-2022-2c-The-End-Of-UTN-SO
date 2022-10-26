@@ -58,16 +58,16 @@ void iniciar_conexiones_con_cpu() {
 	}
 }
 
-void* atender_cpu_dispatch(void* arg){
+void* atender_cpu_dispatch(void* arg){ // corto plazo
 	while(1){
 		// planificar
 		sem_wait(&consolas);
 		t_pcb *pcb = pop_ready_pcb();
-		//t_pcb *pcb = queue_pop(cola_ready_pcbs);
 		log_debug(kernel_logger,"Estado PCB: %d",pcb->estado);
-		// 
 		cambiar_estado(pcb, EXEC);
+
 		enviar_pcb(pcb, conexion_cpu_dispatch);
+		// interrumpir ? if(pcb->con_desalojo) signal(interrupcion_quantum)
 		pcb_destroy(pcb);
 		int cod_op = recibir_operacion(conexion_cpu_dispatch);
 		if(cod_op == PCB) {
@@ -79,21 +79,22 @@ void* atender_cpu_dispatch(void* arg){
 		else {
 			error_show("Error.");
 		}
-		
 		dirigir_pcb(pcb);
-		pcb_destroy(pcb);
-		//enviar_mensaje("dispatch", conexion_cpu_dispatch);
-
-		// envias pcb elegido
-
-		// recv (esperas pcb)
-
+		//pcb_destroy(pcb);
 	}
 }
 
 
 void* atender_cpu_interrupt(void* arg){
 	puts("Hola! Soy hilo cpu interrupt");
+	
+	/*
+	
+	op_code codigo = MENSAJE;
+	enviar_datos(socket_interrupt, &codigo, sizeof(codigo));
+	log_info(kernel_logger_info, "Se envia mensaje de interrupcion a cpu \n");
+	
+	*/
 }
 
 void* rajar_pcb(void* arg) {
@@ -132,10 +133,13 @@ void threads_init() {
 	pthread_t thread_cpu_interrupt;
 	pthread_t thread_consola;
 	pthread_t thread_rajar_pcb;
+	// corto
 	pthread_create(&thread_cpu_dispatch, NULL, &atender_cpu_dispatch, NULL);
 	pthread_create(&thread_cpu_interrupt, NULL, &atender_cpu_interrupt, NULL);
-	pthread_create(&thread_rajar_pcb, NULL, &rajar_pcb, NULL);
 	pthread_create(&thread_consola, NULL, &atender_consolas, NULL);
+
+	// largo
+	pthread_create(&thread_rajar_pcb, NULL, &rajar_pcb, NULL);
 	pthread_detach(thread_consola);
 	pthread_detach(thread_cpu_dispatch);
 	pthread_detach(thread_rajar_pcb);
@@ -159,7 +163,7 @@ void iterator(instruccion* value) {
 	log_debug(kernel_logger,"%s", value->parametro2);
 }
 
-void dirigir_pcb(t_pcb* pcb){
+void dirigir_pcb(t_pcb* pcb){ // corto plazo
 
 	int ultima_instruccion_idx = pcb->program_counter - 1;
 
@@ -174,10 +178,13 @@ void dirigir_pcb(t_pcb* pcb){
 		case IO:
 			pcb->estado = BLOCK;
 			// manejar IO
+			// queue_push(cola_io, pcb)
+			// signal(peticiones_io)
 			break;
 		default:
-			if(pcb->interrupcion){
-				pcb->estado = READY;
+			if(pcb->interrupcion){ // cuando hay fin de quantum
+				push_ready_pcb(pcb);
+				cambiar_estado(pcb, READY);
 				// manejar quantum
 				log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCK", pcb->pid);
 			} else {
@@ -191,6 +198,10 @@ void dirigir_pcb(t_pcb* pcb){
 	}
 }
 
+/* planificador(pcb){
+
+}
+*/
 
 void esperar_conexiones(){
 	cola_consolas = queue_create();
@@ -213,7 +224,7 @@ void esperar_conexiones(){
 // 	pthread_mutex_unlock(&cola_ready_pcbs_mutex);
 // }
 
-void* atender_consolas(void* arg){ 
+void* atender_consolas(void* arg){ // planificador_largo_plazo_nuevo
 	t_pcb* pcb;
 	t_list* instrucciones;
 	while(1){
@@ -252,6 +263,18 @@ void* atender_consolas(void* arg){
 	}
 }
 
+
+/*
+	manejar_io(){
+		while (1){
+			
+			checkear(io)
+
+		}
+	}
+
+*/
+
 t_pcb* pop_ready_pcb(){
 	t_pcb* pcb;
 
@@ -273,7 +296,7 @@ t_pcb* pop_ready_pcb(){
 
 void push_ready_pcb(t_pcb* pcb){
 	if((kernel_config->algoritmo == FEEDBACK 
-	&& pcb->estado == NEW)
+	&& (pcb->estado == NEW || pcb->estado == BLOCK)) // agregar io
 	|| kernel_config->algoritmo == RR) {
 		pthread_mutex_lock(&cola_ready_RR_pcbs_mutex);
 		queue_push(cola_ready_RR_pcbs,pcb);
