@@ -46,9 +46,13 @@ void new_buffer(t_paquete *paquete)
 
 void enviar_mensaje(char *mensaje, int socket_cliente)
 {
+	enviar_mensaje_con_codigo(mensaje, MENSAJE, socket_cliente);
+}
+
+void enviar_mensaje_con_codigo(char *mensaje, cod_mensaje codigo, int socket_cliente){
 	t_paquete *paquete = malloc(sizeof(t_paquete));
 
-	paquete->codigo_operacion = MENSAJE;
+	paquete->codigo_mensaje = codigo;
 	paquete->buffer = malloc(sizeof(t_buffer));
 	paquete->buffer->size = strlen(mensaje) + 1;
 	paquete->buffer->stream = malloc(paquete->buffer->size);
@@ -72,6 +76,31 @@ void recibir_mensaje(t_log* logger, int socket_cliente)
 	free(buffer);
 }
 
+/* VALORES */
+
+
+int recibir_valor(int socket_cliente){
+	int size;
+	int valor;
+	char *buffer = recibir_buffer(&size, socket_cliente);
+	valor = atoi(buffer);
+	free(buffer);
+	return valor;
+}
+
+void enviar_valor_con_codigo(int valor, cod_mensaje codigo, int socket_cliente){
+	char* mensaje = string_itoa(valor);
+	enviar_mensaje_con_codigo(mensaje, codigo, socket_cliente);
+}
+
+void enviar_valor_a_imprimir(int valor, int socket_cliente){
+	enviar_valor_con_codigo(valor, PANTALLA, socket_cliente);
+}
+
+void enviar_valor_ingresado(int valor, int socket_cliente){
+	enviar_valor_con_codigo(valor, TECLADO, socket_cliente);
+}
+
 /* PAQUETES */
 
 void *serializar_paquete(t_paquete *paquete, int bytes)
@@ -79,7 +108,7 @@ void *serializar_paquete(t_paquete *paquete, int bytes)
 	void *magic = malloc(bytes);
 	int desplazamiento = 0;
 
-	memcpy(magic + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
+	memcpy(magic + desplazamiento, &(paquete->codigo_mensaje), sizeof(int));
 	desplazamiento += sizeof(int);
 	memcpy(magic + desplazamiento, &(paquete->buffer->size), sizeof(int));
 	desplazamiento += sizeof(int);
@@ -138,7 +167,7 @@ t_paquete *new_paquete_con_codigo_de_operacion(int codigo)
 {
 	t_paquete *paquete = malloc(sizeof(t_paquete));
 
-	paquete->codigo_operacion = codigo;
+	paquete->codigo_mensaje = codigo;
 	new_buffer(paquete);
 	return paquete;
 }

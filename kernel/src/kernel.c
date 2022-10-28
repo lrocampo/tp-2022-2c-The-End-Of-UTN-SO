@@ -90,7 +90,7 @@ void* atender_cpu_interrupt(void* arg){
 	
 	/*
 	
-	op_code codigo = MENSAJE;
+	operacion codigo = MENSAJE;
 	enviar_datos(socket_interrupt, &codigo, sizeof(codigo));
 	log_info(kernel_logger_info, "Se envia mensaje de interrupcion a cpu \n");
 	

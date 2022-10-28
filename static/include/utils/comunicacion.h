@@ -24,8 +24,11 @@ typedef enum
 	PAQUETE,
 	PAQUETE_INSTRUCCIONES,
 	PCB,
-	INTERRUPCION
-}op_code;
+	INTERRUPCION,
+	FINALIZAR,
+	TECLADO,
+	PANTALLA
+} cod_mensaje;
 
 typedef struct
 {
@@ -35,7 +38,7 @@ typedef struct
 
 typedef struct
 {
-	op_code codigo_operacion;
+	cod_mensaje codigo_mensaje;
 	t_buffer* buffer;
 } t_paquete;
 
@@ -51,8 +54,8 @@ int recibir_operacion(int);
 void new_buffer(t_paquete*);
 
 /* TP0 MODIFICADA */
-void recibir_mensaje(t_log*,int);
 void agregar_a_paquete_con_header(t_paquete*, void*, int);
+void recibir_mensaje(t_log*,int);
 
 /* NUEVAS */
 t_paquete* new_paquete_con_codigo_de_operacion(int);
@@ -67,6 +70,11 @@ void empaquetar_pcb(t_pcb*, t_paquete*);
 void empaquetar_tabla_segmentos(tabla_de_segmentos, t_paquete*);
 void empaquetar_registros(registros_de_proposito_general, t_paquete*);
 t_pcb* recibir_pcb(int);
+int recibir_valor(int);
+void enviar_valor_con_codigo(int, cod_mensaje, int);
+void enviar_valor_a_imprimir(int, int);
+void enviar_valor_ingresado(int, int);
+void enviar_mensaje_con_codigo(char *, cod_mensaje, int);
 
 
 

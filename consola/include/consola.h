@@ -22,6 +22,10 @@
 
 t_log *consola_logger;
 t_consola_config* consola_config;
-int kernel_fd;
+int conexion_kernel;
+
+void imprimir_por_pantalla();
+int ingresar_por_teclado();
+void* atender_solicitud_kernel();
 
 #endif /* CONSOLA_INCLUDE_CONSOLA_H_ */

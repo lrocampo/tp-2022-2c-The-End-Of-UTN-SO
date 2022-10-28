@@ -229,7 +229,7 @@ void ejecutar_mov_out(t_pcb* pcb, char* parametro1, char* parametro2) {
 
 
 void ejecutar_io(t_pcb* pcb, char* parametro1, char* parametro2) {
-	pcb->contexto_de_io.dispositivo = strdup(parametro1);
+	//pcb->contexto_de_io.dispositivo = strdup(parametro1);
 }
 
 uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
