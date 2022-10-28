@@ -25,6 +25,7 @@ t_log *cpu_logger;
 t_cpu_config* cpu_config;
 int server_fd_dispatch;
 int cliente_fd_dispatch;
+int conexion_memoria;
 bool interrupcion;
 
 pthread_mutex_t interrupcion_mutex;
@@ -43,5 +44,6 @@ void ejecutar_mov_in(t_pcb*, char*, char*);
 void ejecutar_mov_out(t_pcb*, char*, char*);
 void ejecutar_io(t_pcb*, char*, char*);
 uint32_t obtener_valor_del_registro(t_pcb*, char*);
+void iniciar_conexion_con_memoria();
 
 #endif /* CPU_INCLUDE_CPU_H_ */

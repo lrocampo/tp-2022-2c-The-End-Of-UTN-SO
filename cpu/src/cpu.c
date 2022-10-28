@@ -21,14 +21,15 @@ int main(void){
 	log_debug(cpu_logger,"Configuracion cargada correctamente");
 
 	server_fd_dispatch = iniciar_servidor(cpu_config->ip_cpu, cpu_config->puerto_escucha_dispatch);
-	
+
+	iniciar_conexion_con_memoria();
+
 	if(server_fd_dispatch == -1){
 		return EXIT_FAILURE;
 	}
 
 	cliente_fd_dispatch = esperar_cliente(server_fd_dispatch);
 	log_debug(cpu_logger,"Se conecto un cliente a DISPATCH");
-	
 
 	if(cliente_fd_dispatch == -1){
 		return EXIT_FAILURE;
@@ -153,8 +154,8 @@ instruccion* fetch(t_pcb* pcb_to_exec) {
 cod_operacion decode(instruccion* instruccion_a_decodificar) {
 	cod_operacion operacion = instruccion_a_decodificar->operacion;
 	if(operacion == MOV_IN || operacion == MOV_OUT) {
-		// implementar mandar mensaje a memoria
-		puts("mandar mensaje a memoria");
+		enviar_mensaje("pido memoria", conexion_memoria);
+		recibir_mensaje(cpu_logger, conexion_memoria);
 	}
 
 	return operacion;
@@ -247,4 +248,11 @@ uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
 	}
 
 	return valor_de_registro;
+}
+
+void iniciar_conexion_con_memoria() {
+	conexion_memoria = crear_conexion(cpu_config->ip_memoria, cpu_config->puerto_memoria);
+	if(conexion_memoria != -1){
+		log_debug(cpu_logger, "Conexion creada correctamente con MEMORIAs");
+	}
 }

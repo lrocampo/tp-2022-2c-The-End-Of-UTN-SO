@@ -70,9 +70,23 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			cpu_config = malloc(sizeof(t_cpu_config));
 			cpu_config->ip_cpu = strdup(config_get_string_value(config, "IP_CPU"));
 			cpu_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
+			cpu_config->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
+			cpu_config->puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
 			cpu_config->puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
 			cpu_config->puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
 			
+			config_destroy(config);
+			free(config_path);
+			return cpu_config;
+		case MEMORIA:
+			t_memoria_config* memoria_config;
+			memoria_config = malloc(sizeof(t_memoria_config));
+			memoria_config->ip_memoria =  strdup(config_get_string_value(config, "IP_MEMORIA"));
+			memoria_config->ip_cpu =  strdup(config_get_string_value(config, "IP_CPU"));
+			memoria_config->ip_kernel =  strdup(config_get_string_value(config, "IP_KERNEL"));
+			memoria_config->puerto_escucha_cpu = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_CPU"));
+			memoria_config->puerto_escucha_kernel = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_KERNEL"));
+
 			config_destroy(config);
 			free(config_path);
 			return cpu_config;

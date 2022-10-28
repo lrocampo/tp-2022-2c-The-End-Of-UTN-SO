@@ -13,16 +13,6 @@
 typedef enum {
 	FIFO, RR, FEEDBACK
 } t_algoritmo;
-typedef struct {
-	char* ip_cpu;
-    char* ip_kernel;
-    char* puerto_escucha;
-	char* puerto_cpu_dispatch;
-	char* puerto_cpu_interrupt;
-	int grado_multiprogramacion;
-	t_algoritmo algoritmo;
-
-} t_kernel_config;
 
 typedef struct {
 	char* ip;
@@ -33,9 +23,40 @@ typedef struct {
 typedef struct {
 	char* ip_cpu;
     char* ip_kernel;
+	char* ip_memoria;
+	char* puerto_memoria;
 	char* puerto_escucha_dispatch;
 	char* puerto_escucha_interrupt;
 }t_cpu_config;
+
+typedef struct {
+	char* ip_cpu;
+    char* ip_kernel;
+	/* char* ip_memoria; */
+    char* puerto_escucha;
+	char* puerto_cpu_dispatch;
+	char* puerto_cpu_interrupt;
+	int grado_multiprogramacion;
+	t_algoritmo algoritmo;
+
+} t_kernel_config;
+
+typedef struct {
+	char* ip_memoria;
+	char* ip_cpu;
+    char* ip_kernel;
+	char* puerto_escucha_cpu;
+	char* puerto_escucha_kernel;
+	/* int tamanio_memoria; */
+	/* int tamanio_pagina; */
+	/* int entradas_por_pagina; */
+	/* int retardo_memoria; */
+	/* char* algoritmo_reemplazo; */
+	/* int* marcos_por_proceso; */
+	/* int* retardo_swap; */
+	/* int* path_swap; */
+	/* int* tamanio_swap; */
+}t_memoria_config;
 
 typedef enum {
 	KERNEL,CPU, MEMORIA,CONSOLA
