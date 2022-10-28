@@ -60,6 +60,22 @@ char* estado_to_string(estado_proceso estado){
     }
 }
 
+cod_operacion string_to_cod_op(char* estado_string){
+    if(string_equals_ignore_case(estado_string, "SET"))
+    return SET;
+    else if(string_equals_ignore_case(estado_string, "ADD"))
+    return ADD;
+    else if(string_equals_ignore_case(estado_string, "MOV_IN"))
+    return MOV_IN;
+    else if(string_equals_ignore_case(estado_string, "MOV_OUT"))
+    return MOV_OUT;
+    else if(string_equals_ignore_case(estado_string, "I/O"))
+    return IO;
+    else if(string_equals_ignore_case(estado_string, "EXIT"))
+    return EXIT;
+    else return UNKNOWN_OP;
+}
+
 char* pcb_to_string(t_pcb* pcb){
     char* pcb_string = string_new();
     char* pcb_estado = estado_to_string(pcb->estado);

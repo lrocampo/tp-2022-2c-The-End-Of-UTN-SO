@@ -16,11 +16,8 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	
 	char* ruta_config = strdup(argv[1]); 
 	char* ruta_instrucciones = strdup(argv[2]);
-	int kernel_fd;
-	char* valor = "consola";
 	t_list* instrucciones;
 
 	/* LOGGER DE ENTREGA */
@@ -28,7 +25,6 @@ int main(int argc, char **argv) {
 	
 	/* LOGGER DE DEBUG */
 	consola_logger = iniciar_logger(RUTA_LOGGER_DEBUG_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
-
 	log_debug(consola_logger,"Arrancando consola...");
 
 	consola_config = cargar_configuracion(ruta_config, CONSOLA);
@@ -46,10 +42,8 @@ int main(int argc, char **argv) {
 	enviar_instrucciones(instrucciones, kernel_fd);
 	log_debug(consola_logger,"Instrucciones enviadas");
 
-	enviar_mensaje(valor, kernel_fd);
-	sleep(20);	
-	log_debug(consola_logger, "Soy consola. Envie el siguiente mensaje a kernel: %s", valor);
 	liberar_conexion(kernel_fd);
+
 	log_debug(consola_logger, "termino consola"); 
 
 	free(ruta_config);
@@ -58,3 +52,4 @@ int main(int argc, char **argv) {
 
 	return EXIT_SUCCESS;
 }
+

@@ -27,7 +27,8 @@ typedef enum{
 	EXEC,
 	BLOCK,
 	FINISH_EXIT,
-	FINISH_ERROR
+	FINISH_ERROR,
+	UNKNOWN_STATE
 } estado_proceso;
 
 typedef enum{
@@ -36,8 +37,15 @@ typedef enum{
 	MOV_IN,
 	MOV_OUT,
 	IO,
-	EXIT
+	EXIT,
+	UNKNOWN_OP
 } cod_operacion;
+
+typedef enum{
+	SOLICITUD_FINALIZAR,
+	SOLICITUD_TECLADO,
+	SOLICITUD_PANTALLA
+} respuesta;
 
 typedef struct {
 	cod_operacion operacion;
@@ -68,6 +76,7 @@ typedef struct {
 }t_pcb;
 
 t_pcb* pcb_create(t_list*, uint32_t, int);
+cod_operacion string_to_cod_op(char*);
 void pcb_destroy(t_pcb*);
 char* estado_to_string(estado_proceso);
 char* pcb_to_string(t_pcb* pcb);

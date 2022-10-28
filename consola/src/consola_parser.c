@@ -2,52 +2,36 @@
 
  t_list* obtener_pseudocodigo(char* instructions_string) {
     t_list *pseudocodigo = list_create();
-    char* param1;
-    char* param2;
+    char* param1 = NULL;
+    char* param2 = NULL;
+    char **palabras = NULL;
     char **instructions_array = string_split(instructions_string, "\n");
     int size = string_array_size(instructions_array);
     for(int i = 0; i < size; i++){    
-        char **palabras = string_split(instructions_array[i], " ");
-
-        if(string_equals_ignore_case(palabras[0], "SET")) {
-            param1 = strdup(palabras[1]);
-            param2 = strdup(palabras[2]);
-            list_add(pseudocodigo, (void*)new_instruccion(SET, param1, param2));
-        }
-        else if(string_equals_ignore_case(palabras[0], "ADD")) {
-            param1 = strdup(palabras[1]);
-            param2 = strdup(palabras[2]);
-            list_add(pseudocodigo, (void*)new_instruccion(ADD, param1, param2));
-        }
-        else if(string_equals_ignore_case(palabras[0], "MOV_IN")) {
-            param1 = strdup(palabras[1]);
-            param2 = strdup(palabras[2]);
-            list_add(pseudocodigo, (void*)new_instruccion(MOV_IN, param1, param2));
-        }
-        else if(string_equals_ignore_case(palabras[0], "MOV_OUT")) {
-            param1 = strdup(palabras[1]);
-            param2 = strdup(palabras[2]);
-            list_add(pseudocodigo, (void*)new_instruccion(MOV_OUT, param1, param2));
-        }
-        else if(string_equals_ignore_case(palabras[0], "I/O")) {
-            param1 = strdup(palabras[1]);
-            param2 = strdup(palabras[2]);
-            list_add(pseudocodigo, (void*)new_instruccion(IO, param1, param2));
-        }
-        else if(string_equals_ignore_case(palabras[0], "EXIT")) {
-            param1 = NULL;
-            param2 = NULL;
-            list_add(pseudocodigo, (void*)new_instruccion(EXIT, param1, param2));
-        }
-        else {
-            error_show("Error al leer la instruccion: %d\n",i);
-            exit(EXIT_FAILURE);
+        palabras = string_split(instructions_array[i], " ");
+        cod_operacion cod_op = string_to_cod_op(palabras[0]);
+        switch (cod_op) {
+            case SET:
+            case ADD:
+            case MOV_IN:
+            case MOV_OUT:
+            case IO:
+                param1 = strdup(palabras[1]);
+                param2 = strdup(palabras[2]);
+            case EXIT:
+                list_add(pseudocodigo, (void*) new_instruccion(cod_op, param1, param2));
+                break;
+            default:
+                error_show("Error al leer la instruccion: %d\n",i);
+                exit(EXIT_FAILURE);
+                break;
         }
         string_array_destroy(palabras);
         free(param1);
         free(param2);
+        param1 = NULL;
+        param2 = NULL;
     }
-
     string_array_destroy(instructions_array);
     return pseudocodigo;
 }
