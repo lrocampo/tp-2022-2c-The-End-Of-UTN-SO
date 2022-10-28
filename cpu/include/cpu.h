@@ -33,7 +33,15 @@ pthread_mutex_t interrupcion_mutex;
 registros_de_proposito_general registros_cpu;
 
 void iniciar_ciclo_de_instruccion(t_pcb*);
-void* atender_kernel_interrupt(void* arg);
-void ejecutar(t_pcb*);
+void* atender_kernel_interrupt(void*);
+instruccion* fetch(t_pcb*);
+cod_operacion decode(instruccion*);
+void ejecutar_instruccion(t_pcb*, cod_operacion, instruccion*);
+void ejecutar_set(t_pcb*, char*, char*);
+void ejecutar_add(t_pcb*, char*, char*);
+void ejecutar_mov_in(t_pcb*, char*, char*);
+void ejecutar_mov_out(t_pcb*, char*, char*);
+void ejecutar_io(t_pcb*, char*, char*);
+uint32_t obtener_valor_del_registro(t_pcb*, char*);
 
 #endif /* CPU_INCLUDE_CPU_H_ */

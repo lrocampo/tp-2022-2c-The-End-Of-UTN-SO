@@ -226,7 +226,7 @@ void ejecutar_mov_out(t_pcb* pcb, char* parametro1, char* parametro2) {
 	puts("Ejecutando mov_out (no estoy haciendo nada xd)");
 }
 
-							// "TECLADO"            "BX"
+
 void ejecutar_io(t_pcb* pcb, char* parametro1, char* parametro2) {
 	pcb->contexto_de_io.dispositivo = strdup(parametro1);
 }
