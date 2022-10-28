@@ -21,6 +21,13 @@ typedef struct {
 	uint32_t dx;
 }registros_de_proposito_general;
 
+
+typedef struct {
+	char* dispositivo;
+	int unidades_de_trabajo;
+	uint32_t registro_de_io;
+} contexto_io;
+
 typedef enum{
 	NEW,
 	READY,
@@ -73,6 +80,7 @@ typedef struct {
 	t_list * instrucciones;
 	tabla_de_segmentos tabla;
 	registros_de_proposito_general registros;
+	contexto_io contexto_de_io;
 }t_pcb;
 
 t_pcb* pcb_create(t_list*, uint32_t, int);

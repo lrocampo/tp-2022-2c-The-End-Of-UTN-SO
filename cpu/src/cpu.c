@@ -46,12 +46,12 @@ int main(void){
 				recibir_mensaje(cpu_logger, cliente_fd_dispatch);
 				break;
 			case PCB:
-				// Fetch -> Decode -> Execute -> Check Interrupt
 				pcb_to_exec = recibir_pcb(cliente_fd_dispatch);
 				log_debug(cpu_logger, "Recibi pcb con pid: %d",pcb_to_exec->pid);
 				char* pcb_string = pcb_to_string(pcb_to_exec);
 				log_debug(cpu_logger, "PCB RECIBIDA:\n %s", pcb_string);
 
+				// Fetch -> Decode -> Execute -> Check Interrupt
 				iniciar_ciclo_de_instruccion(pcb_to_exec);
 
 				enviar_pcb(pcb_to_exec, cliente_fd_dispatch);
@@ -87,19 +87,25 @@ int main(void){
 
 void iniciar_ciclo_de_instruccion(t_pcb* pcb_to_exec) {
 	log_debug(cpu_logger, "Iniciando ciclo de instruccion");
+	instruccion* instruccion;
+	cod_operacion operacion_a_ejecutar;
 	while(pcb_to_exec->program_counter < list_size(pcb_to_exec->instrucciones)) {
 
 		// fetch()
+		instruccion = fetch(pcb_to_exec);
 
 		// decode()
+		operacion_a_ejecutar = decode(instruccion);
+		
 
 		// execute()
-		ejecutar(pcb_to_exec);
+		ejecutar_instruccion(pcb_to_exec, operacion_a_ejecutar, instruccion);
 
 		// Check interrupt
 		if(interrupcion) {
 			log_debug(cpu_logger, "Se recibio señal de interrupcion");
 			pcb_to_exec->interrupcion = true;
+			/* La linea de abajo podria ser responsabilidad del kernel, y no de la cpu */
 			pcb_to_exec->estado = READY;
 			pthread_mutex_lock(&interrupcion_mutex);
 			interrupcion = false;
@@ -136,11 +142,109 @@ void* atender_kernel_interrupt(void* arg) {
 	}
 }
 
-void ejecutar(t_pcb* pcb){
-	log_debug(cpu_logger, "Ejecutando...");
+
+instruccion* fetch(t_pcb* pcb_to_exec) {
+	t_list* instrucciones = pcb_to_exec->instrucciones;
+	instruccion* instruccion_a_ejecutar = list_get(instrucciones, (int) pcb_to_exec->program_counter);
+
+	return instruccion_a_ejecutar;
+}
+
+cod_operacion decode(instruccion* instruccion_a_decodificar) {
+	cod_operacion operacion = instruccion_a_decodificar->operacion;
+	if(operacion == MOV_IN || operacion == MOV_OUT) {
+		// implementar mandar mensaje a memoria
+		puts("mandar mensaje a memoria");
+	}
+
+	return operacion;
+}
+
+void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instruccion* instruccion){
+	log_debug(cpu_logger, "Ejecutando instruccion...");
+
+	switch(operacion_a_ejecutar) {
+		case SET:
+			ejecutar_set(pcb, instruccion->parametro1, instruccion->parametro2);
+			break;
+		case ADD:
+			ejecutar_add(pcb, instruccion->parametro1, instruccion->parametro2);
+			break;
+		case MOV_IN:
+			ejecutar_mov_in(pcb, instruccion->parametro1, instruccion->parametro2);
+			break;
+		case MOV_OUT:
+			ejecutar_mov_out(pcb, instruccion->parametro1, instruccion->parametro2);
+			break;
+		case IO:
+			ejecutar_io(pcb, instruccion->parametro1, instruccion->parametro2);
+			break;
+		case EXIT:
+			ejecutar_exit(pcb);
+			break;												
+	}
+
 	sleep(5);
 	printf("%d\n", list_size(pcb->instrucciones));
 	pcb->program_counter = list_size(pcb->instrucciones); 
 }
 
+void ejecutar_set(t_pcb* pcb, char* parametro1, char* parametro2) {
+	if(string_equals_ignore_case(parametro1, "ax")) {
+		pcb->registros.ax = (uint32_t) atoi(parametro2);
+	}
+	else if(string_equals_ignore_case(parametro1, "bx")) {
+		pcb->registros.bx = (uint32_t) atoi(parametro2);
+	}
+	else if(string_equals_ignore_case(parametro1, "cx")) {
+		pcb->registros.cx = (uint32_t) atoi(parametro2);
+	}
+	else if(string_equals_ignore_case(parametro1, "dx")) {
+		pcb->registros.dx = (uint32_t) atoi(parametro2);
+	}	
+}
 
+void ejecutar_add(t_pcb* pcb, char* parametro1, char* parametro2) {
+	uint32_t valorRegistroDestino = obtener_valor_del_registro(pcb, parametro1);
+	uint32_t valorRegistroOrigen = obtener_valor_del_registro(pcb, parametro2);
+
+	valorRegistroDestino += valorRegistroOrigen;
+
+	// Transformo el entero a string para poder reutilizar ejecutar_set, que espera que el parametro2 sea un string.
+	char *resultado_a_string = string_itoa(valorRegistroDestino);
+
+	ejecutar_set(pcb, parametro1, resultado_a_string);
+
+	// pcb->registros->ax = pcb->registros->ax + pcb->registros->bx
+}
+
+void ejecutar_mov_in(t_pcb* pcb, char* parametro1, char* parametro2) {
+	puts("Ejecutando mov_in (no estoy haciendo nada xd)");
+}
+
+void ejecutar_mov_out(t_pcb* pcb, char* parametro1, char* parametro2) {
+	puts("Ejecutando mov_out (no estoy haciendo nada xd)");
+}
+
+							// "TECLADO"            "BX"
+void ejecutar_io(t_pcb* pcb, char* parametro1, char* parametro2) {
+	pcb->contexto_de_io.dispositivo = strdup(parametro1);
+}
+
+uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
+	uint32_t valor_de_registro;
+	if(string_equals_ignore_case(parametro1, "ax")) {
+		valor_de_registro = pcb->registros.ax;
+	}
+	if(string_equals_ignore_case(parametro1, "bx")) {
+		valor_de_registro = pcb->registros.bx;
+	}
+	if(string_equals_ignore_case(parametro1, "cx")) {
+		valor_de_registro = pcb->registros.cx;
+	}
+	if(string_equals_ignore_case(parametro1, "dx")) {
+		valor_de_registro = pcb->registros.dx;
+	}
+
+	return valor_de_registro;
+}
