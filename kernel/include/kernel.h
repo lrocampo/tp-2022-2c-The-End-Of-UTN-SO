@@ -43,12 +43,14 @@ sem_t consolas;
 sem_t conexiones;
 sem_t multiprogramacion;
 sem_t procesos_finalizados; // existe alguna convencion para el nombre de los semaforos de sincro?
+sem_t interrupcion_quantum;
 uint32_t pid_actual;
 pthread_mutex_t pid_mutex;
 pthread_mutex_t cola_consolas_mutex;
 // pthread_mutex_t cola_ready_pcbs_mutex;// desp vuela
 pthread_mutex_t cola_ready_RR_pcbs_mutex;
 pthread_mutex_t cola_ready_FIFO_pcbs_mutex;
+pthread_t th_timer;
 int kernel_server_fd;
 
 void iniciar_conexiones_con_cpu();

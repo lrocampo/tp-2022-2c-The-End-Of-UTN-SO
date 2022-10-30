@@ -38,6 +38,7 @@ typedef struct {
 	char* puerto_cpu_interrupt;
 	int grado_multiprogramacion;
 	t_algoritmo algoritmo;
+	int quantum_RR;
 
 } t_kernel_config;
 

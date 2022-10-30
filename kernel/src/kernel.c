@@ -67,7 +67,9 @@ void* atender_cpu_dispatch(void* arg){ // corto plazo
 		cambiar_estado(pcb, EXEC);
 
 		enviar_pcb(pcb, conexion_cpu_dispatch);
-		// interrumpir ? if(pcb->con_desalojo) signal(interrupcion_quantum)
+		if(pcb->con_desalojo){
+			sem_post(&interrupcion_quantum);
+		}
 		pcb_destroy(pcb);
 		int cod_op = recibir_operacion(conexion_cpu_dispatch);
 		if(cod_op == PCB) {
@@ -84,18 +86,6 @@ void* atender_cpu_dispatch(void* arg){ // corto plazo
 	}
 }
 
-
-void* atender_cpu_interrupt(void* arg){
-	puts("Hola! Soy hilo cpu interrupt");
-	
-	/*
-	
-	operacion codigo = MENSAJE;
-	enviar_datos(socket_interrupt, &codigo, sizeof(codigo));
-	log_info(kernel_logger_info, "Se envia mensaje de interrupcion a cpu \n");
-	
-	*/
-}
 
 void* rajar_pcb(void* arg) {
 	while(1) {
@@ -163,13 +153,16 @@ void iterator(instruccion* value) {
 	log_debug(kernel_logger,"%s", value->parametro2);
 }
 
-void dirigir_pcb(t_pcb* pcb){ // corto plazo
+void dirigir_pcb(t_pcb* pcb){ // corto plazo // tener en cuenta page default ya que no deberiamos modificar el program counter
 
 	int ultima_instruccion_idx = pcb->program_counter - 1;
 
 	instruccion* ultima_instruccion = list_get(pcb->instrucciones,ultima_instruccion_idx);
 	switch(ultima_instruccion->operacion){
 		case EXIT:
+			if(pcb->con_desalojo) {
+				pthread_cancel(th_timer);
+			}
 			cambiar_estado(pcb, FINISH_EXIT);
 			queue_push(cola_exit_pcbs,pcb);
 			//log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", pcb->pid);
@@ -177,6 +170,9 @@ void dirigir_pcb(t_pcb* pcb){ // corto plazo
 			break;
 		case IO:
 			pcb->estado = BLOCK;
+				if(pcb->con_desalojo) {
+				pthread_cancel(th_timer);
+			}
 			// manejar IO
 			// queue_push(cola_io, pcb)
 			// signal(peticiones_io)
@@ -185,7 +181,7 @@ void dirigir_pcb(t_pcb* pcb){ // corto plazo
 			if(pcb->interrupcion){ // cuando hay fin de quantum
 				push_ready_pcb(pcb);
 				cambiar_estado(pcb, READY);
-				// manejar quantum
+				// manejar quantum ?? no seria en execute
 				log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCK", pcb->pid);
 			} else {
 				push_ready_pcb(pcb);
@@ -313,6 +309,34 @@ void cambiar_estado(t_pcb* pcb, estado_proceso nuevo_estado){
 	log_info(kernel_logger,"PID: %d - Estado Anterior: %d - Estado Actual: %d", pcb->pid, pcb->estado, nuevo_estado);
 	pcb->estado = nuevo_estado;
 }
+
+// Interrupcion por Quantum primero debo generar la conversion entre milisegundos a 
+// microsegundos, luego generar un proceso que espere recibir  quantum y generar un hilo 
+// por interrupcion - esto nos va a facilitar eliminarlo en caso de que sobre quantum
+// 
+//ejecutarEspera le pasas el tiempo en milisegundos y el tipo te frena todo por ese tiempo
+void ejecutarEspera(uint32_t tiempo){
+	usleep(tiempo * 1000);
+}
+
+
+void* enviar_interrup(void* arg){
+	while(1) {
+		sem_wait(&interrupcion_quantum);
+ 		puts("Hola! Soy hilo cpu interrupt");
+		ejecutarEspera(kernel_config->quantum_RR);
+		puts("Finalizo Espera");
+		cod_mensaje codigo = INTERRUPCION;
+	 	enviar_valor_con_codigo(&codigo, sizeof(codigo),conexion_cpu_interrupt);
+		log_info(kernel_logger, "Se envia mensaje de interrupcion a cpu \n");
+ 	}
+	
+}
+ void iniciarInterrupcion() {
+ 	pthread_create(&th_timer, NULL, (void *)enviar_interrup, NULL);
+ 	pthread_detach(th_timer);
+ }
+
 
 // void colas_init(t_kernel_config* kernel_config){
 	

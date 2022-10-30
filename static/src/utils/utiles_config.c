@@ -59,6 +59,7 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			kernel_config->puerto_cpu_interrupt = strdup(config_get_string_value(config, "PUERTO_CPU_INTERRUPT"));
 			kernel_config->grado_multiprogramacion = config_get_int_value(config, "GRADO_MAX_MULTIPROGRAMACION");
 			kernel_config->algoritmo = config_get_algoritmo_enum(config);
+			kernel_config->quantum_RR = config_get_int_value(config, "QUANTUM_RR");
 
 			// TODO: Componer la configuracion del resto
 
