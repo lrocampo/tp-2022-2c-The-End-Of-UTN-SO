@@ -90,6 +90,7 @@ void iniciar_ciclo_de_instruccion(t_pcb* pcb_to_exec) {
 	log_debug(cpu_logger, "Iniciando ciclo de instruccion");
 	instruccion* instruccion;
 	cod_operacion operacion_a_ejecutar;
+
 	while(pcb_to_exec->program_counter < list_size(pcb_to_exec->instrucciones)) {
 
 		// fetch()
@@ -97,26 +98,24 @@ void iniciar_ciclo_de_instruccion(t_pcb* pcb_to_exec) {
 
 		// decode()
 		operacion_a_ejecutar = decode(instruccion);
-		
 
 		// execute()
 		ejecutar_instruccion(pcb_to_exec, operacion_a_ejecutar, instruccion);
+
+		pcb_to_exec->program_counter++;
+
+		// Chequear si este orden esta bien (1. block por IO 2. interrupcion)
+		if(operacion_a_ejecutar == IO) break;
 
 		// Check interrupt
 		if(interrupcion) {
 			log_debug(cpu_logger, "Se recibio señal de interrupcion");
 			pcb_to_exec->interrupcion = true;
-			/* La linea de abajo podria ser responsabilidad del kernel, y no de la cpu */
-			pcb_to_exec->estado = READY;
 			pthread_mutex_lock(&interrupcion_mutex);
 			interrupcion = false;
 			pthread_mutex_unlock(&interrupcion_mutex);
 			break;
 		}
-	}
-
-	if(pcb_to_exec->program_counter == list_size(pcb_to_exec->instrucciones)) {
-		pcb_to_exec->estado = FINISH_EXIT;
 	}
 }
 
@@ -162,7 +161,12 @@ cod_operacion decode(instruccion* instruccion_a_decodificar) {
 }
 
 void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instruccion* instruccion){
-	log_debug(cpu_logger, "Ejecutando instruccion...");
+	if(operacion_a_ejecutar != EXIT) {
+		log_info(cpu_logger, "PID: %d - Ejecutando %s - %s %s", (int)pcb->pid, operacion_to_string(operacion_a_ejecutar), instruccion->parametro1, instruccion->parametro2);
+	}
+	else {
+		log_info(cpu_logger, "PID: %d - Ejecutando %s", (int)pcb->pid, operacion_to_string(operacion_a_ejecutar));
+	}
 
 	switch(operacion_a_ejecutar) {
 		case SET:
@@ -178,18 +182,12 @@ void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instru
 			ejecutar_mov_out(pcb, instruccion->parametro1, instruccion->parametro2);
 			break;
 		case IO:
-			ejecutar_io(pcb, instruccion->parametro1, instruccion->parametro2);
 			break;
 		case EXIT:
-			ejecutar_exit(pcb);
 			break;												
 	}
-
-	sleep(5);
-	printf("%d\n", list_size(pcb->instrucciones));
-	pcb->program_counter = list_size(pcb->instrucciones); 
 }
-
+							
 void ejecutar_set(t_pcb* pcb, char* parametro1, char* parametro2) {
 	if(string_equals_ignore_case(parametro1, "ax")) {
 		pcb->registros.ax = (uint32_t) atoi(parametro2);
@@ -205,9 +203,9 @@ void ejecutar_set(t_pcb* pcb, char* parametro1, char* parametro2) {
 	}	
 }
 
-void ejecutar_add(t_pcb* pcb, char* parametro1, char* parametro2) {
+void ejecutar_add(t_pcb* pcb, char* parametro1, char* parametro2) {	
 	uint32_t valorRegistroDestino = obtener_valor_del_registro(pcb, parametro1);
-	uint32_t valorRegistroOrigen = obtener_valor_del_registro(pcb, parametro2);
+	uint32_t valorRegistroOrigen = obtener_valor_del_registro(pcb, parametro2); 
 
 	valorRegistroDestino += valorRegistroOrigen;
 
@@ -215,35 +213,36 @@ void ejecutar_add(t_pcb* pcb, char* parametro1, char* parametro2) {
 	char *resultado_a_string = string_itoa(valorRegistroDestino);
 
 	ejecutar_set(pcb, parametro1, resultado_a_string);
-
-	// pcb->registros->ax = pcb->registros->ax + pcb->registros->bx
 }
 
 void ejecutar_mov_in(t_pcb* pcb, char* parametro1, char* parametro2) {
-	puts("Ejecutando mov_in (no estoy haciendo nada xd)");
+	puts("no hago nada");
 }
 
 void ejecutar_mov_out(t_pcb* pcb, char* parametro1, char* parametro2) {
-	puts("Ejecutando mov_out (no estoy haciendo nada xd)");
+	puts("no hago nada");
 }
 
 
-void ejecutar_io(t_pcb* pcb, char* parametro1, char* parametro2) {
-	//pcb->contexto_de_io.dispositivo = strdup(parametro1);
-}
+// void ejecutar_io(t_pcb* pcb, char* parametro1, char* parametro2) {
+// }
+
+// void ejecutar_exit(t_pcb* pcb) {
+// 	
+// }
 
 uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
 	uint32_t valor_de_registro;
 	if(string_equals_ignore_case(parametro1, "ax")) {
 		valor_de_registro = pcb->registros.ax;
 	}
-	if(string_equals_ignore_case(parametro1, "bx")) {
+	else if(string_equals_ignore_case(parametro1, "bx")) {
 		valor_de_registro = pcb->registros.bx;
 	}
-	if(string_equals_ignore_case(parametro1, "cx")) {
+	else if(string_equals_ignore_case(parametro1, "cx")) {
 		valor_de_registro = pcb->registros.cx;
 	}
-	if(string_equals_ignore_case(parametro1, "dx")) {
+	else if(string_equals_ignore_case(parametro1, "dx")) {
 		valor_de_registro = pcb->registros.dx;
 	}
 
@@ -254,5 +253,24 @@ void iniciar_conexion_con_memoria() {
 	conexion_memoria = crear_conexion(cpu_config->ip_memoria, cpu_config->puerto_memoria);
 	if(conexion_memoria != -1){
 		log_debug(cpu_logger, "Conexion creada correctamente con MEMORIAs");
+	}
+}
+
+char* operacion_to_string(cod_operacion operacion) {
+	switch(operacion) {
+		case ADD:
+			return "ADD";
+		case SET:
+			return "SET";
+		case MOV_IN:
+			return "MOV_IN";
+		case MOV_OUT:
+			return "MOV_OUT";
+		case IO:
+			return "I/O";
+		case EXIT:
+			return "EXIT";
+		default:
+			return "Operador invalido";
 	}
 }
