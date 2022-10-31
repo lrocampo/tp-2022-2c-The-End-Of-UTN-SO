@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <utils/utiles_config.h>
 #include <stdlib.h>
+#include <utils/socket.h>
+#include <pthread.h>
+#include <utils/comunicacion.h>
 #include "../../static/include/utils/logger.h"
 
 #define RUTA_LOGGER_MEMORIA "./memoria.log"
@@ -23,5 +26,6 @@ t_memoria_config* memoria_config;
 int memoria_server_fd;
 int cliente_kernel_fd;
 int cliente_cpu_fd;
+void* atender_pedido_de_memoria(void*);
 
 #endif /* MEMORIA_INCLUDE_MEMORIA_H_ */

@@ -62,6 +62,7 @@ t_paquete* new_paquete_con_codigo_de_operacion(int);
 void empaquetar_instrucciones(t_list*, t_paquete*);
 void enviar_instrucciones(t_list*, int);
 void serializar_instruccion(instruccion*,t_paquete*);
+int enviar_datos(int , void *, uint32_t);
 void agregar_valor_a_paquete(t_paquete* , void* , int );
 void* deserializar_instruccion(void*, int*);
 t_list* recibir_paquete_con_funcion(int, void* (*funcion_deserializar)(void*,int*));
@@ -75,6 +76,7 @@ void enviar_valor_con_codigo(int, cod_mensaje, int);
 void enviar_valor_a_imprimir(int, int);
 void enviar_valor_ingresado(int, int);
 void enviar_mensaje_con_codigo(char *, cod_mensaje, int);
+void* enviar_interrupt(void*);
 
 
 

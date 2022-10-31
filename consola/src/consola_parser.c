@@ -74,8 +74,8 @@ instruccion* new_instruccion(cod_operacion operacion, char* parametro1, char* pa
         estructura->parametro2 = strdup(parametro2);
     } else
     {
-        estructura->parametro1 = "";
-        estructura->parametro2 = "";
+        estructura->parametro1 = strdup("");
+        estructura->parametro2 = strdup("");
     }
 
     return estructura;

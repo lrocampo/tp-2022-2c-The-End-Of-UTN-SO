@@ -26,12 +26,9 @@ int main(void){
 
 	iniciar_conexiones_con_cpu();
 
-	planificacion_init(/*kernel_config*/);
+	planificacion_init();
 
 	esperar_conexiones();
-
-	liberar_conexion(conexion_cpu_dispatch);
-	liberar_conexion(conexion_cpu_interrupt);
 	
 	log_debug(kernel_logger,"Termino Kernel");
 
@@ -65,17 +62,19 @@ void* atender_cpu_dispatch(void* arg){ // corto plazo
 		t_pcb *pcb = pop_ready_pcb();
 		log_debug(kernel_logger,"Estado PCB: %d",pcb->estado);
 		cambiar_estado(pcb, EXEC);
-
-		enviar_pcb(pcb, conexion_cpu_dispatch);
+		log_debug(kernel_logger, "Enviando PCB");
 		if(pcb->con_desalojo){
+			log_debug(kernel_logger, "Preparando interrupcion");
+			iniciar_interrupcion();
 			sem_post(&interrupcion_quantum);
 		}
+		enviar_pcb(pcb, conexion_cpu_dispatch);
 		pcb_destroy(pcb);
 		int cod_op = recibir_operacion(conexion_cpu_dispatch);
 		if(cod_op == PCB) {
 			pcb = recibir_pcb(conexion_cpu_dispatch);
 			char* pcb_string = pcb_to_string(pcb);
-			log_debug(kernel_logger,"PCB Recibida\n: %s", pcb_string);
+			//log_debug(kernel_logger,"PCB Recibida\n: %s", pcb_string);
 			free(pcb_string);
 		}
 		else {
@@ -111,21 +110,16 @@ void semaforos_init() {
 	sem_init(&multiprogramacion,0,kernel_config->grado_multiprogramacion);
 	sem_init(&procesos_finalizados, 0, 0);
 	pthread_mutex_init(&pid_mutex, NULL);
-	// pthread_mutex_init(&cola_consolas_mutex, NULL);
-	// pthread_mutex_init(&cola_ready_pcbs_mutex, NULL);
 	pthread_mutex_init(&cola_ready_RR_pcbs_mutex, NULL);
 	pthread_mutex_init(&cola_ready_FIFO_pcbs_mutex, NULL);
-
 }
 
 void threads_init() {
 	pthread_t thread_cpu_dispatch;
-	pthread_t thread_cpu_interrupt;
 	pthread_t thread_consola;
 	pthread_t thread_rajar_pcb;
 	// corto
 	pthread_create(&thread_cpu_dispatch, NULL, &atender_cpu_dispatch, NULL);
-	pthread_create(&thread_cpu_interrupt, NULL, &atender_cpu_interrupt, NULL);
 	pthread_create(&thread_consola, NULL, &atender_consolas, NULL);
 
 	// largo
@@ -154,15 +148,19 @@ void iterator(instruccion* value) {
 }
 
 void dirigir_pcb(t_pcb* pcb){ // corto plazo // tener en cuenta page default ya que no deberiamos modificar el program counter
-
+	if(pcb->con_desalojo) {
+		pthread_cancel(th_timer);
+		log_debug(kernel_logger, "Interrupcion cancelada por vuelta del PCB");
+	}
+	if(pcb->interrupcion){ // cuando hay fin de quantum
+		log_info(kernel_logger,"PID: %d - Desalojado por fin de Quantum", pcb->pid);
+		pcb->interrupcion = false;
+	}
 	int ultima_instruccion_idx = pcb->program_counter - 1;
 
 	instruccion* ultima_instruccion = list_get(pcb->instrucciones,ultima_instruccion_idx);
 	switch(ultima_instruccion->operacion){
 		case EXIT:
-			if(pcb->con_desalojo) {
-				pthread_cancel(th_timer);
-			}
 			cambiar_estado(pcb, FINISH_EXIT);
 			queue_push(cola_exit_pcbs,pcb);
 			//log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", pcb->pid);
@@ -170,34 +168,18 @@ void dirigir_pcb(t_pcb* pcb){ // corto plazo // tener en cuenta page default ya 
 			break;
 		case IO:
 			pcb->estado = BLOCK;
-				if(pcb->con_desalojo) {
-				pthread_cancel(th_timer);
-			}
 			// manejar IO
 			// queue_push(cola_io, pcb)
 			// signal(peticiones_io)
 			break;
 		default:
-			if(pcb->interrupcion){ // cuando hay fin de quantum
-				push_ready_pcb(pcb);
-				cambiar_estado(pcb, READY);
-				// manejar quantum ?? no seria en execute
-				log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCK", pcb->pid);
-			} else {
-				push_ready_pcb(pcb);
-				cambiar_estado(pcb, READY);
-				// pcb->estado = READY;
-				// queue_push(cola_ready_pcbs,pcb);
-				//log_info(kernel_logger,"PID: %d - Estado Anterior: EXEC - Estado Actual: READY", pcb->pid);
-			}
+			push_ready_pcb(pcb);
+			cambiar_estado(pcb, READY);
+			sem_post(&consolas);
 			break;
 	}
 }
 
-/* planificador(pcb){
-
-}
-*/
 
 void esperar_conexiones(){
 	cola_consolas = queue_create();
@@ -212,13 +194,6 @@ void esperar_conexiones(){
 		sem_post(&conexiones);
 	}
 }
-
-// void agregar_pcb_a_ready(t_pcb* pcb) {
-// 	pcb->estado = READY;
-// 	pthread_mutex_lock(&cola_ready_pcbs_mutex);
-// 	queue_push(cola_ready_pcbs, pcb);
-// 	pthread_mutex_unlock(&cola_ready_pcbs_mutex);
-// }
 
 void* atender_consolas(void* arg){ // planificador_largo_plazo_nuevo
 	t_pcb* pcb;
@@ -236,7 +211,7 @@ void* atender_consolas(void* arg){ // planificador_largo_plazo_nuevo
 			case PAQUETE_INSTRUCCIONES:
 				instrucciones = recibir_paquete_con_funcion(consola_fd, deserializar_instruccion);
 				log_debug(kernel_logger, "Recibí %d instrucciones", list_size(instrucciones));
-				list_iterate(instrucciones, (void*) iterator);
+				//list_iterate(instrucciones, (void*) iterator);
 				pcb = pcb_create(instrucciones, siguiente_pid(), consola_fd);
 				// Agregar pcb a cola new
 				queue_push(cola_new_pcbs,pcb);
@@ -259,18 +234,6 @@ void* atender_consolas(void* arg){ // planificador_largo_plazo_nuevo
 	}
 }
 
-
-/*
-	manejar_io(){
-		while (1){
-			
-			checkear(io)
-
-		}
-	}
-
-*/
-
 t_pcb* pop_ready_pcb(){
 	t_pcb* pcb;
 
@@ -291,13 +254,17 @@ t_pcb* pop_ready_pcb(){
 }
 
 void push_ready_pcb(t_pcb* pcb){
+	printf("ALGORITMO: %d\n",kernel_config->algoritmo);
 	if((kernel_config->algoritmo == FEEDBACK 
 	&& (pcb->estado == NEW || pcb->estado == BLOCK)) // agregar io
 	|| kernel_config->algoritmo == RR) {
+		puts("asignando desalojo");
+		pcb->con_desalojo = true;
 		pthread_mutex_lock(&cola_ready_RR_pcbs_mutex);
 		queue_push(cola_ready_RR_pcbs,pcb);
 		pthread_mutex_unlock(&cola_ready_RR_pcbs_mutex);
 	} else {
+		puts("en el else");
 		pthread_mutex_lock(&cola_ready_FIFO_pcbs_mutex);
 		queue_push(cola_ready_FIFO_pcbs,pcb);
 		pthread_mutex_unlock(&cola_ready_FIFO_pcbs_mutex);
@@ -306,8 +273,12 @@ void push_ready_pcb(t_pcb* pcb){
 }
 
 void cambiar_estado(t_pcb* pcb, estado_proceso nuevo_estado){
-	log_info(kernel_logger,"PID: %d - Estado Anterior: %d - Estado Actual: %d", pcb->pid, pcb->estado, nuevo_estado);
+	char* nuevo_estado_string = strdup(estado_to_string(nuevo_estado));
+	char* estado_anterior_string = strdup(estado_to_string(pcb->estado));
+	log_info(kernel_logger,"PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, estado_anterior_string, nuevo_estado_string);
 	pcb->estado = nuevo_estado;
+	free(estado_anterior_string);
+	free(nuevo_estado_string);
 }
 
 // Interrupcion por Quantum primero debo generar la conversion entre milisegundos a 
@@ -315,52 +286,28 @@ void cambiar_estado(t_pcb* pcb, estado_proceso nuevo_estado){
 // por interrupcion - esto nos va a facilitar eliminarlo en caso de que sobre quantum
 // 
 //ejecutarEspera le pasas el tiempo en milisegundos y el tipo te frena todo por ese tiempo
-void ejecutarEspera(uint32_t tiempo){
+void ejecutar_espera(uint32_t tiempo){
+	printf("%d milisegundos \n", (int) tiempo);
 	usleep(tiempo * 1000);
 }
 
 
-void* enviar_interrup(void* arg){
+void* enviar_interrupt(void* arg){
 	while(1) {
 		sem_wait(&interrupcion_quantum);
- 		puts("Hola! Soy hilo cpu interrupt");
-		ejecutarEspera(kernel_config->quantum_RR);
-		puts("Finalizo Espera");
-		cod_mensaje codigo = INTERRUPCION;
-	 	enviar_valor_con_codigo(&codigo, sizeof(codigo),conexion_cpu_interrupt);
-		log_info(kernel_logger, "Se envia mensaje de interrupcion a cpu \n");
- 	}
-	
+		cod_mensaje mensaje = INTERRUPCION;
+		log_debug(kernel_logger,"Hola! Soy hilo cpu interrupt");
+		ejecutar_espera(kernel_config->quantum_RR);
+		log_debug(kernel_logger,"Finalizo Espera");
+		enviar_datos(conexion_cpu_interrupt,&mensaje, sizeof(mensaje));
+		log_debug(kernel_logger, "Se envia mensaje de interrupcion a cpu \n");
+	}
 }
- void iniciarInterrupcion() {
- 	pthread_create(&th_timer, NULL, (void *)enviar_interrup, NULL);
+
+ void iniciar_interrupcion() {
+ 	pthread_create(&th_timer, NULL, &enviar_interrupt, NULL);
  	pthread_detach(th_timer);
  }
 
 
-// void colas_init(t_kernel_config* kernel_config){
-	
-// 	//cola_ready_FIFO_pcbs = queue_create();
-// 	//cola_ready_RR_pcbs = queue_create();
-// }
 
-
-// Preguntas checkpint
-
-// De quien es responsabilidad cambiar el estado de un pcb? Dentro de que funcion?
-// Como se supone que vamos a abstraer y separar la plani de largo y la plani de corto?
-// Por que a veces los modulos se conectan bien y otras veces mal.
-// Hay que detachear los demas threads? cpu dispatch, cpu interrupt, rajar_pcb?
-// Como se espera (en que orden) que se levanten los modulos? Para la entrega final.
-// mediano plazo
-
-
-// void* atender_consola(void* p){
-// 	int consola_fd = *(int *) p;
-// 	free(p);
-// 	t_pcb* pcb;
-// 	t_list* instrucciones;
-// 		while(1){
-		
-// 	}
-// }

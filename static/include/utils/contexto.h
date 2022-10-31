@@ -77,5 +77,6 @@ char* estado_to_string(estado_proceso);
 char* pcb_to_string(t_pcb* pcb);
 char* instruccion_to_string(instruccion*);
 void instruccion_destroy(void*);
+char* operacion_to_string(cod_operacion);
 
 #endif /* INCLUDE_UTILS_CONTEXTO_H_ */

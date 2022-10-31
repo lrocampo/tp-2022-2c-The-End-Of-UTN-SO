@@ -24,6 +24,11 @@ int main(void){
 
 	iniciar_conexion_con_memoria();
 
+		// en otro hilo:
+	pthread_t thread_kernel_interrupt;
+	pthread_create(&thread_kernel_interrupt, NULL, &atender_kernel_interrupt, NULL);
+	pthread_detach(thread_kernel_interrupt);
+
 	if(server_fd_dispatch == -1){
 		return EXIT_FAILURE;
 	}
@@ -35,9 +40,7 @@ int main(void){
 		return EXIT_FAILURE;
 	}
 
-	// en otro hilo:
-	pthread_t thread_kernel_interrupt;
-	pthread_create(&thread_kernel_interrupt, NULL, &atender_kernel_interrupt, NULL);
+
 
 	while(1){
 			t_pcb* pcb_to_exec;
@@ -50,7 +53,7 @@ int main(void){
 				pcb_to_exec = recibir_pcb(cliente_fd_dispatch);
 				log_debug(cpu_logger, "Recibi pcb con pid: %d",pcb_to_exec->pid);
 				char* pcb_string = pcb_to_string(pcb_to_exec);
-				log_debug(cpu_logger, "PCB RECIBIDA:\n %s", pcb_string);
+				//log_debug(cpu_logger, "PCB RECIBIDA:\n %s", pcb_string);
 
 				// Fetch -> Decode -> Execute -> Check Interrupt
 				iniciar_ciclo_de_instruccion(pcb_to_exec);
@@ -67,20 +70,6 @@ int main(void){
 			}
 		}
 
-	/*while(1){
-				int cod_op = recibir_operacion(cliente_fd_interrupt);
-				switch (cod_op) {
-				case MENSAJE:
-					recibir_mensaje(cliente_fd_interrupt);
-					break;
-				case -1:
-					break;
-				default:
-					break;
-				}
-				break;
-			}
-*/
 	log_debug(cpu_logger,"termino cpu\n");
 	log_destroy(cpu_logger);
 	return EXIT_SUCCESS;
@@ -122,24 +111,30 @@ void iniciar_ciclo_de_instruccion(t_pcb* pcb_to_exec) {
 void* atender_kernel_interrupt(void* arg) {
 	int server_fd_interrupt = iniciar_servidor(cpu_config->ip_cpu, cpu_config->puerto_escucha_interrupt);
 	int cliente_fd_interrupt = esperar_cliente(server_fd_interrupt);
-
 	log_debug(cpu_logger,"Se conecto un cliente a INTERRUPT");
 
-	int cod_op = recibir_operacion(cliente_fd_interrupt);
+	while(1){
+		
+		cod_mensaje cod_op = recibir_operacion(cliente_fd_interrupt);
 
-	if(cod_op == INTERRUPCION) {
-		pthread_mutex_lock(&interrupcion_mutex);
-		interrupcion = true;
-		pthread_mutex_unlock(&interrupcion_mutex);
+		if(cod_op == INTERRUPCION) {
+			pthread_mutex_lock(&interrupcion_mutex);
+			interrupcion = true;
+			pthread_mutex_unlock(&interrupcion_mutex);
+		}
+		else {
+			error_show("Error, se recibio algo que no es una interrupcion: %d\n", cod_op);
+			exit(EXIT_FAILURE);
+		}
+		
+		if(cliente_fd_interrupt == -1){
+			error_show("Error conectando con el kernel");
+			log_debug(cpu_logger,"Se desconecto el cliente.");
+			exit(EXIT_FAILURE);
+		}
+		
 	}
-
-	else {
-		error_show("Error.");
-	}
-
-	if(cliente_fd_interrupt == -1){
-		error_show("Error conectando con el kernel");
-	}
+	
 }
 
 
@@ -154,38 +149,51 @@ cod_operacion decode(instruccion* instruccion_a_decodificar) {
 	cod_operacion operacion = instruccion_a_decodificar->operacion;
 	if(operacion == MOV_IN || operacion == MOV_OUT) {
 		enviar_mensaje("pido memoria", conexion_memoria);
-		recibir_mensaje(cpu_logger, conexion_memoria);
+		puts("Solicitando memoria");
+		cod_mensaje mensaje = recibir_operacion(conexion_memoria);
+		puts("Recibi la operacion");
+		if(mensaje == MENSAJE){
+			recibir_mensaje(cpu_logger, conexion_memoria);
+		}
 	}
 
 	return operacion;
 }
 
 void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instruccion* instruccion){
+	char* operacion_string = strdup(operacion_to_string(operacion_a_ejecutar));
 	if(operacion_a_ejecutar != EXIT) {
-		log_info(cpu_logger, "PID: %d - Ejecutando %s - %s %s", (int)pcb->pid, operacion_to_string(operacion_a_ejecutar), instruccion->parametro1, instruccion->parametro2);
+		log_info(cpu_logger, "PID: %d - Ejecutando %s - %s %s", (int)pcb->pid, operacion_string, instruccion->parametro1, instruccion->parametro2);
 	}
 	else {
-		log_info(cpu_logger, "PID: %d - Ejecutando %s", (int)pcb->pid, operacion_to_string(operacion_a_ejecutar));
+		log_info(cpu_logger, "PID: %d - Ejecutando %s", (int)pcb->pid, operacion_string);
 	}
 
 	switch(operacion_a_ejecutar) {
 		case SET:
 			ejecutar_set(pcb, instruccion->parametro1, instruccion->parametro2);
+			sleep(1);
 			break;
 		case ADD:
 			ejecutar_add(pcb, instruccion->parametro1, instruccion->parametro2);
+			sleep(1);
 			break;
 		case MOV_IN:
 			ejecutar_mov_in(pcb, instruccion->parametro1, instruccion->parametro2);
+			sleep(1);
 			break;
 		case MOV_OUT:
 			ejecutar_mov_out(pcb, instruccion->parametro1, instruccion->parametro2);
+			sleep(1);
 			break;
 		case IO:
 			break;
 		case EXIT:
-			break;												
+			break;
+		default:
+			error_show("Error, instruccion desconocida.");												
 	}
+	free(operacion_string);
 }
 							
 void ejecutar_set(t_pcb* pcb, char* parametro1, char* parametro2) {
@@ -213,6 +221,7 @@ void ejecutar_add(t_pcb* pcb, char* parametro1, char* parametro2) {
 	char *resultado_a_string = string_itoa(valorRegistroDestino);
 
 	ejecutar_set(pcb, parametro1, resultado_a_string);
+	free(resultado_a_string);
 }
 
 void ejecutar_mov_in(t_pcb* pcb, char* parametro1, char* parametro2) {
@@ -222,14 +231,6 @@ void ejecutar_mov_in(t_pcb* pcb, char* parametro1, char* parametro2) {
 void ejecutar_mov_out(t_pcb* pcb, char* parametro1, char* parametro2) {
 	puts("no hago nada");
 }
-
-
-// void ejecutar_io(t_pcb* pcb, char* parametro1, char* parametro2) {
-// }
-
-// void ejecutar_exit(t_pcb* pcb) {
-// 	
-// }
 
 uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
 	uint32_t valor_de_registro;
@@ -256,21 +257,3 @@ void iniciar_conexion_con_memoria() {
 	}
 }
 
-char* operacion_to_string(cod_operacion operacion) {
-	switch(operacion) {
-		case ADD:
-			return "ADD";
-		case SET:
-			return "SET";
-		case MOV_IN:
-			return "MOV_IN";
-		case MOV_OUT:
-			return "MOV_OUT";
-		case IO:
-			return "I/O";
-		case EXIT:
-			return "EXIT";
-		default:
-			return "Operador invalido";
-	}
-}

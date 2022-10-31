@@ -13,7 +13,7 @@
 int recibir_operacion(int socket_cliente)
 {
 	int cod_op;
-	if (recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL) > 0)
+	if (recv(socket_cliente, &cod_op, sizeof(cod_mensaje), MSG_WAITALL) > 0)
 		return cod_op;
 	else
 	{
@@ -99,6 +99,10 @@ void enviar_valor_a_imprimir(int valor, int socket_cliente){
 
 void enviar_valor_ingresado(int valor, int socket_cliente){
 	enviar_valor_con_codigo(valor, TECLADO, socket_cliente);
+}
+
+int enviar_datos(int socket_fd, void *source, uint32_t size) {
+	return send(socket_fd, source, size, 0);
 }
 
 /* PAQUETES */
@@ -333,9 +337,6 @@ t_pcb* recibir_pcb(int socket_cliente){
 	for(int i = 0; i < cantidad_instrucciones; i++){
 		instruccion* nueva_instruccion = deserializar_instruccion(buffer, &desplazamiento);
 		list_add(lista_instrucciones, nueva_instruccion);
-		// free(nueva_instruccion->parametro1);
-		// free(nueva_instruccion->parametro2);
-		// TODO: FALTA LIBERAR MEMORIA NUEVA INSTRUCCIon
 	}
 
 	nueva_pcb->instrucciones = lista_instrucciones;

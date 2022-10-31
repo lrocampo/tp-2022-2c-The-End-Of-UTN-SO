@@ -67,8 +67,11 @@ void dirigir_pcb(t_pcb*);
 void agregar_pcb_a_ready();
 void* atender_consolas();
 void esperar_conexiones();
+void iniciar_interrupcion();
+void* enviar_interrupt(void*);
 void push_ready_pcb(t_pcb*);
 t_pcb* pop_ready_pcb();
+void ejecutar_espera(uint32_t);
 void cambiar_estado(t_pcb*, estado_proceso);
 
 #endif /* KERNEL_INCLUDE_KERNEL_H_ */

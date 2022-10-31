@@ -13,13 +13,13 @@ bool validar_configuracion(t_config* config) {
 t_algoritmo config_get_algoritmo_enum(t_config* config){
 	char* algoritmo_string = strdup(config_get_string_value(config,"ALGORITMO_PLANIFICACION"));
 	t_algoritmo algoritmo = FIFO; // default por si hay errores, sacar en algun momento(?
-	if(strcmp(algoritmo_string,"FIFO") == 0){
+	if(string_equals_ignore_case(algoritmo_string,"FIFO")){
 		algoritmo = FIFO;
 	}
-	else if(strcmp(algoritmo_string,"RR") == 0){
+	else if(string_equals_ignore_case(algoritmo_string,"RR")){
 		algoritmo = RR;
 	}
-	else if(strcmp(algoritmo_string,"FEEDBACK") == 0){
+	else if(string_equals_ignore_case(algoritmo_string,"FEEDBACK")){
 		algoritmo = FEEDBACK;
 	}
 	free(algoritmo_string);
@@ -90,7 +90,7 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 
 			config_destroy(config);
 			free(config_path);
-			return cpu_config;
+			return memoria_config;
 
 		default:
 			config_destroy(config);

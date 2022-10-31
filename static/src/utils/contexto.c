@@ -9,8 +9,8 @@
 
 void instruccion_destroy(void* _instruccion){
     instruccion* ins = (instruccion*) _instruccion;
-    free( ins ->parametro1);
-    free(ins ->parametro2);
+    free(ins->parametro1);
+    free(ins->parametro2);
     free(ins);
 }
 
@@ -30,6 +30,7 @@ t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
     pcb->tabla.indice_tabla_paginas = 0;
     pcb->tabla.nro_segmento = 0;
     pcb->tabla.tamanio_segmento = 0;
+    pcb->con_desalojo = false;
 
     return pcb;
 }
@@ -47,6 +48,12 @@ char* estado_to_string(estado_proceso estado){
         break;
     case READY:
         return "READY";
+        break;
+    case BLOCK:
+        return "BLOCK";
+        break;
+    case EXEC:
+        return "EXEC";
         break;
     case FINISH_EXIT:
         return "EXIT";
@@ -134,4 +141,23 @@ char* instruccion_to_string(instruccion* instruccion){
     }
 
     return instruccion_string;
+}
+
+char* operacion_to_string(cod_operacion operacion) {
+	switch(operacion) {
+		case ADD:
+			return "ADD";
+		case SET:
+			return "SET";
+		case MOV_IN:
+			return "MOV_IN";
+		case MOV_OUT:
+			return "MOV_OUT";
+		case IO:
+			return "I/O";
+		case EXIT:
+			return "EXIT";
+		default:
+			return "Operador invalido";
+	}
 }

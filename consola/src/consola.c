@@ -20,9 +20,7 @@ int main(int argc, char **argv) {
 	char* ruta_instrucciones = strdup(argv[2]);
 	t_list* instrucciones;
 
-	pthread_t th_atender_solicitud_kernel;
-	pthread_create(&th_atender_solicitud_kernel, NULL, &atender_solicitud_kernel, NULL);
-	pthread_detach(th_atender_solicitud_kernel);
+	
 
 	/* LOGGER DE ENTREGA */
 	//consola_logger = iniciar_logger(RUTA_LOGGER_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
@@ -36,6 +34,10 @@ int main(int argc, char **argv) {
 
 	conexion_kernel = crear_conexion(consola_config->ip, consola_config->puerto);
 	log_debug(consola_logger,"Conexion creada correctamente");
+
+	pthread_t th_atender_solicitud_kernel;
+	pthread_create(&th_atender_solicitud_kernel, NULL, &atender_solicitud_kernel, NULL);
+	pthread_detach(th_atender_solicitud_kernel);
 
 	char *instrucciones_string = leer_archivo_pseudocodigo(ruta_instrucciones);
 	log_debug(consola_logger,"Archivo de pseudocodigo leido correctamente");
@@ -53,6 +55,7 @@ int main(int argc, char **argv) {
 	free(ruta_config);
 	free(ruta_instrucciones);
 	free(instrucciones_string);
+	list_destroy_and_destroy_elements(instrucciones, instruccion_destroy);
 
 	return EXIT_SUCCESS;
 }
@@ -68,7 +71,7 @@ void* atender_solicitud_kernel(){
 				break;
 			case TECLADO:
 				int valor_ingresado = ingresar_por_teclado();
-				enviar_valor(valor_ingresado, conexion_kernel);
+				enviar_valor_ingresado(valor_ingresado, conexion_kernel);
 				break;
 			case PANTALLA:
 				imprimir_por_pantalla();
@@ -89,7 +92,7 @@ void imprimir_por_pantalla(){
 
 int ingresar_por_teclado(){
 	int valor_ingresado;
-	scanf("%d",valor_ingresado);
+	scanf("%d",&valor_ingresado);
 	return valor_ingresado;
 }
 
