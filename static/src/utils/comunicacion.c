@@ -13,7 +13,7 @@
 int recibir_operacion(int socket_cliente)
 {
 	int cod_op;
-	if (recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL) > 0)
+	if (recv(socket_cliente, &cod_op, sizeof(cod_mensaje), MSG_WAITALL) > 0)
 		return cod_op;
 	else
 	{
@@ -46,9 +46,13 @@ void new_buffer(t_paquete *paquete)
 
 void enviar_mensaje(char *mensaje, int socket_cliente)
 {
+	enviar_mensaje_con_codigo(mensaje, MENSAJE, socket_cliente);
+}
+
+void enviar_mensaje_con_codigo(char *mensaje, cod_mensaje codigo, int socket_cliente){
 	t_paquete *paquete = malloc(sizeof(t_paquete));
 
-	paquete->codigo_operacion = MENSAJE;
+	paquete->codigo_mensaje = codigo;
 	paquete->buffer = malloc(sizeof(t_buffer));
 	paquete->buffer->size = strlen(mensaje) + 1;
 	paquete->buffer->stream = malloc(paquete->buffer->size);
@@ -72,6 +76,35 @@ void recibir_mensaje(t_log* logger, int socket_cliente)
 	free(buffer);
 }
 
+/* VALORES */
+
+
+int recibir_valor(int socket_cliente){
+	int size;
+	int valor;
+	char *buffer = recibir_buffer(&size, socket_cliente);
+	valor = atoi(buffer);
+	free(buffer);
+	return valor;
+}
+
+void enviar_valor_con_codigo(int valor, cod_mensaje codigo, int socket_cliente){
+	char* mensaje = string_itoa(valor);
+	enviar_mensaje_con_codigo(mensaje, codigo, socket_cliente);
+}
+
+void enviar_valor_a_imprimir(int valor, int socket_cliente){
+	enviar_valor_con_codigo(valor, PANTALLA, socket_cliente);
+}
+
+void enviar_valor_ingresado(int valor, int socket_cliente){
+	enviar_valor_con_codigo(valor, TECLADO, socket_cliente);
+}
+
+int enviar_datos(int socket_fd, void *source, uint32_t size) {
+	return send(socket_fd, source, size, 0);
+}
+
 /* PAQUETES */
 
 void *serializar_paquete(t_paquete *paquete, int bytes)
@@ -79,7 +112,7 @@ void *serializar_paquete(t_paquete *paquete, int bytes)
 	void *magic = malloc(bytes);
 	int desplazamiento = 0;
 
-	memcpy(magic + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
+	memcpy(magic + desplazamiento, &(paquete->codigo_mensaje), sizeof(int));
 	desplazamiento += sizeof(int);
 	memcpy(magic + desplazamiento, &(paquete->buffer->size), sizeof(int));
 	desplazamiento += sizeof(int);
@@ -138,7 +171,7 @@ t_paquete *new_paquete_con_codigo_de_operacion(int codigo)
 {
 	t_paquete *paquete = malloc(sizeof(t_paquete));
 
-	paquete->codigo_operacion = codigo;
+	paquete->codigo_mensaje = codigo;
 	new_buffer(paquete);
 	return paquete;
 }
@@ -179,7 +212,6 @@ void serializar_instruccion(instruccion *instruccion, t_paquete *paquete)
 	agregar_valor_a_paquete(paquete, &(instruccion->operacion), sizeof(cod_operacion));
 	agregar_a_paquete_con_header(paquete, instruccion->parametro1, strlen(instruccion->parametro1) + 1);
 	agregar_a_paquete_con_header(paquete, instruccion->parametro2, strlen(instruccion->parametro2) + 1);
-	free(instruccion);
 }
 
 void* deserializar_instruccion(void* buffer, int* desplazamiento)
@@ -207,7 +239,7 @@ void* deserializar_instruccion(void* buffer, int* desplazamiento)
 	*desplazamiento += tamanio;
 
 
-	return (void*) nueva_instruccion;
+	return nueva_instruccion;
 }
 
 /* PAQUETE_PCB */
@@ -229,6 +261,7 @@ void empaquetar_pcb(t_pcb* pcb,t_paquete* paquete){
 	agregar_valor_a_paquete(paquete, &(pcb->estado), sizeof(estado_proceso));
 	agregar_valor_a_paquete(paquete, &(pcb->socket_consola), sizeof(int));
 	agregar_valor_a_paquete(paquete, &(pcb->interrupcion), sizeof(bool));
+	agregar_valor_a_paquete(paquete, &(pcb->con_desalojo), sizeof(bool));
 	empaquetar_tabla_segmentos(pcb->tabla, paquete);
 	empaquetar_registros(pcb->registros, paquete);
 	agregar_valor_a_paquete(paquete, &(cantidad_instrucciones), sizeof(int));
@@ -274,6 +307,9 @@ t_pcb* recibir_pcb(int socket_cliente){
 	memcpy(&(nueva_pcb->interrupcion), buffer + desplazamiento, sizeof(bool));
 	desplazamiento += sizeof(bool);
 
+	memcpy(&(nueva_pcb->con_desalojo), buffer + desplazamiento, sizeof(bool));
+	desplazamiento += sizeof(bool);
+
 	memcpy(&(nueva_pcb->tabla.indice_tabla_paginas), buffer + desplazamiento, sizeof(u_int32_t));
 	desplazamiento += sizeof(u_int32_t);
 
@@ -299,13 +335,13 @@ t_pcb* recibir_pcb(int socket_cliente){
 	desplazamiento += sizeof(int);
 
 	for(int i = 0; i < cantidad_instrucciones; i++){
-		void* nueva_instruccion = deserializar_instruccion(buffer, &desplazamiento);
+		instruccion* nueva_instruccion = deserializar_instruccion(buffer, &desplazamiento);
 		list_add(lista_instrucciones, nueva_instruccion);
 	}
+
 	nueva_pcb->instrucciones = lista_instrucciones;
 	free(buffer);
 	return nueva_pcb;
-
 }
 
 
@@ -333,50 +369,42 @@ t_pcb* recibir_pcb(int socket_cliente){
 // 	return valores;
 // }
 
-/*
-t_list *deserializar_instrucciones(int socket_cliente)
-{
-	int size;
-	int desplazamiento = 0;
-	void *buffer;
-	t_list *valores = list_create();
-	int tamanio;
-	buffer = recibir_buffer(&size, socket_cliente);
 
-	while (desplazamiento < size)
-	{
-		instruccion *nueva_instruccion = malloc(sizeof(instruccion));
-		puts("nueva instruccion");
+// t_list *deserializar_instrucciones(int socket_cliente)
+// {
+// 	int size;
+// 	int desplazamiento = 0;
+// 	void *buffer;
+// 	t_list *valores = list_create();
+// 	int tamanio;
+// 	buffer = recibir_buffer(&size, socket_cliente);
 
-		memcpy(&(nueva_instruccion->operacion), buffer + desplazamiento, sizeof(cod_operacion));
-		desplazamiento += sizeof(cod_operacion);
+// 	while (desplazamiento < size)
+// 	{
+// 		instruccion *nueva_instruccion = malloc(sizeof(instruccion));
+// 		puts("nueva instruccion");
 
-		puts(string_itoa(nueva_instruccion->operacion));
+// 		memcpy(&(nueva_instruccion->operacion), buffer + desplazamiento, sizeof(cod_operacion));
+// 		desplazamiento += sizeof(cod_operacion);
 
-		memcpy(&(tamanio), buffer + desplazamiento, sizeof(int));
-		desplazamiento += sizeof(int);
+// 		memcpy(&(tamanio), buffer + desplazamiento, sizeof(int));
+// 		desplazamiento += sizeof(int);
 
-		puts(string_itoa(tamanio));
+// 		nueva_instruccion->parametro1 = malloc(tamanio);
 
-		nueva_instruccion->parametro1 = malloc(tamanio);
+// 		memcpy(nueva_instruccion->parametro1, buffer + desplazamiento, tamanio);
+// 		desplazamiento += tamanio;
 
-		memcpy(nueva_instruccion->parametro1, buffer + desplazamiento, tamanio);
-		desplazamiento += tamanio;
+// 		memcpy(&(tamanio), buffer + desplazamiento, sizeof(int));
+// 		desplazamiento += sizeof(int);
 
-		memcpy(&(tamanio), buffer + desplazamiento, sizeof(int));
-		desplazamiento += sizeof(int);
+// 		nueva_instruccion->parametro2 = malloc(tamanio);
 
-		puts(string_itoa(tamanio));
-		nueva_instruccion->parametro2 = malloc(tamanio);
+// 		memcpy(nueva_instruccion->parametro2, buffer + desplazamiento, tamanio);
+// 		desplazamiento += tamanio;
 
-		memcpy(nueva_instruccion->parametro2, buffer + desplazamiento, tamanio);
-		desplazamiento += tamanio;
-
-		puts(nueva_instruccion->parametro1);
-		puts(nueva_instruccion->parametro2);
-
-		list_add(valores, nueva_instruccion);
-	}
-	free(buffer);
-	return valores;
-}*/
+// 		list_add(valores, nueva_instruccion);
+// 	}
+// 	free(buffer);
+// 	return valores;
+// }

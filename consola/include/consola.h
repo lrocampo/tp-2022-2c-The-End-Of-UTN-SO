@@ -13,6 +13,7 @@
 #include <utils/utiles_config.h>
 #include <utils/logger.h>
 #include <commons/string.h>
+#include <pthread.h>
 #include <consola_parser.h>
 #include <stdio.h>
 
@@ -21,5 +22,11 @@
 #define NOMBRE_MODULO "Consola"
 
 t_log *consola_logger;
+t_consola_config* consola_config;
+int conexion_kernel;
+
+void imprimir_por_pantalla();
+int ingresar_por_teclado();
+void* atender_solicitud_kernel();
 
 #endif /* CONSOLA_INCLUDE_CONSOLA_H_ */

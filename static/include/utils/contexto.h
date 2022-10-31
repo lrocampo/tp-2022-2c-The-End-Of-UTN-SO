@@ -27,7 +27,8 @@ typedef enum{
 	EXEC,
 	BLOCK,
 	FINISH_EXIT,
-	FINISH_ERROR
+	FINISH_ERROR,
+	UNKNOWN_STATE
 } estado_proceso;
 
 typedef enum{
@@ -36,7 +37,8 @@ typedef enum{
 	MOV_IN,
 	MOV_OUT,
 	IO,
-	EXIT
+	EXIT,
+	UNKNOWN_OP
 } cod_operacion;
 
 typedef struct {
@@ -65,12 +67,16 @@ typedef struct {
 	t_list * instrucciones;
 	tabla_de_segmentos tabla;
 	registros_de_proposito_general registros;
+	bool con_desalojo;
 }t_pcb;
 
 t_pcb* pcb_create(t_list*, uint32_t, int);
+cod_operacion string_to_cod_op(char*);
 void pcb_destroy(t_pcb*);
 char* estado_to_string(estado_proceso);
 char* pcb_to_string(t_pcb* pcb);
 char* instruccion_to_string(instruccion*);
+void instruccion_destroy(void*);
+char* operacion_to_string(cod_operacion);
 
 #endif /* INCLUDE_UTILS_CONTEXTO_H_ */

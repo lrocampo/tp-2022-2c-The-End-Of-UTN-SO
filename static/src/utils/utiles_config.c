@@ -10,6 +10,22 @@ bool validar_configuracion(t_config* config) {
 	return (config_keys_amount(config) > 0);
 }
 
+t_algoritmo config_get_algoritmo_enum(t_config* config){
+	char* algoritmo_string = strdup(config_get_string_value(config,"ALGORITMO_PLANIFICACION"));
+	t_algoritmo algoritmo = FIFO; // default por si hay errores, sacar en algun momento(?
+	if(string_equals_ignore_case(algoritmo_string,"FIFO")){
+		algoritmo = FIFO;
+	}
+	else if(string_equals_ignore_case(algoritmo_string,"RR")){
+		algoritmo = RR;
+	}
+	else if(string_equals_ignore_case(algoritmo_string,"FEEDBACK")){
+		algoritmo = FEEDBACK;
+	}
+	free(algoritmo_string);
+	return algoritmo;
+}
+
 //Levanta todos los datos que necesitamos del config
 void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 	t_config *config;
@@ -42,6 +58,9 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			kernel_config->puerto_cpu_dispatch = strdup(config_get_string_value(config, "PUERTO_CPU_DISPATCH"));
 			kernel_config->puerto_cpu_interrupt = strdup(config_get_string_value(config, "PUERTO_CPU_INTERRUPT"));
 			kernel_config->grado_multiprogramacion = config_get_int_value(config, "GRADO_MAX_MULTIPROGRAMACION");
+			kernel_config->algoritmo = config_get_algoritmo_enum(config);
+			kernel_config->quantum_RR = config_get_int_value(config, "QUANTUM_RR");
+
 			// TODO: Componer la configuracion del resto
 
 			config_destroy(config);
@@ -52,12 +71,26 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			cpu_config = malloc(sizeof(t_cpu_config));
 			cpu_config->ip_cpu = strdup(config_get_string_value(config, "IP_CPU"));
 			cpu_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
+			cpu_config->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
+			cpu_config->puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
 			cpu_config->puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
 			cpu_config->puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
 			
 			config_destroy(config);
 			free(config_path);
 			return cpu_config;
+		case MEMORIA:
+			t_memoria_config* memoria_config;
+			memoria_config = malloc(sizeof(t_memoria_config));
+			memoria_config->ip_memoria =  strdup(config_get_string_value(config, "IP_MEMORIA"));
+			memoria_config->ip_cpu =  strdup(config_get_string_value(config, "IP_CPU"));
+			memoria_config->ip_kernel =  strdup(config_get_string_value(config, "IP_KERNEL"));
+			memoria_config->puerto_escucha_cpu = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_CPU"));
+			memoria_config->puerto_escucha_kernel = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_KERNEL"));
+
+			config_destroy(config);
+			free(config_path);
+			return memoria_config;
 
 		default:
 			config_destroy(config);

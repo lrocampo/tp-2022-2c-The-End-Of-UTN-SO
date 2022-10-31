@@ -7,6 +7,13 @@
 
 #include <utils/contexto.h>
 
+void instruccion_destroy(void* _instruccion){
+    instruccion* ins = (instruccion*) _instruccion;
+    free(ins->parametro1);
+    free(ins->parametro2);
+    free(ins);
+}
+
 t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
     t_pcb* pcb = malloc(sizeof(t_pcb));
 
@@ -23,12 +30,14 @@ t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
     pcb->tabla.indice_tabla_paginas = 0;
     pcb->tabla.nro_segmento = 0;
     pcb->tabla.tamanio_segmento = 0;
+    pcb->con_desalojo = false;
 
     return pcb;
 }
 
 void pcb_destroy(t_pcb* pcb){
-
+    list_destroy_and_destroy_elements(pcb->instrucciones, instruccion_destroy);
+    free(pcb);
 }
 
 char* estado_to_string(estado_proceso estado){
@@ -39,6 +48,12 @@ char* estado_to_string(estado_proceso estado){
         break;
     case READY:
         return "READY";
+        break;
+    case BLOCK:
+        return "BLOCK";
+        break;
+    case EXEC:
+        return "EXEC";
         break;
     case FINISH_EXIT:
         return "EXIT";
@@ -52,10 +67,25 @@ char* estado_to_string(estado_proceso estado){
     }
 }
 
+cod_operacion string_to_cod_op(char* estado_string){
+    if(string_equals_ignore_case(estado_string, "SET"))
+    return SET;
+    else if(string_equals_ignore_case(estado_string, "ADD"))
+    return ADD;
+    else if(string_equals_ignore_case(estado_string, "MOV_IN"))
+    return MOV_IN;
+    else if(string_equals_ignore_case(estado_string, "MOV_OUT"))
+    return MOV_OUT;
+    else if(string_equals_ignore_case(estado_string, "I/O"))
+    return IO;
+    else if(string_equals_ignore_case(estado_string, "EXIT"))
+    return EXIT;
+    else return UNKNOWN_OP;
+}
+
 char* pcb_to_string(t_pcb* pcb){
     char* pcb_string = string_new();
     char* pcb_estado = estado_to_string(pcb->estado);
-
     int cantidad_instrucciones = list_size(pcb->instrucciones);
     string_append_with_format(&pcb_string,
         "PID: %d\nPPID: %d\nPC: %d\nESTADO: %s\nINTERRUPCION: %d\n\nAX= %d BX= %d \nCX= %d DX= %d \n\nIDX: %d  N.PAG: %d  TAM: %d\n\n",
@@ -75,6 +105,7 @@ char* pcb_to_string(t_pcb* pcb){
         for(int i = 0; i < cantidad_instrucciones; i++){
             char* instruccion = instruccion_to_string(list_get(pcb->instrucciones, i));
             string_append_with_format(&pcb_string,"%s\n",instruccion);
+            free(instruccion);
         }
 
     return pcb_string;
@@ -108,5 +139,25 @@ char* instruccion_to_string(instruccion* instruccion){
         string_append(&instruccion_string,"UNKNOWN");
         break;
     }
+
     return instruccion_string;
+}
+
+char* operacion_to_string(cod_operacion operacion) {
+	switch(operacion) {
+		case ADD:
+			return "ADD";
+		case SET:
+			return "SET";
+		case MOV_IN:
+			return "MOV_IN";
+		case MOV_OUT:
+			return "MOV_OUT";
+		case IO:
+			return "I/O";
+		case EXIT:
+			return "EXIT";
+		default:
+			return "Operador invalido";
+	}
 }
