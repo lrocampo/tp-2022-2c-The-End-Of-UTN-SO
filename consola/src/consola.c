@@ -75,10 +75,10 @@ void* atender_solicitud_kernel(){
 				break;
 			case PANTALLA:
 				imprimir_por_pantalla();
-				
+				// TODO: notificacion con datos 
 				break;
 			default:
-				
+				// TODO: notificacion con datos error
 				error_show("Error, mensaje desconocido.\n");
 				break;
 		}

@@ -30,7 +30,8 @@
 			"consola_parser.h": "c",
 			"list.h": "c",
 			"log.h": "c",
-			"utiles_config.h": "c"
+			"utiles_config.h": "c",
+			"kernel_utils.h": "c"
 		}
 	}
 }
