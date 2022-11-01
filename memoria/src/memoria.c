@@ -29,6 +29,9 @@ int main(void){
 	pthread_create(&th_atender_pedido_de_memoria, NULL, &atender_pedido_de_memoria, NULL);
 	pthread_detach(th_atender_pedido_de_memoria);
 
+
+	// al igual que con cpu creo otro hilo para atender el kernel
+
 	while (1){
 
 	}
@@ -53,3 +56,20 @@ void* atender_pedido_de_memoria(void* args){
 	}
 	
 }
+
+// todo mauro
+// atender_pedido_de_estructuras(void* args) {
+// 	cliente_kernel_fd = esperar_cliente(memoria_server_fd);
+// 	log_debug(memoria_logger,"Se conecto un cliente a MEMORIA.");
+// 	while(1){
+// 		cod_mensaje mensaje = recibir_operacion(cliente_kernel_fd);
+// 		if(mensaje == MENSAJE){
+// 			recibir_mensaje(memoria_logger, cliente_kernel_fd);
+// 			enviar_mensaje("Atiendo boludos", cliente_kernel_fd);
+// 		}
+// 		else {
+// 			log_debug(memoria_logger,"Se desconecto el cliente.");
+// 			exit(EXIT_FAILURE);
+// 		}
+// 	}
+// }
