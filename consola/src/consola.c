@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
 	pthread_t th_atender_solicitud_kernel;
 	pthread_create(&th_atender_solicitud_kernel, NULL, &atender_solicitud_kernel, NULL);
-	pthread_detach(th_atender_solicitud_kernel);
+	pthread_detach(th_atender_solicitud_kernel); // esto no va
 
 	char *instrucciones_string = leer_archivo_pseudocodigo(ruta_instrucciones);
 	log_debug(consola_logger,"Archivo de pseudocodigo leido correctamente");
@@ -47,6 +47,8 @@ int main(int argc, char **argv) {
 
 	enviar_instrucciones(instrucciones, conexion_kernel);
 	log_debug(consola_logger,"Instrucciones enviadas");
+
+	//pthread_join(atender_kernel) para que no termine el main antes de que finalice el hilo
 
 	liberar_conexion(conexion_kernel);
 
@@ -75,7 +77,10 @@ void* atender_solicitud_kernel(){
 				break;
 			case PANTALLA:
 				imprimir_por_pantalla();
-				// TODO: notificacion con datos 
+				// TODO: Agregar el retardo al consola.config
+				// TODO: utiles_config cargue el retardo.
+				// TODO: notificacion con datos
+				// Reutilizar la funcion que hiciste
 				break;
 			default:
 				// TODO: notificacion con datos error

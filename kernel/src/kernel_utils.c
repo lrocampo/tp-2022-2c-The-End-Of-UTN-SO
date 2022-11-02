@@ -164,13 +164,52 @@ void dirigir_proceso_ejecutado(t_pcb* pcb){ // corto plazo // tener en cuenta pa
             solicitar_finalizacion(pcb);
 			break;
 		case IO:
-            // TODO: bloqueo
+            solicitar_io(pcb, ultima_instruccion);
 			break;
 		default:
             pasar_a_ready(pcb);
 			break;
 	}
 }
+
+void solicitar_io(t_pcb* pcb, instruccion* ultima_instruccion) {
+	char* dispositivo = ultima_instruccion->parametro1;
+
+	if(string_equals_ignore_case(dispositivo, "TECLADO") || string_equals_ignore_case(dispositivo, "PANTALLA")) {
+		pthread_t th_solicitud_consola;
+        pthread_create(&th_solicitud_consola, NULL, &solicitar_io_consola, (void*)pcb);
+        pthread_detach(th_solicitud_consola);
+	}
+	else {
+		solicitar_dispositivo(pcb, ultima_instruccion);
+	}
+}
+
+// Cuerpo de la funcion que ejecuta el hilo para teclado/pantalla
+// void* solicitar_io_consola(pcb){
+
+//     obtenerultimains(pcb)
+
+//     solicitud(pcb->instruccion->param1, consola_fd)
+
+//     esperarrespuesta(consola_fd)
+
+//     ---> pasaraready() <---
+
+// }
+
+// La funcion que se comunica con la consola
+// void solicitud(instruccion, consola_fd) {
+//     param1 = instruccion->param1
+//     param2 = instruccion->param2
+//     if(param1 == TECLADO) {
+//         enviar_datos(teclado)
+//     }
+//     else {
+//         enviar_valor_a_imprimir(pantalla, param2)
+//     }
+// }
+
 
 void* transicion_proceso_a_ready(void* arg){
 	while(1){
