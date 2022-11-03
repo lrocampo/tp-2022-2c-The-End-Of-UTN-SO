@@ -26,6 +26,8 @@ int main(void){
 
 	iniciar_conexiones_con_cpu();
 
+	// iniciar_conexion_con_memoria()
+
 	planificacion_init();
 
 	esperar_conexiones();

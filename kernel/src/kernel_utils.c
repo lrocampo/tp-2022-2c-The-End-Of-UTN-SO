@@ -164,7 +164,7 @@ void dirigir_proceso_ejecutado(t_pcb* pcb){ // corto plazo // tener en cuenta pa
             solicitar_finalizacion(pcb);
 			break;
 		case IO:
-            // TODO: bloqueo
+            solicitar_io(pcb, ultima_instruccion);
 			break;
 		default:
             pasar_a_ready(pcb);
@@ -172,14 +172,72 @@ void dirigir_proceso_ejecutado(t_pcb* pcb){ // corto plazo // tener en cuenta pa
 	}
 }
 
+void solicitar_io(t_pcb* pcb, instruccion* ultima_instruccion) {
+	char* dispositivo = ultima_instruccion->parametro1;
+
+	if(string_equals_ignore_case(dispositivo, "TECLADO") || string_equals_ignore_case(dispositivo, "PANTALLA")) {
+		pthread_t th_solicitud_consola;
+        pthread_create(&th_solicitud_consola, NULL, &solicitar_io_consola, (void*)pcb);
+        pthread_detach(th_solicitud_consola);
+	}
+	else {
+		solicitar_dispositivo(pcb, ultima_instruccion);
+	}
+}
+
+// Cuerpo de la funcion que ejecuta el hilo para teclado/pantalla
+// void* solicitar_io_consola(pcb){
+
+//     obtenerultimains(pcb)
+
+//     solicitud(pcb->instruccion->param1, consola_fd)
+
+//     esperarrespuesta(consola_fd)
+
+//     ---> pasaraready() <---
+
+// }
+
+// La funcion que se comunica con la consola
+// void solicitud(instruccion, consola_fd) {
+//     param1 = instruccion->param1
+//     param2 = instruccion->param2
+//     if(param1 == TECLADO) {
+//         enviar_datos(teclado)
+//     }
+//     else {
+//         enviar_valor_a_imprimir(pantalla, param2)
+//     }
+// }
+
+
 void* transicion_proceso_a_ready(void* arg){
 	while(1){
 		sem_wait(&procesos_new);
         sem_wait(&multiprogramacion);
         t_pcb* pcb = safe_pcb_pop(cola_new_pcbs, cola_new_pcbs_mutex);
         pasar_a_ready(pcb);
+		// solicitar_crear_estructuras_administrativas(pcb);
+
 	}
 }
+// todo mauro
+// solicitar_crear_estructuras_administrativas(pcb) {
+// 	enviar_mensaje("pido crear estructuras administrativas", conexion_memoria);
+// 	cod_mensaje mensaje = recibir_operacion(conexion_memoria);
+// 	puts("Recibi la operacion");
+// 	if(mensaje == MENSAJE){
+// 		recibir_mensaje(memoria_logger, conexion_memoria);
+// 	}
+// }
+
+
+// iniciar_conexion_con_memoria() {
+// 	conexion_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria);
+// 	if(conexion_memoria != -1){
+// 		log_debug(kernel_logger, "Conexion creada correctamente con MEMORIAs");
+// 	}
+// }
 
 /* Planificacion Utils */
 
