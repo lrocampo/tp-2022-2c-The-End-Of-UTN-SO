@@ -10,6 +10,22 @@ bool validar_configuracion(t_config* config) {
 	return (config_keys_amount(config) > 0);
 }
 
+t_list* config_get_io_list(t_config* config){
+	t_list* lista_dispositivos = list_create();
+	char** array_dispositivos = config_get_array_value(config, "DISPOSITIVOS_IO");
+	char** array_duraciones = config_get_array_value(config, "TIEMPOS_IO");
+	for(int i = 0; i < string_array_size(array_dispositivos); i++){
+		t_dispositivo* new_dispositivo = malloc(sizeof(t_dispositivo));
+		t_queue* cola = queue_create();
+		new_dispositivo->indice = i;
+		new_dispositivo->nombre = strdup(array_dispositivos[i]);
+		new_dispositivo->duracion = atoi(array_duraciones[i]);
+		new_dispositivo->cola = cola;
+		list_add(lista_dispositivos, new_dispositivo);
+	}
+	return lista_dispositivos;
+}
+
 t_algoritmo config_get_algoritmo_enum(t_config* config){
 	char* algoritmo_string = strdup(config_get_string_value(config,"ALGORITMO_PLANIFICACION"));
 	t_algoritmo algoritmo = FIFO; // default por si hay errores, sacar en algun momento(?
@@ -60,6 +76,7 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			kernel_config->grado_multiprogramacion = config_get_int_value(config, "GRADO_MAX_MULTIPROGRAMACION");
 			kernel_config->algoritmo = config_get_algoritmo_enum(config);
 			kernel_config->quantum_RR = config_get_int_value(config, "QUANTUM_RR");
+			kernel_config->dispositivos_io = config_get_io_list(config); 
 
 			// TODO: Componer la configuracion del resto
 
@@ -99,3 +116,4 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			exit(EXIT_FAILURE);
 	}
 }
+

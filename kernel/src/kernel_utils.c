@@ -2,10 +2,13 @@
 
 int conexion_cpu_dispatch;
 int conexion_cpu_interrupt;
+int kernel_server_fd;
+int cantidad_dispositivos;
 
 t_log* kernel_logger;
 t_kernel_config* kernel_config;
-int kernel_server_fd;
+t_list* dispositivos_io;
+
 
 t_queue* cola_new_pcbs;
 t_queue* cola_exit_pcbs;
@@ -17,6 +20,8 @@ sem_t procesos_new;
 sem_t multiprogramacion;
 sem_t procesos_finalizados; 
 sem_t interrupcion_quantum;
+sem_t* s_dispositivos_io;
+// chequear como inicializar array de semaforos
 
 uint32_t pid_actual;
 t_algoritmo algoritmo;
@@ -25,6 +30,7 @@ pthread_mutex_t pid_mutex;
 pthread_mutex_t cola_new_pcbs_mutex;
 pthread_mutex_t cola_ready_RR_pcbs_mutex;
 pthread_mutex_t cola_ready_FIFO_pcbs_mutex;
+pthread_mutex_t* cola_dispositivo_mutex;
 
 pthread_t th_timer;
 pthread_t th_conexiones;
@@ -156,9 +162,7 @@ void analizar_contexto_recibido(t_pcb* pcb){
 }
 
 void dirigir_proceso_ejecutado(t_pcb* pcb){ // corto plazo // tener en cuenta page default ya que no deberiamos modificar el program counter
-	int ultima_instruccion_idx = pcb->program_counter - 1;
-
-	instruccion* ultima_instruccion = list_get(pcb->instrucciones,ultima_instruccion_idx);
+	instruccion* ultima_instruccion = obtener_ultima_instruccion(pcb);
 	switch(ultima_instruccion->operacion){
 		case EXIT:
             solicitar_finalizacion(pcb);
@@ -172,13 +176,19 @@ void dirigir_proceso_ejecutado(t_pcb* pcb){ // corto plazo // tener en cuenta pa
 	}
 }
 
+instruccion* obtener_ultima_instruccion(t_pcb* pcb){
+	int ultima_instruccion_idx = pcb->program_counter - 1;
+	instruccion* ultima_instruccion = list_get(pcb->instrucciones,ultima_instruccion_idx);
+	return ultima_instruccion;
+}
+
 void solicitar_io(t_pcb* pcb, instruccion* ultima_instruccion) {
 	char* dispositivo = ultima_instruccion->parametro1;
 
 	if(string_equals_ignore_case(dispositivo, "TECLADO") || string_equals_ignore_case(dispositivo, "PANTALLA")) {
-		pthread_t th_solicitud_consola;
-        pthread_create(&th_solicitud_consola, NULL, &solicitar_io_consola, (void*)pcb);
-        pthread_detach(th_solicitud_consola);
+		//pthread_t th_solicitud_consola;
+       // pthread_create(&th_solicitud_consola, NULL, &solicitar_io_consola, (void*)pcb);
+        //pthread_detach(th_solicitud_consola);
 	}
 	else {
 		solicitar_dispositivo(pcb, ultima_instruccion);
@@ -331,6 +341,52 @@ t_pcb* safe_pcb_pop(t_queue* queue, pthread_mutex_t mutex){
 // 
 //ejecutarEspera le pasas el tiempo en milisegundos y el tipo te frena todo por ese tiempo
 void ejecutar_espera(uint32_t tiempo){
-	printf("%d milisegundos \n", (int) tiempo);
 	usleep(tiempo * 1000);
+}
+
+/* IO */
+
+void dispositivos_io_init(){
+	s_dispositivos_io = malloc(sizeof(sem_t) * cantidad_dispositivos);
+	cola_dispositivo_mutex = malloc(sizeof(pthread_mutex_t) * cantidad_dispositivos);
+
+	for(int i = 0; i < cantidad_dispositivos; i++){
+		t_dispositivo* dispositivo = list_get(dispositivos_io, i);
+		sem_init(&s_dispositivos_io[i], 0, 0);
+		pthread_mutex_init(&cola_dispositivo_mutex[i], NULL);
+		pthread_t th_dispositivo_io;
+		pthread_create(&th_dispositivo_io, NULL, &ejecucion_io, (void*) dispositivo);
+		pthread_detach(th_dispositivo_io);
+	}
+}
+
+void* ejecucion_io(void* arg){
+	t_dispositivo* dispositivo = (t_dispositivo*) arg;
+	int idx = dispositivo->indice;
+	t_queue* cola_de_atencion = dispositivo->cola;
+	char* nombre = dispositivo->nombre;
+	while(1){
+		sem_wait(&s_dispositivos_io[idx]);
+		t_pcb* pcb = safe_pcb_pop(cola_de_atencion, cola_dispositivo_mutex[idx]);
+		instruccion* ultima_instruccion = obtener_ultima_instruccion(pcb);
+		uint32_t unidades_tiempo = (uint32_t) atoi(ultima_instruccion->parametro2);
+		ejecutar_espera(unidades_tiempo);
+		pasar_a_ready(pcb);
+	}
+}
+
+void solicitar_dispositivo(t_pcb* pcb, instruccion* ultima_instruccion){
+	t_dispositivo* dispositivo = obtener_dispositivo_por_nombre(ultima_instruccion->parametro1);
+	safe_pcb_push(dispositivo->cola, pcb, cola_dispositivo_mutex[dispositivo->indice]);
+	sem_post(&s_dispositivos_io[dispositivo->indice]);	
+}
+
+t_dispositivo* obtener_dispositivo_por_nombre(char* nombre){
+	int i = 0;
+	t_dispositivo* dispositivo = list_get(dispositivos_io, i); 
+	while(!string_equals_ignore_case(dispositivo->nombre, nombre) && i < cantidad_dispositivos){
+		dispositivo = list_get(dispositivos_io, i);
+		i++; 
+	}
+	return dispositivo;
 }

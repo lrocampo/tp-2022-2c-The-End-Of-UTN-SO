@@ -17,10 +17,12 @@
 
 extern int conexion_cpu_dispatch;
 extern int conexion_cpu_interrupt;
+extern int cantidad_dispositivos;
+extern int kernel_server_fd;
 
 extern t_log* kernel_logger;
 extern t_kernel_config* kernel_config;
-extern int kernel_server_fd;
+extern t_list* dispositivos_io;
 
 void esperar_conexiones();
 void iniciar_conexiones_con_cpu();

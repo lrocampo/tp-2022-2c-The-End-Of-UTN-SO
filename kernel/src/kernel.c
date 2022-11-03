@@ -55,6 +55,8 @@ void esperar_conexiones(){
 
 void planificacion_init(/*t_kernel_config* kernel_config*/) {
 	algoritmo = kernel_config->algoritmo;
+	dispositivos_io = kernel_config->dispositivos_io;
+	cantidad_dispositivos = list_size(dispositivos_io);
 	pid_actual = 0;
 	pthread_mutex_init(&pid_mutex, NULL);
 	/* Al encender el kernel, arrancamos con pid 0 */
@@ -62,4 +64,5 @@ void planificacion_init(/*t_kernel_config* kernel_config*/) {
 
 	largo_plazo_init();
     corto_plazo_init();
+	dispositivos_io_init();
 }
