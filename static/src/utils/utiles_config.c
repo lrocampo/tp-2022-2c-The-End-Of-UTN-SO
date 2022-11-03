@@ -75,7 +75,8 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			cpu_config->puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
 			cpu_config->puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
 			cpu_config->puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
-			
+			cpu_config->retardo_intruccion = config_get_int_value(config, "RETARDO_INSTRUCCION");
+
 			config_destroy(config);
 			free(config_path);
 			return cpu_config;

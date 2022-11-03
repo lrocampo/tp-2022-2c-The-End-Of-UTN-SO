@@ -160,6 +160,12 @@ cod_operacion decode(instruccion* instruccion_a_decodificar) {
 	return operacion;
 }
 
+void valor_retardo_instruccion(uint32_t tiempo){
+	log_debug(cpu_logger, "%d milisegundos \n", (int)tiempo);
+	usleep(tiempo * 1000);
+}
+
+
 void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instruccion* instruccion){
 	char* operacion_string = strdup(operacion_to_string(operacion_a_ejecutar));
 	if(operacion_a_ejecutar != EXIT) {
@@ -172,19 +178,17 @@ void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instru
 	switch(operacion_a_ejecutar) {
 		case SET:
 			ejecutar_set(pcb, instruccion->parametro1, instruccion->parametro2);
-			sleep(1);
+			valor_retardo_instruccion(cpu_config->retardo_intruccion);
 			break;
 		case ADD:
 			ejecutar_add(pcb, instruccion->parametro1, instruccion->parametro2);
-			sleep(1);
+			valor_retardo_instruccion(cpu_config->retardo_intruccion);
 			break;
 		case MOV_IN:
 			ejecutar_mov_in(pcb, instruccion->parametro1, instruccion->parametro2);
-			sleep(1);
 			break;
 		case MOV_OUT:
 			ejecutar_mov_out(pcb, instruccion->parametro1, instruccion->parametro2);
-			sleep(1);
 			break;
 		case IO:
 			break;
