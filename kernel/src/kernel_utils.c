@@ -333,16 +333,7 @@ t_pcb* safe_pcb_pop(t_queue* queue, pthread_mutex_t mutex){
     return pcb;
 }
 
-// TODO: mover a static
 
-// Interrupcion por Quantum primero debo generar la conversion entre milisegundos a 
-// microsegundos, luego generar un proceso que espere recibir  quantum y generar un hilo 
-// por interrupcion - esto nos va a facilitar eliminarlo en caso de que sobre quantum
-// 
-//ejecutarEspera le pasas el tiempo en milisegundos y el tipo te frena todo por ese tiempo
-void ejecutar_espera(uint32_t tiempo){
-	usleep(tiempo * 1000);
-}
 
 /* IO */
 

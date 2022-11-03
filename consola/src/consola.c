@@ -77,10 +77,8 @@ void* atender_solicitud_kernel(){
 				break;
 			case PANTALLA:
 				imprimir_por_pantalla();
-				// TODO: Agregar el retardo al consola.config
-				// TODO: utiles_config cargue el retardo.
-				// TODO: notificacion con datos
-				// Reutilizar la funcion que hiciste
+				ejecutar_espera(consola_config->tiempo_pantalla);
+				enviar_mensaje("Imprimi por Pantalla Correctamente", conexion_kernel);
 				break;
 			default:
 				// TODO: notificacion con datos error

@@ -67,7 +67,7 @@ t_pcb* pop_ready_pcb();
 /* Utils */
 void safe_pcb_push(t_queue*, t_pcb*, pthread_mutex_t);
 t_pcb* safe_pcb_pop(t_queue*, pthread_mutex_t);
-void ejecutar_espera(uint32_t);
+
 
 /* IO */
 void* ejecucion_io(void*);
