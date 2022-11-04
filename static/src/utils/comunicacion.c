@@ -25,7 +25,6 @@ int recibir_operacion(int socket_cliente)
 /* TIMMER */
 
 void ejecutar_espera(uint32_t tiempo){
-	printf("%d milisegundos \n", (int) tiempo);
 	usleep(tiempo * 1000);
 }
 /* BUFFER */

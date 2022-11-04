@@ -161,3 +161,37 @@ char* operacion_to_string(cod_operacion operacion) {
 			return "Operador invalido";
 	}
 }
+
+void set_valor_registro(t_pcb* pcb, char* parametro1, char* parametro2) {
+    uint32_t valor = (uint32_t) atoi(parametro2);
+	if(string_equals_ignore_case(parametro1, "ax")) {
+		pcb->registros.ax = valor;
+	}
+	else if(string_equals_ignore_case(parametro1, "bx")) {
+		pcb->registros.bx = valor;
+	}
+	else if(string_equals_ignore_case(parametro1, "cx")) {
+		pcb->registros.cx = valor;
+	}
+	else if(string_equals_ignore_case(parametro1, "dx")) {
+		pcb->registros.dx = valor;
+	}	
+}
+
+uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
+	uint32_t valor_de_registro;
+	if(string_equals_ignore_case(parametro1, "ax")) {
+		valor_de_registro = pcb->registros.ax;
+	}
+	else if(string_equals_ignore_case(parametro1, "bx")) {
+		valor_de_registro = pcb->registros.bx;
+	}
+	else if(string_equals_ignore_case(parametro1, "cx")) {
+		valor_de_registro = pcb->registros.cx;
+	}
+	else if(string_equals_ignore_case(parametro1, "dx")) {
+		valor_de_registro = pcb->registros.dx;
+	}
+
+	return valor_de_registro;
+}

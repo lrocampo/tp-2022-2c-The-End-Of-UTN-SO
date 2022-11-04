@@ -19,12 +19,6 @@ int main(void){
 
 	memoria_config = cargar_configuracion(RUTA_MEMORIA_CONFIG, MEMORIA);
 
-	memoria_server_fd = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_cpu);
-
-	if(memoria_server_fd == -1){
-		return EXIT_FAILURE;
-	}
-
 	pthread_t th_atender_pedido_de_memoria;
 	pthread_create(&th_atender_pedido_de_memoria, NULL, &atender_pedido_de_memoria, NULL);
 	pthread_detach(th_atender_pedido_de_memoria);
@@ -44,8 +38,12 @@ int main(void){
 }
 
 void* atender_pedido_de_memoria(void* args){
-	cliente_cpu_fd = esperar_cliente(memoria_server_fd);
-	log_debug(memoria_logger,"Se conecto un cliente a MEMORIA.");
+	server_fd_cpu = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_cpu);
+	if(server_fd_cpu == -1){
+		pthread_exit(NULL);
+	}
+	cliente_cpu_fd = esperar_cliente(server_fd_cpu);
+	log_debug(memoria_logger,"Se conecto un CPU a MEMORIA.");
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_cpu_fd);
 		if(mensaje == MENSAJE){
@@ -54,7 +52,7 @@ void* atender_pedido_de_memoria(void* args){
 		}
 		else {
 			log_debug(memoria_logger,"Se desconecto el cliente.");
-			exit(EXIT_FAILURE);
+			pthread_exit(NULL);
 		}
 	}
 	
@@ -62,8 +60,12 @@ void* atender_pedido_de_memoria(void* args){
 
 // todo mauro
 void* atender_pedido_de_estructuras(void* args) {
- 	cliente_kernel_fd = esperar_cliente(memoria_server_fd);
- 	log_debug(memoria_logger,"Se conecto un cliente a MEMORIA.");
+	server_fd_kernel = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_kernel);
+	if(server_fd_kernel == -1){
+		pthread_exit(NULL);
+	}
+ 	cliente_kernel_fd = esperar_cliente(server_fd_kernel);
+ 	log_debug(memoria_logger,"Se conecto un Kernel a MEMORIA.");
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_kernel_fd);
  		if(mensaje == MENSAJE){
@@ -72,7 +74,7 @@ void* atender_pedido_de_estructuras(void* args) {
  		}
  		else {
  			log_debug(memoria_logger,"Se desconecto el cliente.");
- 			exit(EXIT_FAILURE);
+			pthread_exit(NULL);
  		}
  	}
  }

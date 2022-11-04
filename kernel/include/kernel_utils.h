@@ -13,7 +13,6 @@
 #include <semaphore.h>
 #include <stdlib.h>
 #include <kernel.h>
-#include <cpu.h>
 
 extern t_queue* cola_new_pcbs;
 extern t_queue* cola_exit_pcbs;
@@ -78,5 +77,8 @@ void dispositivos_io_init();
 t_dispositivo* obtener_dispositivo_por_nombre(char*);
 instruccion* obtener_ultima_instruccion(t_pcb* pcb);
 void solicitar_dispositivo(t_pcb*, instruccion*);
+void solicitar_creacion_estructuras_administrativas(t_pcb*);
+void solicitud(instruccion*, t_pcb *);
+void* solicitar_io_consola(void *);
 
 #endif /* KERNEL_INCLUDE_KERNEL_UTILS_H_ */

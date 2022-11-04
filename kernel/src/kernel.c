@@ -26,7 +26,7 @@ int main(void){
 
 	iniciar_conexiones_con_cpu();
 
-	iniciar_conexion_con_memoria()
+	iniciar_conexion_con_memoria();
 
 	planificacion_init();
 
@@ -46,6 +46,13 @@ void iniciar_conexiones_con_cpu() {
 	conexion_cpu_interrupt = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt);
 		if(conexion_cpu_interrupt != -1){
 		log_debug(kernel_logger,"Conexion creada correctamente con CPU INTERRUPT");
+	}
+}
+
+void iniciar_conexion_con_memoria() {
+ 	conexion_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria);
+	if(conexion_memoria != -1){
+ 		log_debug(kernel_logger, "Conexion creada correctamente con MEMORIAs");
 	}
 }
 

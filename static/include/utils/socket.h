@@ -8,6 +8,7 @@
 #include<netdb.h>
 #include<string.h>
 #include<commons/log.h>
+#include<commons/error.h>
 
 int crear_conexion( char* , char* );
 void liberar_conexion(int);

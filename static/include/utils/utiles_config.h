@@ -32,8 +32,9 @@ typedef struct {
 typedef struct {
 	char* ip_cpu;
     char* ip_kernel;
-	/* char* ip_memoria; */
+	char* ip_memoria;
     char* puerto_escucha;
+    char* puerto_memoria;
 	char* puerto_cpu_dispatch;
 	char* puerto_cpu_interrupt;
 	int grado_multiprogramacion;

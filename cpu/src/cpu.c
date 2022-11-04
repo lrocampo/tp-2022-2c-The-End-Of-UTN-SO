@@ -161,8 +161,7 @@ cod_operacion decode(instruccion* instruccion_a_decodificar) {
 }
 
 void valor_retardo_instruccion(uint32_t tiempo){
-	log_debug(cpu_logger, "%d milisegundos \n", (int)tiempo);
-	usleep(tiempo * 1000);
+	ejecutar_espera(tiempo);
 }
 
 
@@ -201,18 +200,7 @@ void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instru
 }
 							
 void ejecutar_set(t_pcb* pcb, char* parametro1, char* parametro2) {
-	if(string_equals_ignore_case(parametro1, "ax")) {
-		pcb->registros.ax = (uint32_t) atoi(parametro2);
-	}
-	else if(string_equals_ignore_case(parametro1, "bx")) {
-		pcb->registros.bx = (uint32_t) atoi(parametro2);
-	}
-	else if(string_equals_ignore_case(parametro1, "cx")) {
-		pcb->registros.cx = (uint32_t) atoi(parametro2);
-	}
-	else if(string_equals_ignore_case(parametro1, "dx")) {
-		pcb->registros.dx = (uint32_t) atoi(parametro2);
-	}	
+	set_valor_registro(pcb, parametro1, parametro2);
 }
 
 void ejecutar_add(t_pcb* pcb, char* parametro1, char* parametro2) {	
@@ -229,29 +217,11 @@ void ejecutar_add(t_pcb* pcb, char* parametro1, char* parametro2) {
 }
 
 void ejecutar_mov_in(t_pcb* pcb, char* parametro1, char* parametro2) {
-	puts("no hago nada");
+	log_debug(cpu_logger,"MOV_IN: no hago nada, todavia....");
 }
 
 void ejecutar_mov_out(t_pcb* pcb, char* parametro1, char* parametro2) {
-	puts("no hago nada");
-}
-
-uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
-	uint32_t valor_de_registro;
-	if(string_equals_ignore_case(parametro1, "ax")) {
-		valor_de_registro = pcb->registros.ax;
-	}
-	else if(string_equals_ignore_case(parametro1, "bx")) {
-		valor_de_registro = pcb->registros.bx;
-	}
-	else if(string_equals_ignore_case(parametro1, "cx")) {
-		valor_de_registro = pcb->registros.cx;
-	}
-	else if(string_equals_ignore_case(parametro1, "dx")) {
-		valor_de_registro = pcb->registros.dx;
-	}
-
-	return valor_de_registro;
+	log_debug(cpu_logger,"MOV_OUT: no hago nada, todavia....");
 }
 
 void iniciar_conexion_con_memoria() {

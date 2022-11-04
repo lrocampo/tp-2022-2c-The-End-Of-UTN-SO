@@ -1,5 +1,6 @@
 #include <kernel_utils.h>
 
+int conexion_memoria;
 int conexion_cpu_dispatch;
 int conexion_cpu_interrupt;
 int kernel_server_fd;
@@ -82,6 +83,7 @@ void* rajar_pcb(void* arg) {
         --pid_actual;
         pthread_mutex_unlock(&pid_mutex);
 		log_debug(kernel_logger,"PCB con id: %d ha finalizado.",pcb->pid);
+		pcb_destroy(pcb);
 		sem_post(&multiprogramacion);
 	}
 }
@@ -201,28 +203,30 @@ void* solicitar_io_consola(void *arg){
 	instruccion *instruccionIO = obtener_ultima_instruccion(pcb);
 	solicitud(instruccionIO, pcb);
 	pasar_a_ready(pcb);
-
+	pthread_exit(NULL);
 }
 
 // La funcion que se comunica con la consola
 	void solicitud(instruccion* instruccionIO, t_pcb *pcb) {
-     char* dispositivo = instruccionIO->parametro1;
-     char *registro = instruccionIO->parametro2;
-	 int consola_fd =  pcb->socket_consola;
-     if(string_equals_ignore_case(dispositivo,"TECLADO")) {
-         enviar_datos(consola_fd,TECLADO,sizeof(TECLADO));
-		 cod_mensaje codigo = recibir_operacion(consola_fd);
-		 if(codigo == OKI_TECLADO){
+	cod_mensaje cod_msj;
+	char* dispositivo = instruccionIO->parametro1;
+	char *registro = instruccionIO->parametro2;
+	int consola_fd =  pcb->socket_consola;
+	if(string_equals_ignore_case(dispositivo,"TECLADO")) {
+		cod_msj = TECLADO;
+		enviar_datos(consola_fd,&cod_msj,sizeof(cod_msj));
+		cod_mensaje codigo = recibir_operacion(consola_fd);
+		if(codigo == OKI_TECLADO){
 			int valor = recibir_valor(consola_fd);
 			char* valorToString = string_itoa(valor);
-			ejecutar_set(pcb,registro,valorToString);
-		 }else{
+			set_valor_registro(pcb,registro,valorToString);
+		}else{
 			log_debug(kernel_logger,"ERROR");
-		 }
-    }
+		}
+	}
      else {
 		uint32_t valor_registro = obtener_valor_del_registro(pcb,registro);
-        enviar_valor_a_imprimir(valor_registro,consola_fd);
+        enviar_valor_a_imprimir((int)valor_registro,consola_fd);
 		cod_mensaje codigo = recibir_operacion(consola_fd);
 		 if(codigo == OKI_PANTALLA){
 			log_debug(kernel_logger,"Todo Bien, Imprimir por Pantalla");
@@ -244,22 +248,14 @@ void* transicion_proceso_a_ready(void* arg){
 	}
 }
 // todo mauro
-void solicitar_creacion_estructuras_administrativas(pcb) {
+void solicitar_creacion_estructuras_administrativas(t_pcb* pcb) {
  	enviar_mensaje("pido crear estructuras administrativas", conexion_memoria);
  	cod_mensaje mensaje = recibir_operacion(conexion_memoria);
  	puts("Recibi la operacion");
  	if(mensaje == MENSAJE){
- 		recibir_mensaje(memoria_logger, conexion_memoria);
+ 		recibir_mensaje(kernel_logger, conexion_memoria);
  	}
  }
-
-
-void iniciar_conexion_con_memoria() {
- 	conexion_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria);
-	if(conexion_memoria != -1){
- 		log_debug(kernel_logger, "Conexion creada correctamente con MEMORIAs");
-	}
-}
 
 /* Planificacion Utils */
 
@@ -279,8 +275,10 @@ void pasar_a_ready(t_pcb* pcb){
 }
 
 void solicitar_finalizacion(t_pcb* pcb){
+	cod_mensaje cod_msj = FINALIZAR;
     cambiar_estado(pcb, FINISH_EXIT);
     queue_push(cola_exit_pcbs,pcb);
+	enviar_datos(pcb->socket_consola,&cod_msj,sizeof(cod_msj));
     sem_post(&procesos_finalizados);
 }
 
@@ -367,7 +365,7 @@ void* ejecucion_io(void* arg){
 	t_dispositivo* dispositivo = (t_dispositivo*) arg;
 	int idx = dispositivo->indice;
 	t_queue* cola_de_atencion = dispositivo->cola;
-	char* nombre = dispositivo->nombre;
+	//char* nombre = dispositivo->nombre; TODO: log
 	while(1){
 		sem_wait(&s_dispositivos_io[idx]);
 		t_pcb* pcb = safe_pcb_pop(cola_de_atencion, cola_dispositivo_mutex[idx]);

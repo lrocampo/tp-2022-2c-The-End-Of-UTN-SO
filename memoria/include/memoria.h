@@ -23,9 +23,11 @@
 
 t_log *memoria_logger;
 t_memoria_config* memoria_config;
-int memoria_server_fd;
+int server_fd_cpu;
+int server_fd_kernel;
 int cliente_kernel_fd;
 int cliente_cpu_fd;
 void* atender_pedido_de_memoria(void*);
+void* atender_pedido_de_estructuras(void*);
 
 #endif /* MEMORIA_INCLUDE_MEMORIA_H_ */

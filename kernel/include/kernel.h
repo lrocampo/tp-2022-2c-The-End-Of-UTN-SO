@@ -16,6 +16,7 @@
 #define RUTA_KERNEL_CONFIG "./src/kernel.config"
 
 extern int conexion_cpu_dispatch;
+extern int conexion_memoria;
 extern int conexion_cpu_interrupt;
 extern int cantidad_dispositivos;
 extern int kernel_server_fd;
@@ -26,7 +27,7 @@ extern t_list* dispositivos_io;
 
 void esperar_conexiones();
 void iniciar_conexiones_con_cpu();
-// TODO: iniciar_conexion_con_memoria
+void iniciar_conexion_con_memoria();
 void planificacion_init();
 
 #endif /* KERNEL_INCLUDE_KERNEL_H_ */
