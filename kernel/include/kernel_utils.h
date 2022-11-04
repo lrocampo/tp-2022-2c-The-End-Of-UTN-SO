@@ -24,6 +24,7 @@ extern sem_t procesos_new;
 extern sem_t multiprogramacion;
 extern sem_t procesos_finalizados; 
 extern sem_t interrupcion_quantum;
+extern sem_t* s_dispositivos_io;
 
 extern uint32_t pid_actual;
 extern t_algoritmo algoritmo;
@@ -32,6 +33,7 @@ extern pthread_mutex_t pid_mutex;
 extern pthread_mutex_t cola_ready_RR_pcbs_mutex;
 extern pthread_mutex_t cola_new_pcbs_mutex;
 extern pthread_mutex_t cola_ready_FIFO_pcbs_mutex;
+extern pthread_mutex_t* cola_dispositivo_mutex;
 
 extern pthread_t th_timer;
 extern pthread_t th_conexiones;
@@ -65,6 +67,15 @@ t_pcb* pop_ready_pcb();
 /* Utils */
 void safe_pcb_push(t_queue*, t_pcb*, pthread_mutex_t);
 t_pcb* safe_pcb_pop(t_queue*, pthread_mutex_t);
-void ejecutar_espera(uint32_t);
+
+
+/* IO */
+void* ejecucion_io(void*);
+void solicitar_dispositivo(t_pcb*,instruccion*);
+void solicitar_io(t_pcb*, instruccion*);
+void dispositivos_io_init();
+t_dispositivo* obtener_dispositivo_por_nombre(char*);
+instruccion* obtener_ultima_instruccion(t_pcb* pcb);
+void solicitar_dispositivo(t_pcb*, instruccion*);
 
 #endif /* KERNEL_INCLUDE_KERNEL_UTILS_H_ */

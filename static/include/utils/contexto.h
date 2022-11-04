@@ -9,6 +9,7 @@
 #define INCLUDE_UTILS_CONTEXTO_H_
 
 #include <commons/collections/list.h>
+#include <commons/collections/queue.h>
 #include <commons/string.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -31,6 +32,10 @@ typedef enum{
 	UNKNOWN_STATE
 } estado_proceso;
 
+typedef enum {
+	FIFO, RR, FEEDBACK
+} t_algoritmo;
+
 typedef enum{
 	SET,
 	ADD,
@@ -46,6 +51,13 @@ typedef struct {
 	char* parametro1;
 	char* parametro2;
 } instruccion;
+
+typedef struct {
+	int indice;
+	char* nombre;
+	int duracion;
+	t_queue* cola;
+} t_dispositivo;
 
 typedef struct {
 	uint32_t nro_segmento;

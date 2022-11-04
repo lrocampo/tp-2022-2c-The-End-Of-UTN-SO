@@ -7,17 +7,16 @@
 #include <commons/string.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
+#include <commons/collections/queue.h>
 #include <commons/error.h>
 #include <string.h>
-
-typedef enum {
-	FIFO, RR, FEEDBACK
-} t_algoritmo;
+#include <utils/contexto.h>
 
 typedef struct {
 	char* ip;
 	char* puerto;
 	int segmentos[4];
+	int tiempo_pantalla;
 } t_consola_config;
 
 typedef struct {
@@ -39,7 +38,7 @@ typedef struct {
 	int grado_multiprogramacion;
 	t_algoritmo algoritmo;
 	int quantum_RR;
-
+	t_list* dispositivos_io;
 } t_kernel_config;
 
 typedef struct {
