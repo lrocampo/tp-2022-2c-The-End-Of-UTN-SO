@@ -217,27 +217,27 @@ void* transicion_proceso_a_ready(void* arg){
         sem_wait(&multiprogramacion);
         t_pcb* pcb = safe_pcb_pop(cola_new_pcbs, cola_new_pcbs_mutex);
         pasar_a_ready(pcb);
-		// solicitar_crear_estructuras_administrativas(pcb);
+		solicitar_creacion_estructuras_administrativas(pcb);
 
 	}
 }
 // todo mauro
-// solicitar_crear_estructuras_administrativas(pcb) {
-// 	enviar_mensaje("pido crear estructuras administrativas", conexion_memoria);
-// 	cod_mensaje mensaje = recibir_operacion(conexion_memoria);
-// 	puts("Recibi la operacion");
-// 	if(mensaje == MENSAJE){
-// 		recibir_mensaje(memoria_logger, conexion_memoria);
-// 	}
-// }
+void solicitar_creacion_estructuras_administrativas(pcb) {
+ 	enviar_mensaje("pido crear estructuras administrativas", conexion_memoria);
+ 	cod_mensaje mensaje = recibir_operacion(conexion_memoria);
+ 	puts("Recibi la operacion");
+ 	if(mensaje == MENSAJE){
+ 		recibir_mensaje(memoria_logger, conexion_memoria);
+ 	}
+ }
 
 
-// iniciar_conexion_con_memoria() {
-// 	conexion_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria);
-// 	if(conexion_memoria != -1){
-// 		log_debug(kernel_logger, "Conexion creada correctamente con MEMORIAs");
-// 	}
-// }
+void iniciar_conexion_con_memoria() {
+ 	conexion_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria);
+	if(conexion_memoria != -1){
+ 		log_debug(kernel_logger, "Conexion creada correctamente con MEMORIAs");
+	}
+}
 
 /* Planificacion Utils */
 
