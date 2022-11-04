@@ -29,14 +29,14 @@ int main(void){
 	pthread_t th_atender_pedido_de_estructuras;
 	pthread_create(&th_atender_pedido_de_estructuras, NULL, atender_pedido_de_estructuras, NULL);
 	pthread_detach(th_atender_pedido_de_estructuras);
-	
-	log_debug(memoria_logger, "Termino memoria\n");
-
-	terminar_modulo();
 
 	while (1){
 
 	}
+
+	log_debug(memoria_logger, "Termino memoria\n");
+
+	terminar_modulo();
 
 	
 	return EXIT_SUCCESS;

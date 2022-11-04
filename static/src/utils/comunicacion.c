@@ -93,9 +93,16 @@ int recibir_valor(int socket_cliente){
 	return valor;
 }
 
+char* recibir_valor_string(int socket_cliente){
+	int size;
+	char *buffer = recibir_buffer(&size, socket_cliente);
+	return buffer;
+}
+
 void enviar_valor_con_codigo(int valor, cod_mensaje codigo, int socket_cliente){
 	char* mensaje = string_itoa(valor);
 	enviar_mensaje_con_codigo(mensaje, codigo, socket_cliente);
+	free(mensaje);
 }
 
 void enviar_valor_a_imprimir(int valor, int socket_cliente){

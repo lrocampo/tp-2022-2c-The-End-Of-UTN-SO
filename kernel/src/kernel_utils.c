@@ -141,9 +141,6 @@ t_pcb* obtener_proceso_ejecutado(){
     int cod_op = recibir_operacion(conexion_cpu_dispatch);
     if(cod_op == PCB) {
         pcb = recibir_pcb(conexion_cpu_dispatch);
-        char* pcb_string = pcb_to_string(pcb);
-        //log_debug(kernel_logger,"PCB Recibida\n: %s", pcb_string);
-        free(pcb_string);
         return pcb;
     }
     else {
@@ -217,9 +214,9 @@ void* solicitar_io_consola(void *arg){
 		enviar_datos(consola_fd,&cod_msj,sizeof(cod_msj));
 		cod_mensaje codigo = recibir_operacion(consola_fd);
 		if(codigo == OKI_TECLADO){
-			int valor = recibir_valor(consola_fd);
-			char* valorToString = string_itoa(valor);
+			char* valorToString = recibir_valor_string(consola_fd);
 			set_valor_registro(pcb,registro,valorToString);
+			free(valorToString);
 		}else{
 			log_debug(kernel_logger,"ERROR");
 		}

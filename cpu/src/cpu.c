@@ -52,14 +52,9 @@ int main(void){
 			case PCB:
 				pcb_to_exec = recibir_pcb(cliente_fd_dispatch);
 				log_debug(cpu_logger, "Recibi pcb con pid: %d",pcb_to_exec->pid);
-				char* pcb_string = pcb_to_string(pcb_to_exec);
-				//log_debug(cpu_logger, "PCB RECIBIDA:\n %s", pcb_string);
-
 				// Fetch -> Decode -> Execute -> Check Interrupt
 				iniciar_ciclo_de_instruccion(pcb_to_exec);
-
 				enviar_pcb(pcb_to_exec, cliente_fd_dispatch);
-				free(pcb_string);
 				pcb_destroy(pcb_to_exec);
 				break;
 			case -1:

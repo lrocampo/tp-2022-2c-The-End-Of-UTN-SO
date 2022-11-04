@@ -80,6 +80,7 @@ void enviar_valor_ingresado(int, int);
 void enviar_mensaje_con_codigo(char *, cod_mensaje, int);
 void* enviar_interrupt(void*);
 void ejecutar_espera(uint32_t);
+char* recibir_valor_string(int);
 
 
 
