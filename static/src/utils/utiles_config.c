@@ -61,7 +61,7 @@ void* cargar_configuracion(char* path_archivo, t_tipo_archivo tipo_archivo) {
 			consola_config = malloc(sizeof(t_consola_config));
 			consola_config->ip = strdup(config_get_string_value(config, "IP"));
 			consola_config->puerto = strdup(config_get_string_value(config, "PUERTO"));
-			consola_config->tiempo_pantalla =strdup(config_get_int_value(config, "TIEMPO_PANTALLA"));
+			consola_config->tiempo_pantalla =config_get_int_value(config, "TIEMPO_PANTALLA");
 			// TODO: Componer la lista de segmentos
 			config_destroy(config);
 			free(config_path);

@@ -78,7 +78,7 @@ void* atender_solicitud_kernel(){
 			case PANTALLA:
 				imprimir_por_pantalla();
 				ejecutar_espera(consola_config->tiempo_pantalla);
-				enviar_mensaje("Imprimi por Pantalla Correctamente", conexion_kernel);
+				enviar_datos(conexion_kernel,OKI_PANTALLA,sizeof(OKI_PANTALLA));
 				break;
 			default:
 				// TODO: notificacion con datos error

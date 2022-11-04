@@ -104,7 +104,7 @@ void enviar_valor_a_imprimir(int valor, int socket_cliente){
 }
 
 void enviar_valor_ingresado(int valor, int socket_cliente){
-	enviar_valor_con_codigo(valor, TECLADO, socket_cliente);
+	enviar_valor_con_codigo(valor, OKI_TECLADO, socket_cliente);
 }
 
 int enviar_datos(int socket_fd, void *source, uint32_t size) {

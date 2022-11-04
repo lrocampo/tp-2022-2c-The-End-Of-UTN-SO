@@ -27,7 +27,9 @@ typedef enum
 	INTERRUPCION,
 	FINALIZAR,
 	TECLADO,
-	PANTALLA
+	PANTALLA,
+	OKI_PANTALLA,
+	OKI_TECLADO,
 } cod_mensaje;
 
 typedef struct

@@ -13,6 +13,7 @@
 #include <semaphore.h>
 #include <stdlib.h>
 #include <kernel.h>
+#include <cpu.h>
 
 extern t_queue* cola_new_pcbs;
 extern t_queue* cola_exit_pcbs;

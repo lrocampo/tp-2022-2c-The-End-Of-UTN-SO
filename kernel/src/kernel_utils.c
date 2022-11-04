@@ -186,9 +186,9 @@ void solicitar_io(t_pcb* pcb, instruccion* ultima_instruccion) {
 	char* dispositivo = ultima_instruccion->parametro1;
 
 	if(string_equals_ignore_case(dispositivo, "TECLADO") || string_equals_ignore_case(dispositivo, "PANTALLA")) {
-		//pthread_t th_solicitud_consola;
-       // pthread_create(&th_solicitud_consola, NULL, &solicitar_io_consola, (void*)pcb);
-        //pthread_detach(th_solicitud_consola);
+		pthread_t th_solicitud_consola;
+        pthread_create(&th_solicitud_consola, NULL, &solicitar_io_consola, (void*)pcb);
+        pthread_detach(th_solicitud_consola);
 	}
 	else {
 		solicitar_dispositivo(pcb, ultima_instruccion);
@@ -196,29 +196,41 @@ void solicitar_io(t_pcb* pcb, instruccion* ultima_instruccion) {
 }
 
 // Cuerpo de la funcion que ejecuta el hilo para teclado/pantalla
-// void* solicitar_io_consola(pcb){
+void* solicitar_io_consola(void *arg){
+	t_pcb *pcb = (t_pcb *) arg;
+	instruccion *instruccionIO = obtener_ultima_instruccion(pcb);
+	solicitud(instruccionIO, pcb);
+	pasar_a_ready(pcb);
 
-//     obtenerultimains(pcb)
-
-//     solicitud(pcb->instruccion->param1, consola_fd)
-
-//     esperarrespuesta(consola_fd)
-
-//     ---> pasaraready() <---
-
-// }
+}
 
 // La funcion que se comunica con la consola
-// void solicitud(instruccion, consola_fd) {
-//     param1 = instruccion->param1
-//     param2 = instruccion->param2
-//     if(param1 == TECLADO) {
-//         enviar_datos(teclado)
-//     }
-//     else {
-//         enviar_valor_a_imprimir(pantalla, param2)
-//     }
-// }
+	void solicitud(instruccion* instruccionIO, t_pcb *pcb) {
+     char* dispositivo = instruccionIO->parametro1;
+     char *registro = instruccionIO->parametro2;
+	 int consola_fd =  pcb->socket_consola;
+     if(string_equals_ignore_case(dispositivo,"TECLADO")) {
+         enviar_datos(consola_fd,TECLADO,sizeof(TECLADO));
+		 cod_mensaje codigo = recibir_operacion(consola_fd);
+		 if(codigo == OKI_TECLADO){
+			int valor = recibir_valor(consola_fd);
+			char* valorToString = string_itoa(valor);
+			ejecutar_set(pcb,registro,valorToString);
+		 }else{
+			log_debug(kernel_logger,"ERROR");
+		 }
+    }
+     else {
+		uint32_t valor_registro = obtener_valor_del_registro(pcb,registro);
+        enviar_valor_a_imprimir(valor_registro,consola_fd);
+		cod_mensaje codigo = recibir_operacion(consola_fd);
+		 if(codigo == OKI_PANTALLA){
+			log_debug(kernel_logger,"Todo Bien, Imprimir por Pantalla");
+		 }else{
+			log_debug(kernel_logger,"ERROR");
+		 }
+    	}
+}
 
 
 void* transicion_proceso_a_ready(void* arg){

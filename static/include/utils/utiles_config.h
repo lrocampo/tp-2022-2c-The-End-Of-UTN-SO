@@ -26,6 +26,7 @@ typedef struct {
 	char* puerto_memoria;
 	char* puerto_escucha_dispatch;
 	char* puerto_escucha_interrupt;
+	int   retardo_intruccion;
 }t_cpu_config;
 
 typedef struct {
