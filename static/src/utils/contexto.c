@@ -7,11 +7,11 @@
 
 #include <utils/contexto.h>
 
-void instruccion_destroy(void* _instruccion){
-    instruccion* ins = (instruccion*) _instruccion;
-    free(ins->parametro1);
-    free(ins->parametro2);
-    free(ins);
+void instruccion_destroy(void* arg){
+    instruccion* _instruccion = (instruccion*) arg;
+    free(_instruccion->parametro1);
+    free(_instruccion->parametro2);
+    free(_instruccion);
 }
 
 t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
@@ -35,7 +35,8 @@ t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
     return pcb;
 }
 
-void pcb_destroy(t_pcb* pcb){
+void pcb_destroy(void* arg){
+    t_pcb* pcb = (t_pcb*) arg;
     list_destroy_and_destroy_elements(pcb->instrucciones, instruccion_destroy);
     free(pcb);
 }

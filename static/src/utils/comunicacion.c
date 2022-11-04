@@ -199,6 +199,7 @@ void enviar_instrucciones(t_list *instrucciones, int socket_cliente)
 
 	enviar_paquete(paquete, socket_cliente);
 	eliminar_paquete(paquete);
+	list_destroy_and_destroy_elements(instrucciones, instruccion_destroy);
 }
 
 void empaquetar_instrucciones(t_list *instrucciones, t_paquete *paquete)

@@ -21,6 +21,16 @@
 #define NOMBRE_MODULO "CPU"
 #define RUTA_CPU_CONFIG "./src/cpu.config"
 
+typedef struct {
+	char* ip_cpu;
+    char* ip_kernel;
+	char* ip_memoria;
+	char* puerto_memoria;
+	char* puerto_escucha_dispatch;
+	char* puerto_escucha_interrupt;
+	int   retardo_intruccion;
+}t_cpu_config;
+
 t_log *cpu_logger;
 t_cpu_config* cpu_config;
 int server_fd_dispatch;
@@ -45,5 +55,8 @@ void ejecutar_mov_out(t_pcb*, char*, char*);
 void ejecutar_io(t_pcb*, char*, char*);
 uint32_t obtener_valor_del_registro(t_pcb*, char*);
 void iniciar_conexion_con_memoria();
+void * configurar_cpu(t_config*);
+void cpu_config_destroy();
+void terminar_modulo();
 
 #endif /* CPU_INCLUDE_CPU_H_ */

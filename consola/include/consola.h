@@ -21,12 +21,24 @@
 #define RUTA_LOGGER_DEBUG_CONSOLA "./consola_db.log"
 #define NOMBRE_MODULO "Consola"
 
+typedef struct {
+	char* ip;
+	char* puerto;
+	int segmentos[4];
+	int tiempo_pantalla;
+} t_consola_config;
+
+
 t_log *consola_logger;
 t_consola_config* consola_config;
 int conexion_kernel;
 
+
 void imprimir_por_pantalla();
 int ingresar_por_teclado();
 void* atender_solicitud_kernel();
+void * configurar_consola(t_config*);
+void terminar_modulo(char*, char*);
+void consola_config_destroy();
 
 #endif /* CONSOLA_INCLUDE_CONSOLA_H_ */

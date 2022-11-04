@@ -17,7 +17,7 @@ int main(void){
 
 	log_debug(cpu_logger,"Arrancando cpu");
 
-	cpu_config = cargar_configuracion(RUTA_CPU_CONFIG, CPU);
+	cpu_config = cargar_configuracion(RUTA_CPU_CONFIG, configurar_cpu);
 	log_debug(cpu_logger,"Configuracion cargada correctamente");
 
 	server_fd_dispatch = iniciar_servidor(cpu_config->ip_cpu, cpu_config->puerto_escucha_dispatch);
@@ -71,7 +71,9 @@ int main(void){
 		}
 
 	log_debug(cpu_logger,"termino cpu\n");
-	log_destroy(cpu_logger);
+
+	terminar_modulo();
+
 	return EXIT_SUCCESS;
 }
 
@@ -124,13 +126,13 @@ void* atender_kernel_interrupt(void* arg) {
 		}
 		else {
 			error_show("Error, se recibio algo que no es una interrupcion: %d\n", cod_op);
-			exit(EXIT_FAILURE);
+			pthread_exit(NULL);
 		}
 		
 		if(cliente_fd_interrupt == -1){
 			error_show("Error conectando con el kernel");
 			log_debug(cpu_logger,"Se desconecto el cliente.");
-			exit(EXIT_FAILURE);
+			pthread_exit(NULL);
 		}
 		
 	}
@@ -231,3 +233,31 @@ void iniciar_conexion_con_memoria() {
 	}
 }
 
+void * configurar_cpu(t_config* config){
+	t_cpu_config* cpu_config;
+	cpu_config = malloc(sizeof(t_cpu_config));
+	cpu_config->ip_cpu = strdup(config_get_string_value(config, "IP_CPU"));
+	cpu_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
+	cpu_config->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
+	cpu_config->puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
+	cpu_config->puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
+	cpu_config->puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
+	cpu_config->retardo_intruccion = config_get_int_value(config, "RETARDO_INSTRUCCION");
+	return cpu_config;
+}
+
+void terminar_modulo(){
+	liberar_conexion(conexion_memoria);
+	log_destroy(cpu_logger);
+	cpu_config_destroy();
+}
+
+void cpu_config_destroy(){
+	free(cpu_config->ip_cpu);
+	free(cpu_config->ip_kernel);
+	free(cpu_config->ip_memoria);
+	free(cpu_config->puerto_escucha_dispatch);
+	free(cpu_config->puerto_escucha_interrupt);
+	free(cpu_config->puerto_memoria);
+	free(cpu_config);
+}

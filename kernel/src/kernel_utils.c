@@ -148,7 +148,7 @@ t_pcb* obtener_proceso_ejecutado(){
     }
     else {
         error_show("Error al recibir PCB");
-        exit(EXIT_FAILURE);
+		pthread_exit(NULL);
     }  
 }
 
