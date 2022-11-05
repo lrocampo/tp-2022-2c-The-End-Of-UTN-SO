@@ -47,7 +47,7 @@ void memoria_config_destroy(){
 void solicitudes_a_memoria_init() {
     pthread_create(&th_atender_pedido_de_memoria, NULL, &atender_pedido_de_memoria, NULL);
 
-	pthread_create(&th_atender_pedido_de_estructuras, NULL, atender_pedido_de_estructuras, NULL);
+	pthread_create(&th_atender_pedido_de_estructuras, NULL, &atender_pedido_de_estructuras, NULL);
 }
 
 void* atender_pedido_de_memoria(void* args){
