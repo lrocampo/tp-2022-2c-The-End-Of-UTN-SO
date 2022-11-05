@@ -92,6 +92,7 @@ void iniciar_ciclo_de_instruccion(t_pcb* pcb_to_exec) {
 			pthread_mutex_unlock(&interrupcion_mutex);
 			break;
 		}
+
 	}
 }
 

@@ -157,6 +157,7 @@ void analizar_contexto_recibido(t_pcb* pcb){
 	if(pcb->interrupcion){ // cuando hay fin de quantum
 		log_info(kernel_logger,"PID: %d - Desalojado por fin de Quantum", pcb->pid);
 		pcb->interrupcion = false;
+		pcb->con_desalojo = false;
 	}
 }
 
@@ -183,6 +184,7 @@ instruccion* obtener_ultima_instruccion(t_pcb* pcb){
 
 void solicitar_io(t_pcb* pcb, instruccion* ultima_instruccion) {
 	char* dispositivo = ultima_instruccion->parametro1;
+	cambiar_estado(pcb, BLOCK);
 
 	if(string_equals_ignore_case(dispositivo, "TECLADO") || string_equals_ignore_case(dispositivo, "PANTALLA")) {
 		pthread_t th_solicitud_consola;
@@ -239,9 +241,8 @@ void* transicion_proceso_a_ready(void* arg){
 		sem_wait(&procesos_new);
         sem_wait(&multiprogramacion);
         t_pcb* pcb = safe_pcb_pop(cola_new_pcbs, cola_new_pcbs_mutex);
-        pasar_a_ready(pcb);
 		solicitar_creacion_estructuras_administrativas(pcb);
-
+        pasar_a_ready(pcb);
 	}
 }
 // todo mauro
@@ -365,10 +366,12 @@ void* ejecucion_io(void* arg){
 	//char* nombre = dispositivo->nombre; TODO: log
 	while(1){
 		sem_wait(&s_dispositivos_io[idx]);
+		log_debug(kernel_logger, "dispositivo solicitado: %s", dispositivo->nombre);
 		t_pcb* pcb = safe_pcb_pop(cola_de_atencion, cola_dispositivo_mutex[idx]);
 		instruccion* ultima_instruccion = obtener_ultima_instruccion(pcb);
-		uint32_t unidades_tiempo = (uint32_t) atoi(ultima_instruccion->parametro2);
+		uint32_t unidades_tiempo = (uint32_t) (atoi(ultima_instruccion->parametro2) * dispositivo->duracion);
 		ejecutar_espera(unidades_tiempo);
+		log_debug(kernel_logger, "Tiempo esperado: %d", unidades_tiempo);
 		pasar_a_ready(pcb);
 	}
 }
