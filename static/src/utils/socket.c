@@ -19,7 +19,7 @@ int iniciar_servidor(char* ip, char* puerto)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
-
+			//null
 	getaddrinfo(ip, puerto, &hints, &servinfo);
 
 	// Creamos el socket de escucha del servidor
