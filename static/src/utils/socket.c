@@ -27,6 +27,10 @@ int iniciar_servidor(char* ip, char* puerto)
             				  servinfo->ai_socktype,
 							  servinfo->ai_protocol);
 
+	if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0){
+    	error_show("setsockopt(SO_REUSEADDR) failed");
+	}
+
 	// Asociamos el socket a un puerto
 	bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
 
@@ -35,6 +39,8 @@ int iniciar_servidor(char* ip, char* puerto)
 
 	freeaddrinfo(servinfo);
 	//log_trace(logger, "Listo para escuchar a mi cliente");
+
+	
 
 	return socket_servidor;
 }

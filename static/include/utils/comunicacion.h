@@ -27,7 +27,9 @@ typedef enum
 	INTERRUPCION,
 	FINALIZAR,
 	TECLADO,
-	PANTALLA
+	PANTALLA,
+	OKI_PANTALLA,
+	OKI_TECLADO,
 } cod_mensaje;
 
 typedef struct
@@ -77,6 +79,8 @@ void enviar_valor_a_imprimir(int, int);
 void enviar_valor_ingresado(int, int);
 void enviar_mensaje_con_codigo(char *, cod_mensaje, int);
 void* enviar_interrupt(void*);
+void ejecutar_espera(uint32_t);
+char* recibir_valor_string(int);
 
 
 

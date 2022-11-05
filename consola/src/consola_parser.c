@@ -33,6 +33,7 @@
         param2 = NULL;
     }
     string_array_destroy(instructions_array);
+    free(instructions_string);
     return pseudocodigo;
 }
 

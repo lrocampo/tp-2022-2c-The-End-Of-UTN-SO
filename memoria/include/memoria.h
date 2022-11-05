@@ -8,24 +8,16 @@
 #ifndef MEMORIA_INCLUDE_MEMORIA_H_
 #define MEMORIA_INCLUDE_MEMORIA_H_
 
-#include <stdio.h>
-#include <utils/utiles_config.h>
-#include <stdlib.h>
-#include <utils/socket.h>
-#include <pthread.h>
-#include <utils/comunicacion.h>
-#include "../../static/include/utils/logger.h"
+#include <memoria_utils.h>
 
-#define RUTA_LOGGER_MEMORIA "./memoria.log"
-#define RUTA_LOGGER_DEBUG_MEMORIA "./memoria_db.log"
-#define NOMBRE_MODULO "MEMORIA"
-#define RUTA_MEMORIA_CONFIG "./src/memoria.config"
+extern t_log *memoria_logger;
+extern t_memoria_config* memoria_config;
+extern int server_fd_cpu;
+extern int server_fd_kernel;
+extern int cliente_kernel_fd;
+extern int cliente_cpu_fd;
 
-t_log *memoria_logger;
-t_memoria_config* memoria_config;
-int memoria_server_fd;
-int cliente_kernel_fd;
-int cliente_cpu_fd;
-void* atender_pedido_de_memoria(void*);
+extern pthread_t th_atender_pedido_de_memoria;
+extern pthread_t th_atender_pedido_de_estructuras;
 
 #endif /* MEMORIA_INCLUDE_MEMORIA_H_ */

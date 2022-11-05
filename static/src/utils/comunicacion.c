@@ -22,6 +22,11 @@ int recibir_operacion(int socket_cliente)
 	}
 }
 
+/* TIMMER */
+
+void ejecutar_espera(uint32_t tiempo){
+	usleep(tiempo * 1000);
+}
 /* BUFFER */
 
 void *recibir_buffer(int *size, int socket_cliente)
@@ -88,9 +93,16 @@ int recibir_valor(int socket_cliente){
 	return valor;
 }
 
+char* recibir_valor_string(int socket_cliente){
+	int size;
+	char *buffer = recibir_buffer(&size, socket_cliente);
+	return buffer;
+}
+
 void enviar_valor_con_codigo(int valor, cod_mensaje codigo, int socket_cliente){
 	char* mensaje = string_itoa(valor);
 	enviar_mensaje_con_codigo(mensaje, codigo, socket_cliente);
+	free(mensaje);
 }
 
 void enviar_valor_a_imprimir(int valor, int socket_cliente){
@@ -98,7 +110,7 @@ void enviar_valor_a_imprimir(int valor, int socket_cliente){
 }
 
 void enviar_valor_ingresado(int valor, int socket_cliente){
-	enviar_valor_con_codigo(valor, TECLADO, socket_cliente);
+	enviar_valor_con_codigo(valor, OKI_TECLADO, socket_cliente);
 }
 
 int enviar_datos(int socket_fd, void *source, uint32_t size) {
@@ -194,6 +206,7 @@ void enviar_instrucciones(t_list *instrucciones, int socket_cliente)
 
 	enviar_paquete(paquete, socket_cliente);
 	eliminar_paquete(paquete);
+	list_destroy_and_destroy_elements(instrucciones, instruccion_destroy);
 }
 
 void empaquetar_instrucciones(t_list *instrucciones, t_paquete *paquete)
