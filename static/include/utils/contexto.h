@@ -82,6 +82,21 @@ typedef struct {
 	bool con_desalojo;
 }t_pcb;
 
+typedef struct {
+	int numero_pagina;
+	int indice_tabla_de_pagina;
+}t_pagina;
+
+typedef struct {
+	int numero_marco;
+	int pid;
+} t_marco;
+
+typedef struct {
+	int numero_marco;
+	int offset;
+} t_direccion_fisica;
+
 t_pcb* pcb_create(t_list*, uint32_t, int);
 cod_operacion string_to_cod_op(char*);
 void pcb_destroy(void*);
