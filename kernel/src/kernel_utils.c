@@ -31,6 +31,7 @@ pthread_mutex_t pid_mutex;
 pthread_mutex_t cola_new_pcbs_mutex;
 pthread_mutex_t cola_ready_RR_pcbs_mutex;
 pthread_mutex_t cola_ready_FIFO_pcbs_mutex;
+pthread_mutex_t cola_exit_pcbs_mutex;
 pthread_mutex_t* cola_dispositivo_mutex;
 
 pthread_t th_timer;
@@ -48,6 +49,7 @@ void largo_plazo_init(){
 	sem_init(&procesos_new,0,0);
 	sem_init(&procesos_finalizados, 0, 0);
 	pthread_mutex_init(&cola_new_pcbs_mutex, NULL);
+	pthread_mutex_init(&cola_exit_pcbs_mutex, NULL);
 
     pthread_create(&th_rajar_pcb, NULL, &rajar_pcb, NULL);
 	pthread_create(&th_conexiones, NULL, &atender_nueva_consola, NULL);
@@ -83,7 +85,7 @@ void* atender_nueva_consola(void* arg){
 void* rajar_pcb(void* arg) {
 	while(1) {
 		sem_wait(&procesos_finalizados);
-		t_pcb* pcb = queue_pop(cola_exit_pcbs);
+		t_pcb* pcb = safe_pcb_pop(cola_exit_pcbs, cola_exit_pcbs_mutex);
         pthread_mutex_lock(&pid_mutex);
         --pid_actual;
         pthread_mutex_unlock(&pid_mutex);
@@ -285,7 +287,7 @@ void pasar_a_ready(t_pcb* pcb){
 void solicitar_finalizacion(t_pcb* pcb){
 	cod_mensaje cod_msj = FINALIZAR;
     cambiar_estado(pcb, FINISH_EXIT);
-    queue_push(cola_exit_pcbs,pcb);
+	safe_pcb_push(cola_exit_pcbs, pcb, cola_exit_pcbs_mutex);
 	enviar_datos(pcb->socket_consola,&cod_msj,sizeof(cod_msj));
     sem_post(&procesos_finalizados);
 }
