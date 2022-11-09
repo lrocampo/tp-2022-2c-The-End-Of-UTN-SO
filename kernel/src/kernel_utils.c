@@ -57,15 +57,20 @@ void largo_plazo_init(){
 void* atender_nueva_consola(void* arg){
     t_pcb* pcb;
 	t_list* instrucciones;
+	t_list* segmentos;
+	t_proceso* proceso;
 	while(1){
 		log_debug(kernel_logger, "Soy Kernel. Esperando conexion...");
 		int consola_fd = esperar_cliente(kernel_server_fd);
 		log_debug(kernel_logger, "se conecto un cliente");
         cod_mensaje cod_msj = recibir_operacion(consola_fd);
-        if(cod_msj == PAQUETE_INSTRUCCIONES){
-            instrucciones = recibir_paquete_con_funcion(consola_fd, deserializar_instruccion);
+        if(cod_msj == PROCESO){
+            proceso = deserializar_proceso(consola_fd);
+			instrucciones = proceso->instrucciones;
+			segmentos = proceso->segmentos;
             log_debug(kernel_logger, "Recibí %d instrucciones", list_size(instrucciones));
-            pcb = pcb_create(instrucciones, siguiente_pid(), consola_fd);
+            log_debug(kernel_logger, "Recibí %d segmentos", list_size(segmentos));
+            pcb = pcb_create(proceso, siguiente_pid(), consola_fd);
             safe_pcb_push(cola_new_pcbs, pcb, cola_new_pcbs_mutex);
             log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
 			sem_post(&procesos_new);
@@ -247,11 +252,16 @@ void* transicion_proceso_a_ready(void* arg){
 }
 // todo mauro
 void solicitar_creacion_estructuras_administrativas(t_pcb* pcb) {
-	cod_mensaje cod_msj = ESTRUCTURAS;
-	enviar_valor_con_codigo(pcb->pid, cod_msj, conexion_memoria);
+	t_pcb_memoria* pcb_memoria = malloc(sizeof(t_pcb_memoria));
+	pcb_memoria->pid = pcb->pid;
+	pcb_memoria->segmentos = pcb->tamanio_segmentos;
+	enviar_pcb_memoria(pcb_memoria, conexion_memoria);
  	cod_mensaje mensaje = recibir_operacion(conexion_memoria);
+
  	if(mensaje == OKI_ESTRUCTURAS){
  		log_debug(kernel_logger, "Se han creado las estructuras para el proceso %d", pcb->pid);
+		// temporal
+		pcb->tabla_de_segmentos = list_create(); // sacar cuando no se use
  	}
  }
 
@@ -319,8 +329,10 @@ t_pcb* pop_ready_pcb(){
 void push_ready_pcb(t_pcb* pcb){
 	if((algoritmo == FEEDBACK && (pcb->estado == NEW || pcb->estado == BLOCK)) || algoritmo == RR) {
 		pcb->con_desalojo = true;
+		pcb->interrupcion = true;
         safe_pcb_push(cola_ready_RR_pcbs, pcb, cola_ready_RR_pcbs_mutex);
 	} else {
+		pcb->con_desalojo = false;
         safe_pcb_push(cola_ready_FIFO_pcbs, pcb, cola_ready_FIFO_pcbs_mutex);
 	}
 }

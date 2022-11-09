@@ -21,7 +21,7 @@ int main(void){
 
 	memoria_principal_init();
 
-	algoritmo_init();
+	//algoritmo_init(); descomentar cuando exista
 
 	solicitudes_a_memoria_init();
 
