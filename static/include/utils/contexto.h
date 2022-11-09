@@ -10,6 +10,7 @@
 
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
+#include<unistd.h>
 #include <commons/string.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -125,5 +126,6 @@ void instruccion_destroy(void*);
 char* operacion_to_string(cod_operacion);
 void set_valor_registro(t_pcb*, char*, char*);
 uint32_t obtener_valor_del_registro(t_pcb*, char*);
+void ejecutar_espera(uint32_t);
 
 #endif /* INCLUDE_UTILS_CONTEXTO_H_ */

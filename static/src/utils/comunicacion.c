@@ -21,12 +21,6 @@ int recibir_operacion(int socket_cliente)
 		return -1;
 	}
 }
-
-/* TIMMER */
-
-void ejecutar_espera(uint32_t tiempo){
-	usleep(tiempo * 1000);
-}
 /* BUFFER */
 
 void *recibir_buffer(int *size, int socket_cliente)
@@ -79,6 +73,25 @@ void recibir_mensaje(t_log* logger, int socket_cliente)
 	char *buffer = recibir_buffer(&size, socket_cliente);
 	log_debug(logger,"Se recibio el siguiente mensaje: %s",buffer);
 	free(buffer);
+}
+
+t_list* deserializar_paquete_mensaje(int* desplazamiento, void* buffer){
+	int tamanio_string;
+	int cantidad_elementos;
+	t_list* lista_result = list_create();
+	memcpy(&(cantidad_elementos), buffer + (*desplazamiento), sizeof(int));
+	*desplazamiento += sizeof(int);
+	for(int i=0; i < cantidad_elementos; i++)
+	{
+		memcpy(&tamanio_string, buffer + (*desplazamiento), sizeof(int));
+		*desplazamiento+=sizeof(int);
+		char* valor = malloc(tamanio_string);
+		memcpy(valor, buffer+(*desplazamiento), tamanio_string);
+		*desplazamiento+=tamanio_string;
+		list_add(lista_result, valor);
+	}
+
+	return lista_result;
 }
 
 /* VALORES */
@@ -150,19 +163,23 @@ void enviar_paquete(t_paquete *paquete, int socket_cliente)
 	free(a_enviar);
 }
 
-t_list* recibir_paquete_con_funcion(int socket_cliente, void* (*funcion_deserializar)(void*,int*))
+t_list* recibir_paquete_con_funcion(int socket_cliente, void* (*funcion_deserializar)(int*, void*))
 {
 	int desplazamiento = 0;
 	int size;
+	int cantidad_elementos;
 	void * buffer;
 	t_list* valores = list_create();
 	void* valor;
 
 	buffer = recibir_buffer(&size, socket_cliente);
 
-	while(desplazamiento < size)
+	memcpy(&(cantidad_elementos), buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	for(int i = 0; i < cantidad_elementos; i++)
 	{
-		valor = funcion_deserializar(buffer, &desplazamiento);	 
+		valor = funcion_deserializar(&desplazamiento, buffer);	 
 		list_add(valores, valor);
 	}
 	free(buffer);
@@ -198,21 +215,10 @@ void agregar_valor_a_paquete(t_paquete *paquete, void *valor, int tamanio)
 
 /* PAQUETE_INSTRUCCIONES */
 
-void enviar_instrucciones(t_list *instrucciones, int socket_cliente)
-{
-	t_paquete *paquete = new_paquete_con_codigo_de_operacion(PAQUETE_INSTRUCCIONES);
-
-	empaquetar_instrucciones(instrucciones, paquete);
-
-	enviar_paquete(paquete, socket_cliente);
-	eliminar_paquete(paquete);
-	list_destroy_and_destroy_elements(instrucciones, instruccion_destroy);
-}
-
 void empaquetar_instrucciones(t_list *instrucciones, t_paquete *paquete)
 {
 	int cantidad_instrucciones = list_size(instrucciones);
-
+	agregar_valor_a_paquete(paquete, &(cantidad_instrucciones), sizeof(int));
 	for (int i = 0; i < cantidad_instrucciones; i++)
 	{
 		instruccion *instruccion = list_get(instrucciones, i);
@@ -227,7 +233,7 @@ void serializar_instruccion(instruccion *instruccion, t_paquete *paquete)
 	agregar_a_paquete_con_header(paquete, instruccion->parametro2, strlen(instruccion->parametro2) + 1);
 }
 
-void* deserializar_instruccion(void* buffer, int* desplazamiento)
+void* deserializar_instruccion(int* desplazamiento, void* buffer)
 {
 	instruccion* nueva_instruccion = malloc(sizeof(instruccion)); 
 	int tamanio = 0;
@@ -255,6 +261,103 @@ void* deserializar_instruccion(void* buffer, int* desplazamiento)
 	return nueva_instruccion;
 }
 
+t_list* deserializar_instrucciones(int* desplazamiento, void* buffer){
+	t_list* lista_instrucciones = list_create();
+	int cantidad_instrucciones;
+
+	memcpy(&(cantidad_instrucciones), buffer + (*desplazamiento), sizeof(int));
+	(*desplazamiento) += sizeof(int);
+
+	for(int i = 0; i < cantidad_instrucciones; i++){
+		instruccion* instruccion = deserializar_instruccion(desplazamiento, buffer);	 
+		list_add(lista_instrucciones, instruccion);
+	}
+
+	return lista_instrucciones;
+}
+
+
+/* PROCESO */
+
+void enviar_proceso(t_proceso* proceso, int socket_cliente){
+	t_paquete *paquete = new_paquete_con_codigo_de_operacion(PROCESO);
+
+	empaquetar_proceso(proceso, paquete);
+
+	enviar_paquete(paquete, socket_cliente);
+	eliminar_paquete(paquete);
+	list_destroy_and_destroy_elements(proceso->instrucciones, instruccion_destroy);
+	list_destroy_and_destroy_elements(proceso->segmentos, free);
+}
+
+void empaquetar_proceso(t_proceso* proceso,t_paquete* paquete){
+	empaquetar_instrucciones(proceso->instrucciones, paquete);
+	empaquetar_segmentos(proceso->segmentos, paquete);
+}
+
+t_proceso* deserializar_proceso(int socket_cliente){
+	int desplazamiento = 0;
+	int size;
+	void * buffer;
+	t_list* lista_instrucciones;
+	t_list* lista_segmentos;
+
+	buffer = recibir_buffer(&size, socket_cliente);
+
+	t_proceso* proceso = malloc(sizeof(t_proceso));
+
+	lista_instrucciones = deserializar_instrucciones(&desplazamiento, buffer);
+	lista_segmentos = deserializar_paquete_mensaje(&desplazamiento, buffer);
+
+	proceso->instrucciones = lista_instrucciones;
+	proceso->segmentos = lista_segmentos;
+
+	return proceso;
+}
+
+/* SEGMENTOS */
+
+void empaquetar_segmentos(t_list* segmentos, t_paquete* paquete){
+	int cantidad_segmentos = list_size(segmentos);
+	agregar_valor_a_paquete(paquete, &(cantidad_segmentos), sizeof(int));
+	for (int i = 0; i < cantidad_segmentos; i++)
+	{
+		char *segmento = list_get(segmentos, i);
+		agregar_a_paquete_con_header(paquete, segmento, strlen(segmento) + 1);
+	}
+}
+
+void* deserializar_segmento(void* buffer, int* desplazamiento)
+{
+	t_segmento* nuevo_segmento = malloc(sizeof(t_segmento)); 
+
+	memcpy(&(nuevo_segmento->nro_segmento), buffer + *desplazamiento, sizeof(uint32_t));
+	*desplazamiento += sizeof(uint32_t);
+
+	memcpy(&(nuevo_segmento->tamanio_segmento), buffer + *desplazamiento, sizeof(uint32_t));
+	*desplazamiento += sizeof(uint32_t);
+
+	memcpy(&(nuevo_segmento->indice_tabla_paginas), buffer + *desplazamiento, sizeof(uint32_t));
+	*desplazamiento += sizeof(uint32_t);
+
+	return nuevo_segmento;
+}
+
+t_list* deserializar_tabla_segmentos(int* desplazamiento, void* buffer){
+	int cantidad_segmentos;
+	t_list* tabla_segmentos = list_create();
+
+	memcpy(&(cantidad_segmentos), buffer + (*desplazamiento), sizeof(int));
+	*desplazamiento += sizeof(int);
+
+	for(int i = 0; i < cantidad_segmentos; i++){
+		t_segmento* nuevo_segmento = deserializar_segmento(buffer, desplazamiento);
+		list_add(tabla_segmentos, nuevo_segmento);
+	}
+
+	return tabla_segmentos;
+}
+
 /* PAQUETE_PCB */
 
 void enviar_pcb(t_pcb* pcb, int socket_cliente)
@@ -268,23 +371,29 @@ void enviar_pcb(t_pcb* pcb, int socket_cliente)
 }
 
 void empaquetar_pcb(t_pcb* pcb,t_paquete* paquete){
-	int cantidad_instrucciones = list_size(pcb->instrucciones);
 	agregar_valor_a_paquete(paquete, &(pcb->pid), sizeof(u_int32_t));
 	agregar_valor_a_paquete(paquete, &(pcb->program_counter), sizeof(u_int32_t));
 	agregar_valor_a_paquete(paquete, &(pcb->estado), sizeof(estado_proceso));
 	agregar_valor_a_paquete(paquete, &(pcb->socket_consola), sizeof(int));
 	agregar_valor_a_paquete(paquete, &(pcb->interrupcion), sizeof(bool));
 	agregar_valor_a_paquete(paquete, &(pcb->con_desalojo), sizeof(bool));
-	empaquetar_tabla_segmentos(pcb->tabla, paquete);
 	empaquetar_registros(pcb->registros, paquete);
-	agregar_valor_a_paquete(paquete, &(cantidad_instrucciones), sizeof(int));
 	empaquetar_instrucciones(pcb->instrucciones, paquete);
+	empaquetar_tabla_segmentos(pcb->tabla_de_segmentos, paquete);
 }
 
-void empaquetar_tabla_segmentos(tabla_de_segmentos tabla,t_paquete* paquete){
-	agregar_valor_a_paquete(paquete, &(tabla.indice_tabla_paginas), sizeof(u_int32_t));
-	agregar_valor_a_paquete(paquete, &(tabla.nro_segmento), sizeof(u_int32_t));
-	agregar_valor_a_paquete(paquete, &(tabla.tamanio_segmento), sizeof(u_int32_t));
+void empaquetar_tabla_segmentos(t_list* tabla,t_paquete* paquete){
+
+	int cant_segmentos = list_size(tabla);
+	agregar_valor_a_paquete(paquete, &(cant_segmentos), sizeof(int));
+
+	for(int i = 0; i < cant_segmentos; i++){
+		t_segmento* segmento = list_get(tabla, i);
+		agregar_valor_a_paquete(paquete, &(segmento->nro_segmento), sizeof(u_int32_t));
+		agregar_valor_a_paquete(paquete, &(segmento->tamanio_segmento), sizeof(u_int32_t));
+		agregar_valor_a_paquete(paquete, &(segmento->indice_tabla_paginas), sizeof(u_int32_t));
+	}
+	
 }
 
 void empaquetar_registros(registros_de_proposito_general registros, t_paquete* paquete){
@@ -298,7 +407,7 @@ void enviar_pcb_memoria(t_pcb_memoria* pcb, int socket_cliente) {
 	t_paquete *paquete = new_paquete_con_codigo_de_operacion(ESTRUCTURAS);
 	
 	agregar_valor_a_paquete(paquete, &(pcb->pid), sizeof(int));
-	empaquetar_tabla_segmentos(pcb->tabla, paquete);
+	empaquetar_segmentos(pcb->segmentos, paquete);
 	
 	enviar_paquete(paquete, socket_cliente);
 	eliminar_paquete(paquete);
@@ -307,9 +416,9 @@ void enviar_pcb_memoria(t_pcb_memoria* pcb, int socket_cliente) {
 t_pcb* recibir_pcb(int socket_cliente){
 	int desplazamiento = 0;
 	int size;
-	int cantidad_instrucciones;
 	void * buffer;
-	t_list* lista_instrucciones = list_create();
+	t_list* lista_instrucciones;
+	t_list* tabla_segmentos;
 
 	buffer = recibir_buffer(&size, socket_cliente);
 
@@ -333,15 +442,6 @@ t_pcb* recibir_pcb(int socket_cliente){
 	memcpy(&(nueva_pcb->con_desalojo), buffer + desplazamiento, sizeof(bool));
 	desplazamiento += sizeof(bool);
 
-	memcpy(&(nueva_pcb->tabla.indice_tabla_paginas), buffer + desplazamiento, sizeof(u_int32_t));
-	desplazamiento += sizeof(u_int32_t);
-
-	memcpy(&(nueva_pcb->tabla.nro_segmento), buffer + desplazamiento, sizeof(u_int32_t));
-	desplazamiento += sizeof(u_int32_t);
-
-	memcpy(&(nueva_pcb->tabla.tamanio_segmento), buffer + desplazamiento, sizeof(u_int32_t));
-	desplazamiento += sizeof(u_int32_t);
-
 	memcpy(&(nueva_pcb->registros.ax), buffer + desplazamiento, sizeof(u_int32_t));
 	desplazamiento += sizeof(u_int32_t);
 
@@ -354,15 +454,12 @@ t_pcb* recibir_pcb(int socket_cliente){
 	memcpy(&(nueva_pcb->registros.dx), buffer + desplazamiento, sizeof(u_int32_t));
 	desplazamiento += sizeof(u_int32_t);
 
-	memcpy(&(cantidad_instrucciones), buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-
-	for(int i = 0; i < cantidad_instrucciones; i++){
-		instruccion* nueva_instruccion = deserializar_instruccion(buffer, &desplazamiento);
-		list_add(lista_instrucciones, nueva_instruccion);
-	}
+	lista_instrucciones = deserializar_instrucciones(&desplazamiento, buffer);
+	tabla_segmentos = deserializar_tabla_segmentos(&desplazamiento, buffer);
 
 	nueva_pcb->instrucciones = lista_instrucciones;
+	nueva_pcb->tabla_de_segmentos = tabla_segmentos;
+
 	free(buffer);
 	return nueva_pcb;
 }
@@ -379,80 +476,9 @@ t_pcb_memoria* recibir_pcb_memoria(int socket_cliente) {
 	memcpy(&(nueva_pcb->pid), buffer + desplazamiento, sizeof(u_int32_t));
 	desplazamiento += sizeof(int);
 
-	memcpy(&(nueva_pcb->tabla.indice_tabla_paginas), buffer + desplazamiento, sizeof(u_int32_t));
-	desplazamiento += sizeof(u_int32_t);
-
-	memcpy(&(nueva_pcb->tabla.nro_segmento), buffer + desplazamiento, sizeof(u_int32_t));
-	desplazamiento += sizeof(u_int32_t);
-
-	memcpy(&(nueva_pcb->tabla.tamanio_segmento), buffer + desplazamiento, sizeof(u_int32_t));
-	desplazamiento += sizeof(u_int32_t);
+	nueva_pcb->segmentos = deserializar_paquete_mensaje(&desplazamiento, buffer);
 
 	free(buffer);
 	return nueva_pcb;
 }
 
-
-/* NO SE USA (pero no borrar todavia)*/
-
-// t_list* recibir_paquete(int socket_cliente, )
-// {
-// 	int size;
-// 	int desplazamiento = 0;
-// 	void * buffer;
-// 	t_list* valores = list_create();
-// 	int tamanio;
-
-// 	buffer = recibir_buffer(&size, socket_cliente);
-// 	while(desplazamiento < size)
-// 	{
-// 		memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
-// 		desplazamiento+=sizeof(int);
-// 		char* valor = malloc(tamanio);
-// 		memcpy(valor, buffer+desplazamiento, tamanio);
-// 		desplazamiento+=tamanio;
-// 		list_add(valores, valor);
-// 	}
-// 	free(buffer);
-// 	return valores;
-// }
-
-
-// t_list *deserializar_instrucciones(int socket_cliente)
-// {
-// 	int size;
-// 	int desplazamiento = 0;
-// 	void *buffer;
-// 	t_list *valores = list_create();
-// 	int tamanio;
-// 	buffer = recibir_buffer(&size, socket_cliente);
-
-// 	while (desplazamiento < size)
-// 	{
-// 		instruccion *nueva_instruccion = malloc(sizeof(instruccion));
-// 		puts("nueva instruccion");
-
-// 		memcpy(&(nueva_instruccion->operacion), buffer + desplazamiento, sizeof(cod_operacion));
-// 		desplazamiento += sizeof(cod_operacion);
-
-// 		memcpy(&(tamanio), buffer + desplazamiento, sizeof(int));
-// 		desplazamiento += sizeof(int);
-
-// 		nueva_instruccion->parametro1 = malloc(tamanio);
-
-// 		memcpy(nueva_instruccion->parametro1, buffer + desplazamiento, tamanio);
-// 		desplazamiento += tamanio;
-
-// 		memcpy(&(tamanio), buffer + desplazamiento, sizeof(int));
-// 		desplazamiento += sizeof(int);
-
-// 		nueva_instruccion->parametro2 = malloc(tamanio);
-
-// 		memcpy(nueva_instruccion->parametro2, buffer + desplazamiento, tamanio);
-// 		desplazamiento += tamanio;
-
-// 		list_add(valores, nueva_instruccion);
-// 	}
-// 	free(buffer);
-// 	return valores;
-// }

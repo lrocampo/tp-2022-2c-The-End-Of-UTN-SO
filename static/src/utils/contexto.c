@@ -197,3 +197,9 @@ uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
 
 	return valor_de_registro;
 }
+
+/* TIMMER */
+
+void ejecutar_espera(uint32_t tiempo){
+	usleep(tiempo * 1000);
+}
