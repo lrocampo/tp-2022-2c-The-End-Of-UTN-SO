@@ -19,6 +19,8 @@ int main(void){
 
 	memoria_config = cargar_configuracion(RUTA_MEMORIA_CONFIG, &configurar_memoria);
 
+	memoria_principal_init();
+
 	solicitudes_a_memoria_init();
 
 	esperar_conexiones();

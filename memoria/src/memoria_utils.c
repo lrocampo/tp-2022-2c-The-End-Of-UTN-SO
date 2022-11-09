@@ -6,6 +6,8 @@ int server_fd_cpu;
 int server_fd_kernel;
 int cliente_kernel_fd;
 int cliente_cpu_fd;
+t_list* lista_de_marcos; 
+t_list* lista_de_tablas_de_pagina;
 
 pthread_t th_atender_pedido_de_memoria;
 pthread_t th_atender_pedido_de_estructuras;
@@ -20,6 +22,9 @@ void * configurar_memoria(t_config* config){
 	memoria_config->ip_kernel =  strdup(config_get_string_value(config, "IP_KERNEL"));
 	memoria_config->puerto_escucha_cpu = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_CPU"));
 	memoria_config->puerto_escucha_kernel = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_KERNEL"));
+	memoria_config->tamanio_memoria = config_get_int_value(config, "TAM_MEMORIA");
+	memoria_config->tamanio_pagina = config_get_int_value(config, "TAM_PAGINA");
+	memoria_config->tamanio_swap = config_get_int_value(config, "TAMANIO_SWAP");
 	return memoria_config;
 }
 
@@ -40,6 +45,27 @@ void memoria_config_destroy(){
 	free(memoria_config->puerto_escucha_cpu);
 	free(memoria_config->puerto_escucha_kernel);
 	free(memoria_config);
+}
+
+/* Inicializacion */
+
+void memoria_principal_init() {
+	void* espacio_memoria = malloc(memoria_config->tamanio_memoria);
+
+	marcos_init();
+}
+
+void marcos_init() {
+	lista_de_marcos = list_create();
+	int i = 0;
+	int cantidad_de_marcos = memoria_config->tamanio_swap / memoria_config->tamanio_pagina;
+
+	for(i = 0; i < cantidad_de_marcos; i++) {
+		t_marco *marco = (t_marco*)malloc(sizeof(t_marco));
+		marco->numero_marco = i;
+		marco->pid = -1;
+		list_add(lista_de_marcos, marco);
+	}
 }
 
 /* Conexiones con Kernel y CPU */

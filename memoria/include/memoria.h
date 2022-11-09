@@ -16,6 +16,8 @@ extern int server_fd_cpu;
 extern int server_fd_kernel;
 extern int cliente_kernel_fd;
 extern int cliente_cpu_fd;
+extern t_list* lista_de_marcos; 
+extern t_list* lista_de_tablas_de_pagina;
 
 extern pthread_t th_atender_pedido_de_memoria;
 extern pthread_t th_atender_pedido_de_estructuras;
