@@ -97,6 +97,11 @@ typedef struct {
 	int offset;
 } t_direccion_fisica;
 
+typedef struct {
+	int pcb;
+	tabla_de_segmentos tabla;
+} t_pcb_memoria;
+
 t_pcb* pcb_create(t_list*, uint32_t, int);
 cod_operacion string_to_cod_op(char*);
 void pcb_destroy(void*);
