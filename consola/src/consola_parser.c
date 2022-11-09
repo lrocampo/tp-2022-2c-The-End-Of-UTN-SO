@@ -19,7 +19,7 @@
                 param1 = strdup(palabras[1]);
                 param2 = strdup(palabras[2]);
             case EXIT:
-                list_add(pseudocodigo, (void*) new_instruccion(cod_op, param1, param2));
+                list_add(pseudocodigo, (void*) instruccion_create(cod_op, param1, param2));
                 break;
             default:
                 error_show("Error al leer la instruccion: %d\n",i);
@@ -67,7 +67,7 @@ char *leer_archivo_pseudocodigo (char *ruta)
     return arrayDinamico;
 }
 
-instruccion* new_instruccion(cod_operacion operacion, char* parametro1, char* parametro2) {
+instruccion* instruccion_create(cod_operacion operacion, char* parametro1, char* parametro2) {
     instruccion *estructura = malloc(sizeof(instruccion));
     estructura->operacion = operacion;
     if(parametro1 != NULL && parametro2 != NULL){

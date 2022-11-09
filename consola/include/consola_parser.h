@@ -11,7 +11,7 @@
 
 t_list* obtener_pseudocodigo(char*);
 char *leer_archivo_pseudocodigo (char*);
-instruccion* new_instruccion(cod_operacion, char*, char*);
+instruccion* instruccion_create(cod_operacion, char*, char*);
 
 #endif /* CONSOLA_PARSER_INCLUDE_CONSOLA_H_ */
 
