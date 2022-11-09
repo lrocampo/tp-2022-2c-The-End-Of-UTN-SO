@@ -14,11 +14,11 @@ void instruccion_destroy(void* arg){
     free(_instruccion);
 }
 
-t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
+t_pcb* pcb_create(t_proceso* proceso, uint32_t pid, int socket){
     t_pcb* pcb = malloc(sizeof(t_pcb));
 
     pcb->estado = NEW;
-    pcb->instrucciones = instrucciones;
+    pcb->instrucciones = proceso->instrucciones;
     pcb->pid = pid;
     pcb->socket_consola = socket;
     pcb->program_counter = 0;
@@ -27,10 +27,8 @@ t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
     pcb->registros.bx = 0;
     pcb->registros.cx = 0;
     pcb->registros.dx = 0;
-    pcb->tabla.indice_tabla_paginas = 0;
-    pcb->tabla.nro_segmento = 0;
-    pcb->tabla.tamanio_segmento = 0;
     pcb->con_desalojo = false;
+    pcb->tamanio_segmentos = proceso->segmentos;
 
     return pcb;
 }
@@ -38,6 +36,9 @@ t_pcb* pcb_create(t_list* instrucciones, uint32_t pid, int socket){
 void pcb_destroy(void* arg){
     t_pcb* pcb = (t_pcb*) arg;
     list_destroy_and_destroy_elements(pcb->instrucciones, instruccion_destroy);
+    if(pcb->tamanio_segmentos != NULL){
+        list_destroy_and_destroy_elements(pcb->tamanio_segmentos, free);
+    }
     free(pcb);
 }
 
@@ -89,7 +90,7 @@ char* pcb_to_string(t_pcb* pcb){
     char* pcb_estado = estado_to_string(pcb->estado);
     int cantidad_instrucciones = list_size(pcb->instrucciones);
     string_append_with_format(&pcb_string,
-        "PID: %d\nPPID: %d\nPC: %d\nESTADO: %s\nINTERRUPCION: %d\n\nAX= %d BX= %d \nCX= %d DX= %d \n\nIDX: %d  N.PAG: %d  TAM: %d\n\n",
+        "PID: %d\nPPID: %d\nPC: %d\nESTADO: %s\nINTERRUPCION: %d\n\nAX= %d BX= %d \nCX= %d DX= %d \n\n",
         pcb->pid,
         pcb->socket_consola,
         pcb->program_counter,
@@ -98,10 +99,10 @@ char* pcb_to_string(t_pcb* pcb){
         pcb->registros.ax,
         pcb->registros.bx,
         pcb->registros.cx,
-        pcb->registros.dx,
-        pcb->tabla.indice_tabla_paginas,
-        pcb->tabla.nro_segmento,
-        pcb->tabla.tamanio_segmento
+        pcb->registros.dx
+        // pcb->tabla.indice_tabla_paginas,
+        // pcb->tabla.nro_segmento,
+        // pcb->tabla.tamanio_segmento
         );
         for(int i = 0; i < cantidad_instrucciones; i++){
             char* instruccion = instruccion_to_string(list_get(pcb->instrucciones, i));

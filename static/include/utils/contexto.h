@@ -63,7 +63,13 @@ typedef struct {
 	uint32_t nro_segmento;
 	uint32_t tamanio_segmento;
 	uint32_t indice_tabla_paginas;
-}tabla_de_segmentos;
+}t_segmento;
+
+typedef struct 
+{
+	t_list* instrucciones;
+	t_list* segmentos;
+} t_proceso;
 
 // voy a devolver el pcb, por que?
 // Me interrumpiste
@@ -77,7 +83,8 @@ typedef struct {
 	int socket_consola;
 	bool interrupcion;
 	t_list * instrucciones;
-	tabla_de_segmentos tabla;
+	t_list* tabla_de_segmentos;
+	t_list* tamanio_segmentos;
 	registros_de_proposito_general registros;
 	bool con_desalojo;
 	bool page_fault;
@@ -108,7 +115,7 @@ typedef struct {
 	t_list* segmentos;
 } t_pcb_memoria;
 
-t_pcb* pcb_create(t_list*, uint32_t, int);
+t_pcb* pcb_create(t_proceso*, uint32_t, int);
 cod_operacion string_to_cod_op(char*);
 void pcb_destroy(void*);
 char* estado_to_string(estado_proceso);

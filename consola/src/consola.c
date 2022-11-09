@@ -43,7 +43,9 @@ int main(int argc, char **argv) {
 	instrucciones = obtener_pseudocodigo(instrucciones_string);
 	log_debug(consola_logger,"Instrucciones parseadas correctamente");
 
-	enviar_instrucciones(instrucciones, conexion_kernel);
+	proceso_consola = proceso_create(instrucciones, consola_config->segmentos);
+
+	enviar_proceso(proceso_consola, conexion_kernel);
 	log_debug(consola_logger,"Instrucciones enviadas");
 
 	pthread_create(&th_atender_solicitud_kernel, NULL, &atender_solicitud_kernel, NULL);
@@ -97,13 +99,20 @@ int ingresar_por_teclado(){
 	return valor_ingresado;
 }
 
+t_proceso* proceso_create(t_list* instrucciones, t_list* segmentos){
+	t_proceso* proceso = malloc(sizeof(t_proceso));
+	proceso->instrucciones = instrucciones;
+	proceso->segmentos = segmentos;
+	return proceso;
+}
+
 void * configurar_consola(t_config* config){
 	t_consola_config* consola_config;
 	consola_config = malloc(sizeof(t_consola_config));
 	consola_config->ip = strdup(config_get_string_value(config, "IP"));
 	consola_config->puerto = strdup(config_get_string_value(config, "PUERTO"));
-	consola_config->tiempo_pantalla =config_get_int_value(config, "TIEMPO_PANTALLA");
-	// TODO: Componer la lista de segmentos
+	consola_config->tiempo_pantalla = config_get_int_value(config, "TIEMPO_PANTALLA");
+	consola_config->segmentos = config_get_segmentos_list(config);
 	return consola_config;
 }
 
@@ -118,4 +127,13 @@ void consola_config_destroy(){
 	free(consola_config->ip);
 	free(consola_config->puerto);
 	free(consola_config);
+}
+
+t_list* config_get_segmentos_list(t_config* config){
+	t_list* lista_segmentos = list_create();
+	char** segmentos_array = config_get_array_value(config, "SEGMENTOS");
+	for(int i = 0; i < string_array_size(segmentos_array); i++ ){
+		list_add(lista_segmentos, segmentos_array[i]);
+	}
+	return lista_segmentos;
 }
