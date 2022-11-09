@@ -63,7 +63,7 @@ void marcos_init() {
 	log_debug(memoria_logger, "Cargando marcos...");
 	lista_de_marcos = list_create();
 	int i = 0;
-	int cantidad_de_marcos = memoria_config->tamanio_swap / memoria_config->tamanio_pagina;
+	int cantidad_de_marcos = memoria_config->tamanio_memoria / memoria_config->tamanio_pagina;
 
 	for(i = 0; i < cantidad_de_marcos; i++) {
 		t_marco *marco = (t_marco*)malloc(sizeof(t_marco));
@@ -80,7 +80,7 @@ void algoritmos_init() {
 void crear_tablas_de_pagina(t_pcb_memoria* pcb) {
 	int i = 0;
 	int j = 0;
-	int cantidad_de_segmentos = list_size(pcb->tabla);
+	int cantidad_de_segmentos = list_size(pcb->segmentos);
 	int cantidad_de_paginas = memoria_config->entradas_por_tabla;
 	for(i = 0; i < cantidad_de_segmentos; i++) {
 		for(j = 0; j < cantidad_de_paginas; j++) {
@@ -137,6 +137,7 @@ void* atender_pedido_de_estructuras(void* args) {
 			t_pcb_memoria* pcb = recibir_pcb_memoria(cliente_kernel_fd);
 			log_debug(memoria_logger, "Recibi pcb con pid: %d",pcb->pid);
 			crear_tablas_de_pagina(pcb);
+			// esto esta mal, porque deberia enviar la tabla de segmentos
 			cod_mensaje cod_msj = OKI_ESTRUCTURAS;
  			enviar_datos(cliente_kernel_fd, &cod_msj, sizeof(cod_msj));
  		}

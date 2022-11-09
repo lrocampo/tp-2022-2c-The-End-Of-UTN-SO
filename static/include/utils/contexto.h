@@ -80,6 +80,8 @@ typedef struct {
 	tabla_de_segmentos tabla;
 	registros_de_proposito_general registros;
 	bool con_desalojo;
+	bool page_fault;
+	bool segmentation_fault;
 }t_pcb;
 
 typedef struct {
@@ -103,7 +105,7 @@ typedef struct {
 
 typedef struct {
 	int pid;
-	tabla_de_segmentos tabla;
+	t_list* segmentos;
 } t_pcb_memoria;
 
 t_pcb* pcb_create(t_list*, uint32_t, int);
