@@ -28,8 +28,10 @@ typedef enum
 	FINALIZAR,
 	TECLADO,
 	PANTALLA,
+	ESTRUCTURAS,
 	OKI_PANTALLA,
 	OKI_TECLADO,
+	OKI_ESTRUCTURAS
 } cod_mensaje;
 
 typedef struct

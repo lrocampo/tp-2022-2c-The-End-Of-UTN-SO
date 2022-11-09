@@ -247,11 +247,11 @@ void* transicion_proceso_a_ready(void* arg){
 }
 // todo mauro
 void solicitar_creacion_estructuras_administrativas(t_pcb* pcb) {
- 	enviar_mensaje("pido crear estructuras administrativas", conexion_memoria);
+	cod_mensaje cod_msj = ESTRUCTURAS;
+	enviar_valor_con_codigo(pcb->pid, cod_msj, conexion_memoria);
  	cod_mensaje mensaje = recibir_operacion(conexion_memoria);
- 	puts("Recibi la operacion");
- 	if(mensaje == MENSAJE){
- 		recibir_mensaje(kernel_logger, conexion_memoria);
+ 	if(mensaje == OKI_ESTRUCTURAS){
+ 		log_debug(kernel_logger, "Se han creado las estructuras para el proceso %d", pcb->pid);
  	}
  }
 

@@ -114,9 +114,11 @@ void* atender_pedido_de_estructuras(void* args) {
  	log_debug(memoria_logger,"Se conecto un Kernel a MEMORIA.");
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_kernel_fd);
- 		if(mensaje == MENSAJE){
- 			recibir_mensaje(memoria_logger, cliente_kernel_fd);
- 			enviar_mensaje("Atiendo boludos", cliente_kernel_fd);
+ 		if(mensaje == ESTRUCTURAS){
+			// recibir pid y segmentos
+			// crear_tablas_de_pagina(pcb->pid, segmentos);
+			cod_mensaje cod_msj = OKI_ESTRUCTURAS;
+ 			enviar_datos(cliente_kernel_fd, &cod_msj, sizeof(cod_msj));
  		}
  		else {
  			log_debug(memoria_logger,"Se desconecto el cliente.");
