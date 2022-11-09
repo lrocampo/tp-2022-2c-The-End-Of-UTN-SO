@@ -25,6 +25,7 @@ void * configurar_memoria(t_config* config){
 	memoria_config->tamanio_memoria = config_get_int_value(config, "TAM_MEMORIA");
 	memoria_config->tamanio_pagina = config_get_int_value(config, "TAM_PAGINA");
 	memoria_config->tamanio_swap = config_get_int_value(config, "TAMANIO_SWAP");
+	memoria_config->entradas_por_tabla = config_get_int_value(config, "ENTRADAS_POR_TABLA");
 	return memoria_config;
 }
 
@@ -76,6 +77,24 @@ void algoritmos_init() {
 	log_debug(memoria_logger, "Obteniendo algoritmo...");
 }
 
+void crear_tablas_de_pagina(t_pcb_memoria* pcb) {
+	int i = 0;
+	int j = 0;
+	int cantidad_de_segmentos = list_size(pcb->tabla);
+	int cantidad_de_paginas = memoria_config->entradas_por_tabla;
+	for(i = 0; i < cantidad_de_segmentos; i++) {
+		for(j = 0; j < cantidad_de_paginas; j++) {
+			t_pagina* nueva_pagina = malloc(sizeof(t_pagina));
+			nueva_pagina->numero_pagina = j;
+			nueva_pagina->indice_tabla_de_pagina = i;
+			nueva_pagina->presencia = false;
+			nueva_pagina->uso = false;
+			nueva_pagina->modificado = false;
+			nueva_pagina->posicion_swap = 1; // no se que poner aca
+		}
+	}
+}
+
 /* Conexiones con Kernel y CPU */
 
 void solicitudes_a_memoria_init() {
@@ -117,7 +136,7 @@ void* atender_pedido_de_estructuras(void* args) {
  		if(mensaje == ESTRUCTURAS){
 			t_pcb_memoria* pcb = recibir_pcb_memoria(cliente_kernel_fd);
 			log_debug(memoria_logger, "Recibi pcb con pid: %d",pcb->pid);
-			crear_tablas_de_pagina(pcb->pid, pcb->tabla);
+			crear_tablas_de_pagina(pcb);
 			cod_mensaje cod_msj = OKI_ESTRUCTURAS;
  			enviar_datos(cliente_kernel_fd, &cod_msj, sizeof(cod_msj));
  		}

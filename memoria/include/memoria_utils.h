@@ -22,7 +22,7 @@ typedef struct {
 	char* puerto_escucha_kernel;
 	int tamanio_memoria;
 	int tamanio_pagina;
-	/* int entradas_por_pagina; */
+	int entradas_por_tabla;
 	/* int retardo_memoria; */
 	/* char* algoritmo_reemplazo; */
 	/* int* marcos_por_proceso; */
@@ -47,6 +47,7 @@ void memoria_principal_init();
 void marcos_init();
 void algoritmo_init();
 void solicitudes_a_memoria_init();
+void crear_tablas_de_pagina(t_pcb_memoria*);
 void* atender_pedido_de_memoria(void*);
 void* atender_pedido_de_estructuras(void*);
 void * configurar_memoria(t_config*);

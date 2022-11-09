@@ -85,6 +85,10 @@ typedef struct {
 typedef struct {
 	int numero_pagina;
 	int indice_tabla_de_pagina;
+	bool presencia;
+	bool modificado;
+	bool uso;
+	int posicion_swap;
 }t_pagina;
 
 typedef struct {
