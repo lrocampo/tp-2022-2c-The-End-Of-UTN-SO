@@ -37,7 +37,6 @@ int conexion_kernel;
 
 void imprimir_por_pantalla();
 int ingresar_por_teclado();
-t_proceso* crear_proceso(t_list*, char**);
 void* atender_solicitud_kernel();
 t_list* config_get_segmentos_list(t_config*);
 void * configurar_consola(t_config*);
