@@ -45,6 +45,7 @@ extern pthread_t th_atender_pedido_de_estructuras;
 
 void memoria_principal_init();
 void marcos_init();
+void algoritmo_init();
 void solicitudes_a_memoria_init();
 void* atender_pedido_de_memoria(void*);
 void* atender_pedido_de_estructuras(void*);

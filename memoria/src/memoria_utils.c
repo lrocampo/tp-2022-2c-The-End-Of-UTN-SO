@@ -50,6 +50,7 @@ void memoria_config_destroy(){
 /* Inicializacion */
 
 void memoria_principal_init() {
+	log_debug(memoria_logger, "Creando espacio de memoria...");
 	void* espacio_memoria = malloc(memoria_config->tamanio_memoria);
 
 	marcos_init();
@@ -58,6 +59,7 @@ void memoria_principal_init() {
 }
 
 void marcos_init() {
+	log_debug(memoria_logger, "Cargando marcos...");
 	lista_de_marcos = list_create();
 	int i = 0;
 	int cantidad_de_marcos = memoria_config->tamanio_swap / memoria_config->tamanio_pagina;
@@ -68,6 +70,10 @@ void marcos_init() {
 		marco->pid = -1;
 		list_add(lista_de_marcos, marco);
 	}
+}
+
+void algoritmos_init() {
+	log_debug(memoria_logger, "Obteniendo algoritmo...");
 }
 
 /* Conexiones con Kernel y CPU */

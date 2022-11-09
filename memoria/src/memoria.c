@@ -21,6 +21,8 @@ int main(void){
 
 	memoria_principal_init();
 
+	algoritmo_init();
+
 	solicitudes_a_memoria_init();
 
 	esperar_conexiones();
