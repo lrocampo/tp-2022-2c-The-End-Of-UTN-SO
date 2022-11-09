@@ -115,8 +115,9 @@ void* atender_pedido_de_estructuras(void* args) {
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_kernel_fd);
  		if(mensaje == ESTRUCTURAS){
-			// recibir pid y segmentos
-			// crear_tablas_de_pagina(pcb->pid, segmentos);
+			t_pcb_memoria* pcb = recibir_pcb_memoria(cliente_kernel_fd);
+			log_debug(memoria_logger, "Recibi pcb con pid: %d",pcb->pid);
+			crear_tablas_de_pagina(pcb->pid, pcb->tabla);
 			cod_mensaje cod_msj = OKI_ESTRUCTURAS;
  			enviar_datos(cliente_kernel_fd, &cod_msj, sizeof(cod_msj));
  		}

@@ -98,7 +98,7 @@ typedef struct {
 } t_direccion_fisica;
 
 typedef struct {
-	int pcb;
+	int pid;
 	tabla_de_segmentos tabla;
 } t_pcb_memoria;
 

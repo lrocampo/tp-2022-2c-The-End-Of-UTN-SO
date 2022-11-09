@@ -294,6 +294,16 @@ void empaquetar_registros(registros_de_proposito_general registros, t_paquete* p
 	agregar_valor_a_paquete(paquete, &(registros.dx), sizeof(u_int32_t));
 }
 
+void enviar_pcb_memoria(t_pcb_memoria* pcb, int socket_cliente) {
+	t_paquete *paquete = new_paquete_con_codigo_de_operacion(ESTRUCTURAS);
+	
+	agregar_valor_a_paquete(paquete, &(pcb->pid), sizeof(int));
+	empaquetar_tabla_segmentos(pcb->tabla, paquete);
+	
+	enviar_paquete(paquete, socket_cliente);
+	eliminar_paquete(paquete);
+}
+
 t_pcb* recibir_pcb(int socket_cliente){
 	int desplazamiento = 0;
 	int size;
@@ -353,6 +363,31 @@ t_pcb* recibir_pcb(int socket_cliente){
 	}
 
 	nueva_pcb->instrucciones = lista_instrucciones;
+	free(buffer);
+	return nueva_pcb;
+}
+
+t_pcb_memoria* recibir_pcb_memoria(int socket_cliente) {
+	int desplazamiento = 0;
+	int size;
+	void * buffer;
+
+	buffer = recibir_buffer(&size, socket_cliente);
+
+	t_pcb_memoria* nueva_pcb = malloc(sizeof(t_pcb_memoria)); 
+
+	memcpy(&(nueva_pcb->pid), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(int);
+
+	memcpy(&(nueva_pcb->tabla.indice_tabla_paginas), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->tabla.nro_segmento), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
+	memcpy(&(nueva_pcb->tabla.tamanio_segmento), buffer + desplazamiento, sizeof(u_int32_t));
+	desplazamiento += sizeof(u_int32_t);
+
 	free(buffer);
 	return nueva_pcb;
 }
