@@ -53,6 +53,8 @@ void memoria_principal_init() {
 	void* espacio_memoria = malloc(memoria_config->tamanio_memoria);
 
 	marcos_init();
+
+	lista_de_tablas_de_pagina = list_create();
 }
 
 void marcos_init() {
