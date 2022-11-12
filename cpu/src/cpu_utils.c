@@ -73,7 +73,7 @@ void iniciar_ciclo_de_instruccion(t_pcb* pcb_to_exec) {
 		instruccion = fetch(pcb_to_exec);
 
 		// decode()
-		operacion_a_ejecutar = decode(instruccion);
+		operacion_a_ejecutar = decode(pcb_to_exec, instruccion);
 
 		// execute()
 		ejecutar_instruccion(pcb_to_exec, operacion_a_ejecutar, instruccion);
@@ -103,9 +103,42 @@ instruccion* fetch(t_pcb* pcb_to_exec) {
 	return instruccion_a_ejecutar;
 }
 
-cod_operacion decode(instruccion* instruccion_a_decodificar) {
+cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar) {
 	cod_operacion operacion = instruccion_a_decodificar->operacion;
+	// t_marco* marco; (hacer malloc)
+	// t_pagina* pagina; (hacer malloc)
+	// int resultado;
+	// int offset;
 	if(operacion == MOV_IN || operacion == MOV_OUT) {
+
+		// Los prototipos de las funciones de mmu que no impacten contra la tlb deben escribirse en mmu.h
+		// Las implementaciones de las funciones de mmu que no impacten contra la tlb deben escribirse en mmu.c
+
+		// Guiarse de la pagina 20 del TP para no perderse nada
+
+		// Si van a pasar una estructura por parametro de una funcion, 
+		// en el prototipo de la funcion el tipo de dato debe ser un puntero
+		// a una estructura, ejemplo void mi_funcion(t_pagina* pagina)
+
+		// Los prototipos de las funciones de tlb deben escribirse en tlb.h
+		// Las implementaciones de las funciones de tlb deben escribirse en tlb.c
+
+		// Para obtener la pagina, necesitamos conocer ademas 
+		// pagina = obtener_pagina(pcb_to_exec->pid, instrucion_a_decodificar)
+
+		// segmento = obtener_segmento(pagina->numero_pagina, tam_max_segmento);
+
+		// Para buscar una pagina en la tlb, necesitamos conocer ademas el pid del proceso y el segmento
+		// resultado = buscar_en_tlb(pcb_to_exec, pagina->numero_pagina, segmento);
+
+		// No olvidar mapear el numero de marco y el offset a una estructura t_direccion_fisica (ver contexto.h)
+		// if (resultado == -1) {
+		//  No encontro la pagina en la tlb, entonces comienza a traducir la direccion logica a fisica, comunicandose con memoria
+		// 	marco = obtener_numero_de_marco(pagina)
+		// 	offset = obtener_offset(pagina);
+		// 	actualizar_tlb(pcb_to_exec->pid, pagina->numero_pagina, segmento)
+		// } 
+
 		enviar_mensaje("pido memoria", conexion_memoria);
 		puts("Solicitando memoria");
 		cod_mensaje mensaje = recibir_operacion(conexion_memoria);

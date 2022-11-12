@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <tlb.h>
 
 #define RUTA_LOGGER_CPU "./cpu.log"
 #define RUTA_LOGGER_DEBUG_CPU "./cpu_db.log"
@@ -47,7 +48,7 @@ void terminar_modulo();
 void ciclo_de_instruccion_init();
 void iniciar_ciclo_de_instruccion(t_pcb*);
 instruccion* fetch(t_pcb*);
-cod_operacion decode(instruccion*);
+cod_operacion decode(t_pcb*, instruccion*);
 void ejecutar_instruccion(t_pcb*, cod_operacion, instruccion*);
 void ejecutar_set(t_pcb*, char*, char*);
 void ejecutar_add(t_pcb*, char*, char*);
