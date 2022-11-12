@@ -5,6 +5,7 @@
 #include <utils/utiles_config.h>
 #include <stdlib.h>
 #include <utils/socket.h>
+#include <swap.h>
 #include <pthread.h>
 #include <utils/comunicacion.h>
 #include "../../static/include/utils/logger.h"
@@ -20,14 +21,14 @@ typedef struct {
     char* ip_kernel;
 	char* puerto_escucha_cpu;
 	char* puerto_escucha_kernel;
+	char* path_swap; 
 	int tamanio_memoria;
 	int tamanio_pagina;
 	int entradas_por_tabla;
 	/* int retardo_memoria; */
 	/* char* algoritmo_reemplazo; */
 	/* int* marcos_por_proceso; */
-	/* int* retardo_swap; */
-	/* int* path_swap; */
+	int retardo_swap;
 	int tamanio_swap;
 }t_memoria_config;
 
@@ -38,13 +39,20 @@ extern int server_fd_kernel;
 extern int cliente_kernel_fd;
 extern int cliente_cpu_fd;
 extern t_list* lista_de_marcos;
+extern t_list* lista_de_marcos_swap;
 extern t_list* lista_de_tablas_de_pagina;  
+
+extern void* espacio_memoria;
 
 extern pthread_t th_atender_pedido_de_memoria;
 extern pthread_t th_atender_pedido_de_estructuras;
 
+extern pthread_mutex_t memoria_swap_mutex;
+extern pthread_mutex_t memoria_usuario_mutex;
+
 void memoria_principal_init();
-void marcos_init();
+void marcos_memoria_principal_init();
+void marcos_init(t_list*, int, int);
 void algoritmo_init();
 void solicitudes_a_memoria_init();
 void crear_tablas_de_pagina(t_pcb_memoria*);
@@ -54,5 +62,6 @@ void * configurar_memoria(t_config*);
 void esperar_conexiones();
 void terminar_modulo();
 void memoria_config_destroy();
+ bool marco_libre(void*);
 
 #endif

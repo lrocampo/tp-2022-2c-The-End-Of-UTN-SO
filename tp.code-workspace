@@ -33,7 +33,11 @@
 			"utiles_config.h": "c",
 			"kernel_utils.h": "c",
 			"cpu_utils.h": "c",
-			"memoria_utils.h": "c"
+			"memoria_utils.h": "c",
+			"swap.h": "c",
+			"memoria.h": "c",
+			"pthread.h": "c",
+			"fcntl.h": "c"
 		}
 	}
 }

@@ -93,7 +93,7 @@ typedef struct {
 }t_pcb;
 
 typedef struct {
-	int numero_pagina;
+	int marco;
 	int indice_tabla_de_pagina;
 	bool presencia;
 	bool modificado;

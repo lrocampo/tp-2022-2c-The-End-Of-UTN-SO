@@ -6,11 +6,20 @@ int server_fd_cpu;
 int server_fd_kernel;
 int cliente_kernel_fd;
 int cliente_cpu_fd;
-t_list* lista_de_marcos; 
+t_list* lista_de_marcos;
+t_list* lista_de_marcos_swap;
 t_list* lista_de_tablas_de_pagina;
+
+void* espacio_memoria;
 
 pthread_t th_atender_pedido_de_memoria;
 pthread_t th_atender_pedido_de_estructuras;
+
+pthread_mutex_t memoria_swap_mutex;
+pthread_mutex_t memoria_usuario_mutex;
+
+void* swap;
+
 
 
 /* Configuracion y limpieza */
@@ -25,7 +34,9 @@ void * configurar_memoria(t_config* config){
 	memoria_config->tamanio_memoria = config_get_int_value(config, "TAM_MEMORIA");
 	memoria_config->tamanio_pagina = config_get_int_value(config, "TAM_PAGINA");
 	memoria_config->tamanio_swap = config_get_int_value(config, "TAMANIO_SWAP");
+	memoria_config->retardo_swap = config_get_int_value(config, "RETARDO_SWAP");
 	memoria_config->entradas_por_tabla = config_get_int_value(config, "ENTRADAS_POR_TABLA");
+	memoria_config->path_swap =  strdup(config_get_string_value(config, "PATH_SWAP"));
 	return memoria_config;
 }
 
@@ -51,25 +62,29 @@ void memoria_config_destroy(){
 /* Inicializacion */
 
 void memoria_principal_init() {
+	pthread_mutex_init(&memoria_usuario_mutex, NULL);
 	log_debug(memoria_logger, "Creando espacio de memoria...");
-	void* espacio_memoria = malloc(memoria_config->tamanio_memoria);
+	espacio_memoria = malloc(memoria_config->tamanio_memoria);
 
-	marcos_init();
+	marcos_memoria_principal_init();
 
 	lista_de_tablas_de_pagina = list_create();
 }
 
-void marcos_init() {
-	log_debug(memoria_logger, "Cargando marcos...");
-	lista_de_marcos = list_create();
-	int i = 0;
-	int cantidad_de_marcos = memoria_config->tamanio_memoria / memoria_config->tamanio_pagina;
+void marcos_memoria_principal_init() {
+	log_debug(memoria_logger, "Cargando marcos memoria principal...");
+	marcos_init(lista_de_marcos, memoria_config->tamanio_memoria, memoria_config->tamanio_pagina);
+}
 
-	for(i = 0; i < cantidad_de_marcos; i++) {
+void marcos_init(t_list* lista_marcos, int tamanio_memoria, int tamanio_pagina){
+	lista_marcos = list_create();
+	int cantidad_de_marcos = tamanio_memoria / tamanio_pagina;
+
+	for(int i = 0; i < cantidad_de_marcos; i++) {
 		t_marco *marco = (t_marco*)malloc(sizeof(t_marco));
 		marco->numero_marco = i;
 		marco->pid = -1;
-		list_add(lista_de_marcos, marco);
+		list_add(lista_marcos, marco);
 	}
 }
 
@@ -85,7 +100,7 @@ void crear_tablas_de_pagina(t_pcb_memoria* pcb) {
 	for(i = 0; i < cantidad_de_segmentos; i++) {
 		for(j = 0; j < cantidad_de_paginas; j++) {
 			t_pagina* nueva_pagina = malloc(sizeof(t_pagina));
-			nueva_pagina->numero_pagina = j;
+			nueva_pagina->marco = j;
 			nueva_pagina->indice_tabla_de_pagina = i;
 			nueva_pagina->presencia = false;
 			nueva_pagina->uso = false;
@@ -147,3 +162,9 @@ void* atender_pedido_de_estructuras(void* args) {
  		}
  	}
  }
+
+ /* Utils */
+
+ bool marco_libre(void* marco){
+    return ((t_marco*) marco)->pid == -1;
+}
