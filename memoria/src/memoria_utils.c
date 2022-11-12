@@ -163,7 +163,7 @@ void* atender_pedido_de_estructuras(void* args) {
  	}
  }
 
-void escribir_en_memoria_principal(int direccion_fisica, int valor) {
+void escribir_en_memoria_principal(int direccion_fisica, int *valor) {
 	pthread_mutex_lock(&memoria_usuario_mutex);
 	memcpy(espacio_memoria + direccion_fisica, valor, sizeof(int));
 	pthread_mutex_unlock(&memoria_usuario_mutex);
@@ -172,7 +172,7 @@ void escribir_en_memoria_principal(int direccion_fisica, int valor) {
 int leer_en_memoria_principal(int direccion_fisica) {
 	int valor;
 	pthread_mutex_lock(&memoria_usuario_mutex);
-    memcpy(valor, espacio_memoria + direccion_fisica, sizeof(int));
+    memcpy(&valor, espacio_memoria + direccion_fisica, sizeof(int));
     pthread_mutex_unlock(&memoria_usuario_mutex);
 
 	return valor;
@@ -181,14 +181,14 @@ int leer_en_memoria_principal(int direccion_fisica) {
  int obtener_numero_de_marco(t_pagina* pagina, int numero_pagina) {
 	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	t_list* lista = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
-	t_pagina* pagina = list_get(lista, numero_pagina);
+	t_pagina* pagina_de_la_lista = list_get(lista, numero_pagina);
 	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 
-	if(pagina->presencia == 0) {
+	if(pagina_de_la_lista->presencia == 0) {
 		return PAGE_FAULT;
 	}
 	else {
-		return pagina->marco;
+		return pagina_de_la_lista->marco;
 	}
  }
 
