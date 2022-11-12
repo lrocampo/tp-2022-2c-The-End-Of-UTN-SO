@@ -95,6 +95,7 @@ typedef struct {
 typedef struct {
 	int marco;
 	int indice_tabla_de_pagina;
+	int segmento;
 	bool presencia;
 	bool modificado;
 	bool uso;

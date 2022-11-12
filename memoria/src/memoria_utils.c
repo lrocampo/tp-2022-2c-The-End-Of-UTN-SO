@@ -20,8 +20,6 @@ pthread_mutex_t memoria_usuario_mutex;
 
 void* swap;
 
-
-
 /* Configuracion y limpieza */
 void * configurar_memoria(t_config* config){
 	t_memoria_config* memoria_config;
