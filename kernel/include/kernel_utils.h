@@ -14,6 +14,30 @@
 #include <stdlib.h>
 #include <kernel.h>
 
+typedef struct {
+	char* ip_cpu;
+    char* ip_kernel;
+	char* ip_memoria;
+    char* puerto_escucha;
+    char* puerto_memoria;
+	char* puerto_cpu_dispatch;
+	char* puerto_cpu_interrupt;
+	int grado_multiprogramacion;
+	t_algoritmo algoritmo;
+	int quantum_RR;
+	t_list* dispositivos_io;
+} t_kernel_config;
+
+extern int conexion_cpu_dispatch;
+extern int conexion_memoria;
+extern int conexion_cpu_interrupt;
+extern int cantidad_dispositivos;
+extern int kernel_server_fd;
+
+extern t_log* kernel_logger;
+extern t_kernel_config* kernel_config;
+extern t_list* dispositivos_io;
+
 extern t_queue* cola_new_pcbs;
 extern t_queue* cola_exit_pcbs;
 extern t_queue* cola_ready_FIFO_pcbs;
