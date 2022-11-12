@@ -163,12 +163,21 @@ void* atender_pedido_de_estructuras(void* args) {
  	}
  }
 
- void escribir_en_memoria_principal(int direccion_fisica, int valor) {
+void escribir_en_memoria_principal(int direccion_fisica, int valor) {
 	pthread_mutex_lock(&memoria_usuario_mutex);
-    memcpy(espacio_memoria + direccion_fisica, valor, sizeof(int));
+	memcpy(espacio_memoria + direccion_fisica, valor, sizeof(int));
+	pthread_mutex_unlock(&memoria_usuario_mutex);
+}
+
+int leer_en_memoria_principal(int direccion_fisica) {
+	int valor;
+	pthread_mutex_lock(&memoria_usuario_mutex);
+    memcpy(valor, espacio_memoria + direccion_fisica, sizeof(int));
     pthread_mutex_unlock(&memoria_usuario_mutex);
+
+	return valor;
  }
- 
+
  /* Utils */
 
  bool marco_libre(void* marco){
