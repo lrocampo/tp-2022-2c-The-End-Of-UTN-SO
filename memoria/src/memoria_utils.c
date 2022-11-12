@@ -8,7 +8,7 @@ int cliente_kernel_fd;
 int cliente_cpu_fd;
 t_list* lista_de_marcos;
 t_list* lista_de_marcos_swap;
-t_list* lista_de_tablas_de_pagina;
+t_list* lista_de_tablas_de_paginas;
 
 void* espacio_memoria;
 
@@ -17,6 +17,8 @@ pthread_t th_atender_pedido_de_estructuras;
 
 pthread_mutex_t memoria_swap_mutex;
 pthread_mutex_t memoria_usuario_mutex;
+pthread_mutex_t lista_de_tablas_de_paginas_mutex;
+pthread_mutex_t lista_de_tablas_de_paginas_swap_mutex;
 
 void* swap;
 
@@ -66,7 +68,7 @@ void memoria_principal_init() {
 
 	marcos_memoria_principal_init();
 
-	lista_de_tablas_de_pagina = list_create();
+	lista_de_tablas_de_paginas = list_create();
 }
 
 void marcos_memoria_principal_init() {
@@ -174,6 +176,20 @@ int leer_en_memoria_principal(int direccion_fisica) {
     pthread_mutex_unlock(&memoria_usuario_mutex);
 
 	return valor;
+ }
+
+ int obtener_numero_de_marco(t_pagina* pagina, int numero_pagina) {
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
+	t_list* lista = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
+	t_pagina* pagina = list_get(lista, numero_pagina);
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
+
+	if(pagina->presencia == 0) {
+		return PAGE_FAULT;
+	}
+	else {
+		return pagina->marco;
+	}
  }
 
  /* Utils */

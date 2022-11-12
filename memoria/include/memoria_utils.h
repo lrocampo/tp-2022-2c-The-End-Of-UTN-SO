@@ -14,6 +14,7 @@
 #define RUTA_LOGGER_DEBUG_MEMORIA "./memoria_db.log"
 #define NOMBRE_MODULO "MEMORIA"
 #define RUTA_MEMORIA_CONFIG "./src/memoria.config"
+#define PAGE_FAULT -2
 
 typedef struct {
 	char* ip_memoria;
@@ -40,7 +41,7 @@ extern int cliente_kernel_fd;
 extern int cliente_cpu_fd;
 extern t_list* lista_de_marcos;
 extern t_list* lista_de_marcos_swap;
-extern t_list* lista_de_tablas_de_pagina;  
+extern t_list* lista_de_tablas_de_paginas;  
 
 extern void* espacio_memoria;
 
@@ -49,6 +50,9 @@ extern pthread_t th_atender_pedido_de_estructuras;
 
 extern pthread_mutex_t memoria_swap_mutex;
 extern pthread_mutex_t memoria_usuario_mutex;
+
+extern pthread_mutex_t lista_de_tablas_de_paginas_mutex;
+extern pthread_mutex_t lista_de_tablas_de_paginas_swap_mutex;
 
 void memoria_principal_init();
 void marcos_memoria_principal_init();
