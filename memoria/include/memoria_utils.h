@@ -14,7 +14,6 @@
 #define RUTA_LOGGER_DEBUG_MEMORIA "./memoria_db.log"
 #define NOMBRE_MODULO "MEMORIA"
 #define RUTA_MEMORIA_CONFIG "./src/memoria.config"
-#define PAGE_FAULT -2
 
 typedef struct {
 	char* ip_memoria;

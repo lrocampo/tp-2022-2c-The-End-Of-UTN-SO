@@ -132,7 +132,7 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 		// resultado = buscar_en_tlb(pcb_to_exec, pagina->numero_pagina, segmento);
 
 		// No olvidar mapear el numero de marco y el offset a una estructura t_direccion_fisica (ver contexto.h)
-		// if (resultado == -1) {
+		// if (resultado == SEG_FAULT) {
 		//  No encontro la pagina en la tlb, entonces comienza a traducir la direccion logica a fisica, comunicandose con memoria
 		// 	marco = obtener_numero_de_marco(pagina)
 		// 	offset = obtener_offset(pagina);
