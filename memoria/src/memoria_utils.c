@@ -163,6 +163,12 @@ void* atender_pedido_de_estructuras(void* args) {
  	}
  }
 
+ void escribir_en_memoria_principal(int direccion_fisica, int valor) {
+	pthread_mutex_lock(&memoria_usuario_mutex);
+    memcpy(espacio_memoria + direccion_fisica, valor, sizeof(int));
+    pthread_mutex_unlock(&memoria_usuario_mutex);
+ }
+ 
  /* Utils */
 
  bool marco_libre(void* marco){

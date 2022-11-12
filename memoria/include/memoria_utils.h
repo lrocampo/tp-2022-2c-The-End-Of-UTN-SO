@@ -62,6 +62,7 @@ void * configurar_memoria(t_config*);
 void esperar_conexiones();
 void terminar_modulo();
 void memoria_config_destroy();
- bool marco_libre(void*);
+bool marco_libre(void*);
+void escribir_en_memoria_principal(int, int);
 
 #endif
