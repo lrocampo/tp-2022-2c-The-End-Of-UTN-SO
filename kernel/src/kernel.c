@@ -7,8 +7,15 @@
 
 #include <kernel.h>
 
+void sighandler(int s){
+    terminar_modulo();
+    exit(0);
+}
+
 int main(void){
-	
+
+	signal(SIGINT, sighandler);
+
 	/* LOGGER DE ENTREGA */
 	//kernel_logger = iniciar_logger(RUTA_LOGGER_KERNEL, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
 	
@@ -95,6 +102,9 @@ void terminar_modulo(){
 	liberar_conexion(conexion_cpu_dispatch);
 	liberar_conexion(conexion_cpu_interrupt);
 	liberar_conexion(conexion_memoria);
+	pthread_cancel(th_ejecucion);
+	pthread_cancel(th_rajar_pcb);
+	pthread_cancel(th_transiciones_ready);
 	log_destroy(kernel_logger);
 	kernel_config_destroy();
 }

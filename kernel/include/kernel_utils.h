@@ -62,6 +62,10 @@ extern pthread_mutex_t* cola_dispositivo_mutex;
 
 extern pthread_t th_timer;
 extern pthread_t th_conexiones;
+extern pthread_t th_ejecucion;
+extern pthread_t th_transiciones_ready;
+extern pthread_t th_rajar_pcb;
+
 
 /* Largo plazo */
 void largo_plazo_init();

@@ -32,7 +32,10 @@ typedef struct {
 t_log *consola_logger;
 t_consola_config* consola_config;
 t_proceso* proceso_consola;
+pthread_t th_atender_solicitud_kernel;
 int conexion_kernel;
+char* ruta_config;
+char* ruta_instrucciones;
 
 
 void imprimir_por_pantalla();
@@ -40,7 +43,7 @@ int ingresar_por_teclado();
 void* atender_solicitud_kernel();
 t_list* config_get_segmentos_list(t_config*);
 void * configurar_consola(t_config*);
-void terminar_modulo(char*, char*);
+void terminar_modulo();
 t_proceso* proceso_create(t_list*, t_list*);
 void consola_config_destroy();
 

@@ -9,7 +9,14 @@
 
 // ./consola.out ruta/del/config ruta/de/las/instrucciones  
 
+void sighandler(int s){
+    terminar_modulo();
+    exit(0);
+}
+
 int main(int argc, char **argv) {
+
+	signal(SIGINT, sighandler);
 
 	// TODO: achicar en funciones
 
@@ -18,11 +25,10 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	char* ruta_config = strdup(argv[1]); 
-	char* ruta_instrucciones = strdup(argv[2]);
+	ruta_config = strdup(argv[1]); 
+	ruta_instrucciones = strdup(argv[2]);
 	char* instrucciones_string;
 	t_list* instrucciones;
-	pthread_t th_atender_solicitud_kernel;
 
 	/* LOGGER DE ENTREGA */
 	//consola_logger = iniciar_logger(RUTA_LOGGER_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
@@ -53,7 +59,7 @@ int main(int argc, char **argv) {
 
 	log_debug(consola_logger, "termino consola"); 
 
-	terminar_modulo(ruta_config, ruta_instrucciones);
+	terminar_modulo();
 
 	return EXIT_SUCCESS;
 }
@@ -116,7 +122,7 @@ void * configurar_consola(t_config* config){
 	return consola_config;
 }
 
-void terminar_modulo(char* ruta_config, char* ruta_instrucciones){
+void terminar_modulo(){
 	liberar_conexion(conexion_kernel);
 	free(ruta_config);
 	free(ruta_instrucciones);

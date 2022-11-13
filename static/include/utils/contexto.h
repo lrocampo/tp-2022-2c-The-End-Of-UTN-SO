@@ -10,7 +10,8 @@
 
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
-#include<unistd.h>
+#include <unistd.h>
+#include <signal.h>
 #include <commons/string.h>
 #include <stdint.h>
 #include <stdlib.h>

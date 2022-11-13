@@ -36,6 +36,9 @@ pthread_mutex_t* cola_dispositivo_mutex;
 
 pthread_t th_timer;
 pthread_t th_conexiones;
+pthread_t th_ejecucion;
+pthread_t th_transiciones_ready;
+pthread_t th_rajar_pcb;
 
 /* Planificacion */
 
@@ -44,8 +47,7 @@ pthread_t th_conexiones;
 void largo_plazo_init(){
     cola_new_pcbs = queue_create();
 	cola_exit_pcbs = queue_create();
-    pthread_t th_rajar_pcb;
-
+    
 	sem_init(&procesos_new,0,0);
 	sem_init(&procesos_finalizados, 0, 0);
 	pthread_mutex_init(&cola_new_pcbs_mutex, NULL);
@@ -53,7 +55,7 @@ void largo_plazo_init(){
 
     pthread_create(&th_rajar_pcb, NULL, &rajar_pcb, NULL);
 	pthread_create(&th_conexiones, NULL, &atender_nueva_consola, NULL);
-	pthread_detach(th_rajar_pcb);	
+	pthread_detach(th_rajar_pcb);
 }
 
 void* atender_nueva_consola(void* arg){
@@ -101,8 +103,6 @@ void* rajar_pcb(void* arg) {
 void corto_plazo_init(){
     cola_ready_FIFO_pcbs = queue_create();
 	cola_ready_RR_pcbs = queue_create();
-    pthread_t th_ejecucion;
-	pthread_t th_transiciones_ready;
 
     sem_init(&procesos_ready,0,0);
     pthread_mutex_init(&cola_ready_RR_pcbs_mutex, NULL);
