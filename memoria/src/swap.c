@@ -9,6 +9,8 @@ void swap_init(){
 
 void marcos_swap_init() {
     log_debug(memoria_logger, "Cargando marcos swap...");
+	lista_de_marcos_swap = list_create();
+
 	marcos_init(lista_de_marcos_swap, memoria_config->tamanio_swap, memoria_config->tamanio_pagina);
 }
 
@@ -30,33 +32,22 @@ void swap_create(){
 }
 
 int obtener_posicion_libre_swap(){
-    t_marco* marco = list_find(lista_de_marcos_swap, marco_libre);
-    return marco->numero_marco * memoria_config->tamanio_pagina;
+    t_marco* marco_buscado = list_find(lista_de_marcos_swap,  (void*) marco_libre);
+    return marco_buscado->numero_marco * memoria_config->tamanio_pagina;
 }
 
-void escribir_en_swap(t_pagina* pagina){
+void ocupar_posicion_swap(int pid, int posicion){
+    t_marco* marco_buscado = list_get(lista_de_marcos_swap, posicion / memoria_config->tamanio_pagina);
+    marco_buscado->pid = pid;
+}
+
+void escribir_en_swap(t_entrada_tp* entrada_pagina){
 	log_info(memoria_logger,"Escribiendo pagina en swap \n");
     ejecutar_espera(memoria_config->retardo_swap);
     pthread_mutex_lock(&memoria_swap_mutex);
     pthread_mutex_lock(&memoria_usuario_mutex);
-    memcpy(swap + pagina->posicion_swap, espacio_memoria + (pagina->marco * memoria_config->tamanio_pagina), memoria_config->tamanio_pagina);
+    memcpy(swap + entrada_pagina->posicion_swap, espacio_memoria + (entrada_pagina->marco * memoria_config->tamanio_pagina), memoria_config->tamanio_pagina);
     pthread_mutex_unlock(&memoria_usuario_mutex);
     pthread_mutex_unlock(&memoria_swap_mutex);
 	log_info(memoria_logger,"Se escribio pagina en swap \n");
-    
-    // t_pagina* pagina = malloc(sizeof(t_pagina));
-	// log_info(memoria_logger,"Entrando a swap_write \n");
-    // // pagina->posicion_swap = 2048;
-    // // int valor = 20;
-    // // int valor_swap;
-    // memcpy(swap + pagina->posicion_swap, &valor, memoria_config->tamanio_pagina);
-    // memcpy(&valor_swap, swap + pagina->posicion_swap, memoria_config->tamanio_pagina);
-    // printf("Valor escrito:%d\n", valor_swap);
-    // // usleep(config_valores_memoria.retardo_swap * 1000);
-	// // pthread_mutex_lock(&mutex_memoria_usuario);
-	// // pthread_mutex_lock(&mutex_archivo_swap);
-	// //memcpy(archivo_swap+get_marco(pag->indice),memoria_usuario+get_marco(pag->marco),config_valores_memoria.tam_pagina);
-	// // pthread_mutex_unlock(&mutex_memoria_usuario);
-	// // pthread_mutex_unlock(&mutex_archivo_swap);
-	// log_info(memoria_logger,"Se escribio pagina en swap \n");
 }

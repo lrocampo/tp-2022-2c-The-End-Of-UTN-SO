@@ -75,6 +75,7 @@ void* atender_nueva_consola(void* arg){
             pcb = pcb_create(proceso, siguiente_pid(), consola_fd);
             safe_pcb_push(cola_new_pcbs, pcb, cola_new_pcbs_mutex);
             log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
+			free(proceso);
 			sem_post(&procesos_new);
         } else {
 			error_show("Mensaje desconocido");
@@ -261,11 +262,32 @@ void solicitar_creacion_estructuras_administrativas(t_pcb* pcb) {
  	cod_mensaje mensaje = recibir_operacion(conexion_memoria);
 
  	if(mensaje == OKI_ESTRUCTURAS){
- 		log_debug(kernel_logger, "Se han creado las estructuras para el proceso %d", pcb->pid);
-		// temporal
-		pcb->tabla_de_segmentos = list_create(); // sacar cuando no se use
- 	}
+		t_list* indices = recibir_indices_tabla_paginas(conexion_memoria);
+		pcb->tabla_de_segmentos = crear_tabla_segmentos(indices, pcb->tamanio_segmentos); // sacar cuando no se use
+ 		log_debug(kernel_logger, "Se han creado las estructuras para el proceso %d, %d tablas", pcb->pid, list_size(pcb->tabla_de_segmentos));
+		list_destroy(indices);
+		free(pcb_memoria);
+	}
+	else {
+		error_show("Error al crear estructuras");
+	}
  }
+
+t_list* crear_tabla_segmentos(t_list* indices, t_list* tamanio_segmentos){
+	t_list* tabla = list_create();
+	for(int i = 0; i < list_size(indices); i++){
+		t_segmento* segmento = malloc(sizeof(t_segmento));
+		char* tamanio = list_get(tamanio_segmentos, i);
+		char* indice = list_get(indices, i);
+		segmento->nro_segmento = i;
+		segmento->tamanio_segmento = atoi(tamanio);
+		segmento->indice_tabla_paginas = atoi(indice);
+		list_add(tabla, segmento);
+		free(tamanio);
+		free(indice);
+	}
+	return tabla;
+}
 
 /* Planificacion Utils */
 

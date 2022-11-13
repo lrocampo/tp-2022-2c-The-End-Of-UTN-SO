@@ -135,5 +135,6 @@ t_list* config_get_segmentos_list(t_config* config){
 	for(int i = 0; i < string_array_size(segmentos_array); i++ ){
 		list_add(lista_segmentos, segmentos_array[i]);
 	}
+	free(segmentos_array);
 	return lista_segmentos;
 }

@@ -105,6 +105,7 @@ typedef struct {
 }t_entrada_tp;
 
 typedef struct {
+	int indice_tabla_de_pagina;
 	int pid;
 	t_list* entradas;
 }t_tabla_de_paginas;
@@ -132,6 +133,7 @@ typedef struct {
 t_pcb* pcb_create(t_proceso*, uint32_t, int);
 cod_operacion string_to_cod_op(char*);
 void pcb_destroy(void*);
+void pcb_memoria_destroy(t_pcb_memoria*);
 char* estado_to_string(estado_proceso);
 char* pcb_to_string(t_pcb*);
 char* instruccion_to_string(instruccion*);

@@ -64,6 +64,7 @@ void* atender_kernel(void*);
 int obtener_numero_de_marco(t_pagina*);
 void * configurar_memoria(t_config*);
 void esperar_conexiones();
+t_list* obtener_indices_tablas_de_pagina(t_pcb_memoria*);
 void terminar_modulo();
 void memoria_config_destroy();
 bool marco_libre(t_marco*);

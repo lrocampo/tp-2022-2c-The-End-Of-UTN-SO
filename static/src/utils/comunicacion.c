@@ -292,7 +292,7 @@ void enviar_proceso(t_proceso* proceso, int socket_cliente){
 
 void empaquetar_proceso(t_proceso* proceso,t_paquete* paquete){
 	empaquetar_instrucciones(proceso->instrucciones, paquete);
-	empaquetar_segmentos(proceso->segmentos, paquete);
+	empaquetar_strings(proceso->segmentos, paquete);
 }
 
 t_proceso* deserializar_proceso(int socket_cliente){
@@ -312,18 +312,19 @@ t_proceso* deserializar_proceso(int socket_cliente){
 	proceso->instrucciones = lista_instrucciones;
 	proceso->segmentos = lista_segmentos;
 
+	free(buffer);
 	return proceso;
 }
 
 /* SEGMENTOS */
 
-void empaquetar_segmentos(t_list* segmentos, t_paquete* paquete){
-	int cantidad_segmentos = list_size(segmentos);
-	agregar_valor_a_paquete(paquete, &(cantidad_segmentos), sizeof(int));
-	for (int i = 0; i < cantidad_segmentos; i++)
+void empaquetar_strings(t_list* strings, t_paquete* paquete){
+	int cantidad_strings = list_size(strings);
+	agregar_valor_a_paquete(paquete, &(cantidad_strings), sizeof(int));
+	for (int i = 0; i < cantidad_strings; i++)
 	{
-		char *segmento = list_get(segmentos, i);
-		agregar_a_paquete_con_header(paquete, segmento, strlen(segmento) + 1);
+		char *string = list_get(strings, i);
+		agregar_a_paquete_con_header(paquete, string, strlen(string) + 1);
 	}
 }
 
@@ -407,10 +408,33 @@ void enviar_pcb_memoria(t_pcb_memoria* pcb, int socket_cliente) {
 	t_paquete *paquete = new_paquete_con_codigo_de_operacion(ESTRUCTURAS);
 	
 	agregar_valor_a_paquete(paquete, &(pcb->pid), sizeof(int));
-	empaquetar_segmentos(pcb->segmentos, paquete);
+	empaquetar_strings(pcb->segmentos, paquete);
 	
 	enviar_paquete(paquete, socket_cliente);
 	eliminar_paquete(paquete);
+}
+
+void enviar_indices_tabla_paginas(t_list* indices, int socket_cliente) {
+	t_paquete *paquete = new_paquete_con_codigo_de_operacion(OKI_ESTRUCTURAS);
+	
+	empaquetar_strings(indices, paquete);
+	
+	enviar_paquete(paquete, socket_cliente);
+	eliminar_paquete(paquete);
+}
+
+t_list* recibir_indices_tabla_paginas(int socket_cliente){
+	int desplazamiento = 0;
+	int size;
+	void * buffer;
+	t_list* lista_indices;
+
+	buffer = recibir_buffer(&size, socket_cliente);
+
+	lista_indices = deserializar_paquete_mensaje(&desplazamiento, buffer);
+	
+	free(buffer);
+	return lista_indices;
 }
 
 t_pcb* recibir_pcb(int socket_cliente){

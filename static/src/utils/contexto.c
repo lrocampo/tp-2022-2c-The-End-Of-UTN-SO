@@ -36,8 +36,15 @@ t_pcb* pcb_create(t_proceso* proceso, uint32_t pid, int socket){
 void pcb_destroy(void* arg){
     t_pcb* pcb = (t_pcb*) arg;
     list_destroy_and_destroy_elements(pcb->instrucciones, instruccion_destroy);
-    if(pcb->tamanio_segmentos != NULL){
-        list_destroy_and_destroy_elements(pcb->tamanio_segmentos, free);
+    if(pcb->tabla_de_segmentos != NULL){
+        list_destroy_and_destroy_elements(pcb->tabla_de_segmentos, free);
+    }
+    free(pcb);
+}
+
+void pcb_memoria_destroy(t_pcb_memoria* pcb){
+    if(pcb->segmentos != NULL){
+        list_destroy_and_destroy_elements(pcb->segmentos, free);
     }
     free(pcb);
 }

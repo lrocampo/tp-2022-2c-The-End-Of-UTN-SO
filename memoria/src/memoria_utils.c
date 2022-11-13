@@ -2,8 +2,8 @@
 
 t_log *memoria_logger;
 t_memoria_config* memoria_config;
-int server_fd_cpu;
-int server_fd_kernel;
+int memoria_server_cpu_fd;
+int memoria_server_kernel_fd;
 int cliente_kernel_fd;
 int cliente_cpu_fd;
 t_list* lista_de_marcos;
@@ -13,7 +13,7 @@ t_list* lista_de_tablas_de_paginas;
 void* espacio_memoria;
 
 pthread_t th_atender_pedido_de_memoria;
-pthread_t th_atender_pedido_de_estructuras;
+pthread_t th_atender_kernel;
 
 pthread_mutex_t memoria_swap_mutex;
 pthread_mutex_t memoria_usuario_mutex;
@@ -42,7 +42,7 @@ void * configurar_memoria(t_config* config){
 
 void esperar_conexiones() {
     pthread_join(th_atender_pedido_de_memoria, NULL);
-    pthread_join(th_atender_pedido_de_estructuras, NULL);
+    pthread_join(th_atender_kernel, NULL);
 }
 
 void terminar_modulo(){
@@ -56,6 +56,7 @@ void memoria_config_destroy(){
 	free(memoria_config->ip_memoria);
 	free(memoria_config->puerto_escucha_cpu);
 	free(memoria_config->puerto_escucha_kernel);
+	free(memoria_config->path_swap);
 	free(memoria_config);
 }
 
@@ -73,19 +74,20 @@ void memoria_principal_init() {
 
 void marcos_memoria_principal_init() {
 	log_debug(memoria_logger, "Cargando marcos memoria principal...");
+	lista_de_marcos = list_create();
 	marcos_init(lista_de_marcos, memoria_config->tamanio_memoria, memoria_config->tamanio_pagina);
 }
 
 void marcos_init(t_list* lista_marcos, int tamanio_memoria, int tamanio_pagina){
-	lista_marcos = list_create();
 	int cantidad_de_marcos = tamanio_memoria / tamanio_pagina;
-
+	log_debug(memoria_logger, "Cargando %d marcos", cantidad_de_marcos);
 	for(int i = 0; i < cantidad_de_marcos; i++) {
-		t_marco *marco = (t_marco*)malloc(sizeof(t_marco));
+		t_marco *marco = malloc(sizeof(t_marco));
 		marco->numero_marco = i;
 		marco->pid = -1;
 		list_add(lista_marcos, marco);
 	}
+	log_debug(memoria_logger, "%d marcos cargados correctamente", list_size(lista_marcos));
 }
 
 void algoritmos_init() {
@@ -98,15 +100,21 @@ void crear_tablas_de_pagina(t_pcb_memoria* pcb) {
 	int cantidad_de_segmentos = list_size(pcb->segmentos);
 	int cantidad_de_paginas = memoria_config->entradas_por_tabla;
 	for(i = 0; i < cantidad_de_segmentos; i++) {
+		t_tabla_de_paginas* tabla_de_paginas = malloc(sizeof(t_tabla_de_paginas));
+		tabla_de_paginas->entradas = list_create();
+		tabla_de_paginas->indice_tabla_de_pagina = i;
+		tabla_de_paginas->pid = pcb->pid;
 		for(j = 0; j < cantidad_de_paginas; j++) {
-			t_pagina* nueva_pagina = malloc(sizeof(t_pagina));
-			nueva_pagina->marco = j;
-			nueva_pagina->indice_tabla_de_pagina = i;
-			nueva_pagina->presencia = false;
-			nueva_pagina->uso = false;
-			nueva_pagina->modificado = false;
-			nueva_pagina->posicion_swap = 1; // no se que poner aca
+			t_entrada_tp* nueva_entrada_pagina = malloc(sizeof(t_entrada_tp));
+			nueva_entrada_pagina->marco = -1; 
+			nueva_entrada_pagina->presencia = false;
+			nueva_entrada_pagina->uso = false;
+			nueva_entrada_pagina->modificado = false;
+			nueva_entrada_pagina->posicion_swap = obtener_posicion_libre_swap(); // obtener posicion libre swap
+			ocupar_posicion_swap(pcb->pid, nueva_entrada_pagina->posicion_swap);
+			list_add(tabla_de_paginas->entradas, nueva_entrada_pagina);
 		}
+		list_add(lista_de_tablas_de_paginas, tabla_de_paginas);
 	}
 }
 
@@ -115,15 +123,15 @@ void crear_tablas_de_pagina(t_pcb_memoria* pcb) {
 void solicitudes_a_memoria_init() {
     pthread_create(&th_atender_pedido_de_memoria, NULL, &atender_pedido_de_memoria, NULL);
 
-	pthread_create(&th_atender_pedido_de_estructuras, NULL, &atender_pedido_de_estructuras, NULL);
+	pthread_create(&th_atender_kernel, NULL, &atender_kernel, NULL);
 }
 
 void* atender_pedido_de_memoria(void* args){
-	server_fd_cpu = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_cpu);
-	if(server_fd_cpu == -1){
+	memoria_server_cpu_fd = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_cpu);
+	if(memoria_server_cpu_fd == -1){
 		pthread_exit(NULL);
 	}
-	cliente_cpu_fd = esperar_cliente(server_fd_cpu);
+	cliente_cpu_fd = esperar_cliente(memoria_server_cpu_fd);
 	log_debug(memoria_logger,"Se conecto un CPU a MEMORIA.");
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_cpu_fd);
@@ -139,29 +147,67 @@ void* atender_pedido_de_memoria(void* args){
 	
 }
 
-void* atender_pedido_de_estructuras(void* args) {
-	server_fd_kernel = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_kernel);
-	if(server_fd_kernel == -1){
+void* atender_kernel(void* args) {
+	memoria_server_kernel_fd = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_kernel);
+	if(memoria_server_kernel_fd == -1){
 		pthread_exit(NULL);
 	}
- 	cliente_kernel_fd = esperar_cliente(server_fd_kernel);
+ 	cliente_kernel_fd = esperar_cliente(memoria_server_kernel_fd);
  	log_debug(memoria_logger,"Se conecto un Kernel a MEMORIA.");
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_kernel_fd);
- 		if(mensaje == ESTRUCTURAS){
+		switch (mensaje)
+		{
+		case ESTRUCTURAS:
 			t_pcb_memoria* pcb = recibir_pcb_memoria(cliente_kernel_fd);
 			log_debug(memoria_logger, "Recibi pcb con pid: %d",pcb->pid);
 			crear_tablas_de_pagina(pcb);
+			t_list* indices = obtener_indices_tablas_de_pagina(pcb);
 			// esto esta mal, porque deberia enviar la tabla de segmentos
-			cod_mensaje cod_msj = OKI_ESTRUCTURAS;
- 			enviar_datos(cliente_kernel_fd, &cod_msj, sizeof(cod_msj));
- 		}
- 		else {
- 			log_debug(memoria_logger,"Se desconecto el cliente.");
+			mensaje = OKI_ESTRUCTURAS;
+			log_debug(memoria_logger, "llegue aca, por eviar cosas");
+
+ 			enviar_indices_tabla_paginas(indices, cliente_kernel_fd);
+
+			list_destroy_and_destroy_elements(indices, free);
+			pcb_memoria_destroy(pcb);
+			
+			break;
+		case PAGE_SWAP:
+			//t_pagina* pagina = recibir_pagina(cliente_kernel_fd);
+			log_debug(memoria_logger, "Messi.");
+			mensaje = OKI_PAGE_SWAP;
+ 			enviar_datos(cliente_kernel_fd, &mensaje, sizeof(cod_mensaje));		
+			break;
+		default:
+			log_debug(memoria_logger,"Se desconecto el cliente.");
 			pthread_exit(NULL);
- 		}
+		}
  	}
  }
+
+t_list* obtener_indices_tablas_de_pagina(t_pcb_memoria* pcb){
+	
+	t_list* tablas_buscadas;
+	t_list* indices;
+	
+	bool by_pid(t_tabla_de_paginas* tabla){
+		return tabla->pid == pcb->pid;
+	}
+
+	char* to_idx(t_tabla_de_paginas* tabla){
+		return string_itoa(tabla->indice_tabla_de_pagina);
+	}
+	
+	tablas_buscadas = list_filter(lista_de_tablas_de_paginas, (void*) by_pid);
+
+	log_debug(memoria_logger, "cantidad de tablas de pid: %d : %d", pcb->pid, list_size(tablas_buscadas));
+
+	indices = list_map(tablas_buscadas, (void*) to_idx);
+	list_destroy(tablas_buscadas);
+
+	return indices;
+}
 
 void escribir_en_memoria_principal(int direccion_fisica, int *valor) {
 	pthread_mutex_lock(&memoria_usuario_mutex);
@@ -178,22 +224,27 @@ int leer_en_memoria_principal(int direccion_fisica) {
 	return valor;
  }
 
- int obtener_numero_de_marco(t_pagina* pagina, int numero_pagina) {
+ t_entrada_tp* obtener_entrada_tp(t_pagina* pagina){
 	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
-	t_list* lista = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
-	t_pagina* pagina_de_la_lista = list_get(lista, numero_pagina);
+	t_tabla_de_paginas* tabla_de_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
+	t_entrada_tp* entrada_pagina = list_get(tabla_de_paginas->entradas, pagina->numero_pagina);
 	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
+	return entrada_pagina;
+ }
 
-	if(pagina_de_la_lista->presencia == 0) {
+ int obtener_numero_de_marco(t_pagina* pagina) {
+	t_entrada_tp* entrada_pagina = obtener_entrada_tp(pagina);
+
+	if(entrada_pagina->presencia == 0) {
 		return PAGE_FAULT;
 	}
 	else {
-		return pagina_de_la_lista->marco;
+		return entrada_pagina->marco;
 	}
  }
 
  /* Utils */
 
- bool marco_libre(void* marco){
-    return ((t_marco*) marco)->pid == -1;
+ bool marco_libre(t_marco* marco){
+    return marco->pid == -1;
 }
