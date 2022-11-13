@@ -97,12 +97,21 @@ typedef struct {
 
 typedef struct {
 	int marco;
-	int indice_tabla_de_pagina;
 	int segmento;
 	bool presencia;
 	bool modificado;
 	bool uso;
 	int posicion_swap;
+}t_entrada_tp;
+
+typedef struct {
+	int pid;
+	t_list* entradas;
+}t_tabla_de_paginas;
+
+typedef struct {
+	int indice_tabla_de_pagina;
+	int numero_pagina;
 }t_pagina;
 
 typedef struct {

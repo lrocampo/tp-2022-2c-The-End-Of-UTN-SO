@@ -79,6 +79,8 @@ void dirigir_proceso_ejecutado(t_pcb*);
 void* transicion_proceso_a_ready(void*); // transicion_new_a_ready
 // TODO: transicion_block_a_ready
 
+t_list* crear_tabla_segmentos(t_list*, t_list*);
+
 /* Planificacion Utils */
 void cambiar_estado(t_pcb*, estado_proceso);
 void pasar_a_ready(t_pcb*);
