@@ -31,6 +31,8 @@ extern int server_fd_dispatch;
 extern int cliente_fd_dispatch;
 extern int conexion_memoria;
 extern bool interrupcion;
+extern t_pagina_config* pagina_config;
+
 
 extern pthread_t th_kernel_dispatch;
 extern pthread_t th_kernel_interrupt;

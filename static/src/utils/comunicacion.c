@@ -369,28 +369,24 @@ void enviar_configuracion_memoria(int tamanio_pagina, int entradas, int cpu_fd) 
 	eliminar_paquete(paquete);
 }
 
-t_list* recibir_configuracion_memoria(int socket_memoria) {
+t_pagina_config* recibir_configuracion_memoria(int socket_memoria) {
 	int desplazamiento = 0;
 	int size;
 	void * buffer;
-	int tamanio_pagina;
-	int cantidad_de_entradas;
+	
+	t_pagina_config* pagina_config = malloc(sizeof(t_pagina_config));
 
 	buffer = recibir_buffer(&size, socket_memoria);
-	t_list* lista = list_create();
 
-	memcpy(&tamanio_pagina, buffer + desplazamiento, sizeof(int));
+	memcpy(&pagina_config->tamanio_pagina, buffer + desplazamiento, sizeof(int));
+
 	desplazamiento += sizeof(int);
 
-	list_add(lista, tamanio_pagina);
-
-	memcpy(&cantidad_de_entradas, buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-
-	list_add(lista, cantidad_de_entradas);
+	memcpy(&pagina_config->cantidad_entradas, buffer + desplazamiento, sizeof(int));
+	
 
 	free(buffer);
-	return lista;
+	return pagina_config;
 }
 
 

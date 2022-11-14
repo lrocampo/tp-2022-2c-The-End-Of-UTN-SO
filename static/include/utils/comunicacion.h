@@ -48,6 +48,11 @@ typedef struct
 	t_buffer* buffer;
 } t_paquete;
 
+typedef struct {
+	int cantidad_entradas;
+	int tamanio_pagina;
+} t_pagina_config;
+
 /* SE USA */
 
 /* TP0 */
@@ -90,7 +95,7 @@ void enviar_proceso(t_proceso*, int);
 void enviar_pagina(t_pagina*, int);
 void enviar_indices_tabla_paginas(t_list*, int);
 void enviar_configuracion_memoria(int, int, int);
-t_list* recibir_configuracion_memoria(int);
+t_pagina_config*  recibir_configuracion_memoria(int);
 int enviar_datos(int , void *, uint32_t);
 
 void empaquetar_instrucciones(t_list*, t_paquete*);

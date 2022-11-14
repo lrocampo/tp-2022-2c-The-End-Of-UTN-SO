@@ -11,6 +11,7 @@ pthread_t th_kernel_dispatch;
 pthread_t th_kernel_interrupt;
 
 pthread_mutex_t interrupcion_mutex;
+t_pagina_config* pagina_config;
 
 /* Configuracion y Limpieza */
 
@@ -32,6 +33,18 @@ void iniciar_conexion_con_memoria() {
 	if(conexion_memoria != -1){
 		log_debug(cpu_logger, "Conexion creada correctamente con MEMORIAs");
 	}
+
+	cod_mensaje cod_msj = recibir_operacion(conexion_memoria);
+
+	if(cod_msj == HANDSHAKE) {
+		pagina_config = recibir_configuracion_memoria(conexion_memoria);
+		log_debug(cpu_logger, "Handshake con memoria realizado.\nTamanio Pagina: %d Kbytes.\nCantidad de entradas por tabla: %d.", pagina_config->tamanio_pagina, pagina_config->cantidad_entradas);
+	}
+	else {
+		error_show("Error en handshake.");
+	}
+
+	
 }
 
 void cpu_config_destroy(){
