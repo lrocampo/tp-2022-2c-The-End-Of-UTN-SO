@@ -150,13 +150,16 @@ void* atender_kernel(void* args) {
 			list_destroy_and_destroy_elements(indices, free);
 			pcb_memoria_destroy(pcb);
 			break;
-		/* case LIBERAR_ESTRUCTURAS:*/	
+		case LIBERAR_ESTRUCTURAS:
+			int pid = recibir_valor(cliente_kernel_fd);
+			liberar_memoria_de_proceso(pid);
+			break;
 		case PAGINA:
 			t_pagina* pagina = recibir_pagina(cliente_kernel_fd);
 			log_debug(memoria_logger, "Messi.");
-			// mutex
+			pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 			t_tabla_de_paginas* tabla_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
-			// mutex
+			pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 			int cantidad_paginas_proceso = cantidad_de_paginas_en_memoria_proceso(tabla_paginas->pid);
 			if(cantidad_paginas_proceso < memoria_config->marcos_por_proceso){
 				// obtener marco libre
@@ -188,6 +191,27 @@ int leer_en_memoria_principal(int direccion_fisica) {
     pthread_mutex_unlock(&memoria_usuario_mutex);
 
 	return valor;
+ }
+
+ void liberar_memoria_de_proceso(int pid) {
+	log_debug(memoria_logger, "Liberando memoria del proceso %d", pid);
+
+	t_list* tablas = obtener_tablas_por_pid(pid);
+	int i, j;
+
+	for(i = 0; i < list_size(tablas); i++) {
+		t_tabla_de_paginas* tabla = list_get(tablas, i); 
+		for(j = 0; j < list_size(tabla->entradas); j++) {
+			t_entrada_tp* entrada = list_get(tabla->entradas, j);
+			if(entrada->presencia) {
+				t_marco* marco = list_get(lista_de_marcos, entrada->marco);
+				marco->pid = -1;
+			}
+			t_marco* marco_swap = list_get(lista_de_marcos_swap, entrada->posicion_swap / memoria_config->tamanio_pagina);
+			marco_swap->pid = -1;
+		}
+	}
+	log_debug(memoria_logger, "Memoria liberada con exito. Vuelvas prontos.");
  }
 
  t_entrada_tp* obtener_entrada_tp(t_pagina* pagina){

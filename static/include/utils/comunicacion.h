@@ -33,7 +33,8 @@ typedef enum
 	OKI_ESTRUCTURAS,
 	OKI_PAGINA,
 	PAGINA,
-	HANDSHAKE
+	HANDSHAKE,
+	LIBERAR_ESTRUCTURAS
 } cod_mensaje;
 
 typedef struct

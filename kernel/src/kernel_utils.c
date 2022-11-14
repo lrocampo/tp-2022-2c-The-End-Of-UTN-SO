@@ -307,10 +307,12 @@ void pasar_a_ready(t_pcb* pcb){
 }
 
 void solicitar_finalizacion(t_pcb* pcb){
-	cod_mensaje cod_msj = FINALIZAR;
+	cod_mensaje cod_msj_consola = FINALIZAR;
+	cod_mensaje cod_msj_memoria = LIBERAR_ESTRUCTURAS;
     cambiar_estado(pcb, FINISH_EXIT);
 	safe_pcb_push(cola_exit_pcbs, pcb, cola_exit_pcbs_mutex);
-	enviar_datos(pcb->socket_consola,&cod_msj,sizeof(cod_msj));
+	enviar_datos(pcb->socket_consola,&cod_msj_consola,sizeof(cod_msj_consola));
+	enviar_valor_con_codigo(pcb->pid, cod_msj_memoria, conexion_memoria);
     sem_post(&procesos_finalizados);
 }
 

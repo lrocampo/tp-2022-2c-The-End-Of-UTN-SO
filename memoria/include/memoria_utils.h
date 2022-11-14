@@ -74,5 +74,6 @@ void memoria_config_destroy();
 bool marco_libre(t_marco*);
 void escribir_en_memoria_principal(int, int*);
 int leer_en_memoria_principal(int);
+void liberar_memoria_de_proceso(int);
 
 #endif /* MEMORIA_INCLUDE_MEMORIA_UTILS_H_ */
