@@ -48,7 +48,7 @@ extern t_list* lista_de_tablas_de_paginas;
 extern void* espacio_memoria;
 extern void* swap;
 
-extern pthread_t th_atender_pedido_de_memoria;
+extern pthread_t th_atender_cpu;
 extern pthread_t th_atender_kernel;
 
 extern pthread_mutex_t memoria_swap_mutex;
@@ -63,7 +63,7 @@ int obtener_marco_libre_memoria();
 void marcos_init(t_list*, int, int);
 void algoritmo_init();
 void solicitudes_a_memoria_init();
-void* atender_pedido_de_memoria(void*);
+void* atender_cpu(void*);
 void* atender_kernel(void*);
 int obtener_numero_de_marco(t_pagina*);
 void * configurar_memoria(t_config*);

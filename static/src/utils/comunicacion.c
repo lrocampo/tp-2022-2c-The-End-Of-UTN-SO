@@ -359,6 +359,16 @@ void enviar_indices_tabla_paginas(t_list* indices, int socket_cliente) {
 	eliminar_paquete(paquete);
 }
 
+void enviar_configuracion_memoria(int tamanio_pagina, int entradas, int cpu_fd) {
+	t_paquete *paquete = new_paquete_con_codigo_de_operacion(HANDSHAKE);
+
+	agregar_valor_a_paquete(paquete, &tamanio_pagina, sizeof(int));
+	agregar_valor_a_paquete(paquete, &entradas, sizeof(int));
+
+	enviar_paquete(paquete, cpu_fd);
+	eliminar_paquete(paquete);
+}
+
 t_list* recibir_indices_tabla_paginas(int socket_cliente){
 	int desplazamiento = 0;
 	int size;

@@ -15,7 +15,7 @@ t_list* lista_de_tablas_de_paginas;
 void* espacio_memoria;
 void* swap;
 
-pthread_t th_atender_pedido_de_memoria;
+pthread_t th_atender_cpu;
 pthread_t th_atender_kernel;
 
 pthread_mutex_t memoria_swap_mutex;
@@ -43,7 +43,7 @@ void * configurar_memoria(t_config* config){
 }
 
 void esperar_conexiones() {
-    pthread_join(th_atender_pedido_de_memoria, NULL);
+    pthread_join(th_atender_cpu, NULL);
     pthread_join(th_atender_kernel, NULL);
 }
 
@@ -99,18 +99,21 @@ void algoritmos_init() {
 /* Conexiones con Kernel y CPU */
 
 void solicitudes_a_memoria_init() {
-    pthread_create(&th_atender_pedido_de_memoria, NULL, &atender_pedido_de_memoria, NULL);
+    pthread_create(&th_atender_cpu, NULL, &atender_cpu, NULL);
 
 	pthread_create(&th_atender_kernel, NULL, &atender_kernel, NULL);
 }
 
-void* atender_pedido_de_memoria(void* args){
+void* atender_cpu(void* args){
 	memoria_server_cpu_fd = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_cpu);
 	if(memoria_server_cpu_fd == -1){
 		pthread_exit(NULL);
 	}
 	cliente_cpu_fd = esperar_cliente(memoria_server_cpu_fd);
 	log_debug(memoria_logger,"Se conecto un CPU a MEMORIA.");
+
+	enviar_configuracion_memoria(memoria_config->tamanio_pagina, memoria_config->entradas_por_tabla, cliente_cpu_fd);
+
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_cpu_fd);
 		if(mensaje == MENSAJE){

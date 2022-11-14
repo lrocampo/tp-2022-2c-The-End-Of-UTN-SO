@@ -32,7 +32,8 @@ typedef enum
 	OKI_TECLADO,
 	OKI_ESTRUCTURAS,
 	OKI_PAGINA,
-	PAGINA
+	PAGINA,
+	HANDSHAKE
 } cod_mensaje;
 
 typedef struct
@@ -88,6 +89,7 @@ void enviar_pcb_memoria(t_pcb_memoria*, int);
 void enviar_proceso(t_proceso*, int);
 void enviar_pagina(t_pagina*, int);
 void enviar_indices_tabla_paginas(t_list*, int);
+void enviar_configuracion_memoria(int, int, int);
 int enviar_datos(int , void *, uint32_t);
 
 void empaquetar_instrucciones(t_list*, t_paquete*);
