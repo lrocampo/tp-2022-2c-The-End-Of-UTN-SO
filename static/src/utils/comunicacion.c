@@ -75,6 +75,10 @@ void recibir_mensaje(t_log* logger, int socket_cliente)
 	free(buffer);
 }
 
+int recibir_datos(int socket_fd, void *dest, uint32_t size) {
+	return recv(socket_fd, dest, size, 0); // cuantos bytes a recibir y a donde los quiero recibir
+}
+
 t_list* deserializar_paquete_mensaje(int* desplazamiento, void* buffer){
 	int tamanio_string;
 	int cantidad_elementos;
@@ -571,3 +575,9 @@ t_pcb_memoria* recibir_pcb_memoria(int socket_cliente) {
 	return nueva_pcb;
 }
 
+void enviar_pedido_de_escritura(int dir_fisica, int fd, int valor) {
+	cod_mensaje cod_msj_test = ESCRIBIR;
+	enviar_datos(fd, &cod_msj_test,sizeof(cod_msj_test));
+	enviar_datos(fd, &dir_fisica,sizeof(dir_fisica));
+	enviar_datos(fd, &valor,sizeof(valor));
+}

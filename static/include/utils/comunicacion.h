@@ -17,6 +17,9 @@
 #include<commons/log.h>
 #include<utils/contexto.h>
 
+#define PAGE_FAULT -2
+#define SEG_FAULT -3
+
 typedef enum
 {
 	MENSAJE,
@@ -34,7 +37,14 @@ typedef enum
 	OKI_PAGINA,
 	PAGINA,
 	HANDSHAKE,
-	LIBERAR_ESTRUCTURAS
+	LIBERAR_ESTRUCTURAS,
+	PEDIDO_MARCO,
+	OKI_MARCO,
+	PAGE_NOT_FOUND_404,
+	LEER,
+	OKI_LEER,
+	ESCRIBIR,
+	OKI_ESCRIBIR
 } cod_mensaje;
 
 typedef struct
@@ -83,6 +93,7 @@ t_proceso* deserializar_proceso(int);
 t_pcb* recibir_pcb(int);
 t_pcb_memoria* recibir_pcb_memoria(int);
 int recibir_valor(int);
+int recibir_datos(int, void *, uint32_t);
 t_pagina* recibir_pagina(int);
 
 void enviar_valor_con_codigo(int, cod_mensaje, int);
@@ -114,5 +125,5 @@ t_list* recibir_indices_tabla_paginas(int);
 t_pcb* recibir_pcb(int);
 int recibir_valor(int);
 t_list* recibir_paquete_con_funcion(int, void* (*funcion_deserializar)(int*, void*));
-
+void enviar_pedido_de_escritura(int, int, int);
 #endif /* INCLUDE_UTILS_COMUNICACION_H_ */

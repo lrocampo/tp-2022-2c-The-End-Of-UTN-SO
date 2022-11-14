@@ -17,9 +17,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define PAGE_FAULT -2
-#define SEG_FAULT -3
-
 typedef struct {
 	uint32_t ax;
 	uint32_t bx;

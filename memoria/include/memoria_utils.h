@@ -63,6 +63,7 @@ int obtener_marco_libre_memoria();
 void marcos_init(t_list*, int, int);
 void algoritmo_init();
 void solicitudes_a_memoria_init();
+void atender_pedido_de_marco();
 void* atender_cpu(void*);
 void* atender_kernel(void*);
 int obtener_numero_de_marco(t_pagina*);
@@ -72,7 +73,7 @@ void terminar_modulo();
 void escribir_en_memoria(void*, void*);
 void memoria_config_destroy();
 bool marco_libre(t_marco*);
-void escribir_en_memoria_principal(int, int*);
+void escribir_en_memoria_principal(int, int);
 int leer_en_memoria_principal(int);
 void liberar_memoria_de_proceso(int);
 

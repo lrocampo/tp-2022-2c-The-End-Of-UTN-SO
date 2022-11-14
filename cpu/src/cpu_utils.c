@@ -43,8 +43,6 @@ void iniciar_conexion_con_memoria() {
 	else {
 		error_show("Error en handshake.");
 	}
-
-	
 }
 
 void cpu_config_destroy(){

@@ -104,6 +104,20 @@ void solicitudes_a_memoria_init() {
 	pthread_create(&th_atender_kernel, NULL, &atender_kernel, NULL);
 }
 
+void atender_pedido_de_marco() {
+	cod_mensaje mensaje;
+	t_pagina* pagina = recibir_pagina(cliente_cpu_fd);
+	int marco = obtener_numero_de_marco(pagina);
+	if(marco == PAGE_FAULT) {
+		mensaje = PAGE_NOT_FOUND_404;
+		enviar_datos(cliente_cpu_fd, &mensaje, sizeof(mensaje));
+	}
+	else {
+		mensaje = OKI_MARCO;
+		enviar_valor_con_codigo(marco, mensaje, cliente_cpu_fd);
+	}
+}
+
 void* atender_cpu(void* args){
 	memoria_server_cpu_fd = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_cpu);
 	if(memoria_server_cpu_fd == -1){
@@ -116,6 +130,34 @@ void* atender_cpu(void* args){
 
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_cpu_fd);
+		int direccion_fisica;
+		int valor;
+		switch (mensaje)
+		{
+		case PEDIDO_MARCO:
+			atender_pedido_de_marco();
+			break;
+		case LEER:
+			log_debug(memoria_logger, "Se pidio leer");
+			direccion_fisica = recibir_valor(cliente_cpu_fd);
+			valor = leer_en_memoria_principal(direccion_fisica);
+			mensaje = OKI_LEER;
+			log_debug(memoria_logger, "dir fisica: %d, valor leido: %d", direccion_fisica, valor);
+			enviar_valor_con_codigo(valor, mensaje, cliente_cpu_fd);
+			log_debug(memoria_logger, "Valor enviado");
+			break;
+		case ESCRIBIR:
+			log_debug(memoria_logger, "Se pidio escribir");
+			recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int));
+			recibir_datos(cliente_cpu_fd, &valor, sizeof(int));
+			log_debug(memoria_logger, "dir fisica: %d, valor a escribir: %d", direccion_fisica, valor);
+			escribir_en_memoria_principal(direccion_fisica, valor);
+			log_debug(memoria_logger, "Valor escrito");
+			break;
+		default:
+			error_show("Mensaje desconocido!");
+			break;
+		}
 		if(mensaje == MENSAJE){
 			recibir_mensaje(memoria_logger, cliente_cpu_fd);
 			enviar_mensaje("Quien te conoce pa?", cliente_cpu_fd);
@@ -178,9 +220,9 @@ void* atender_kernel(void* args) {
  	}
  }
 
-void escribir_en_memoria_principal(int direccion_fisica, int *valor) {
+void escribir_en_memoria_principal(int direccion_fisica, int valor) {
 	pthread_mutex_lock(&memoria_usuario_mutex);
-	memcpy(espacio_memoria + direccion_fisica, valor, sizeof(int));
+	memcpy(espacio_memoria + direccion_fisica, &valor, sizeof(int));
 	pthread_mutex_unlock(&memoria_usuario_mutex);
 }
 
