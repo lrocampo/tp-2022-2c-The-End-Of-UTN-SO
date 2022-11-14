@@ -316,6 +316,63 @@ t_proceso* deserializar_proceso(int socket_cliente){
 	return proceso;
 }
 
+/* PAGINAS */
+
+void enviar_pagina(t_pagina* pagina, int socket_cliente){
+	t_paquete *paquete = new_paquete_con_codigo_de_operacion(PAGINA);
+
+	empaquetar_pagina(pagina, paquete);
+
+	enviar_paquete(paquete, socket_cliente);
+	eliminar_paquete(paquete);
+}
+
+void empaquetar_pagina(t_pagina* pagina, t_paquete* paquete){
+	agregar_valor_a_paquete(paquete, &(pagina->indice_tabla_de_pagina), sizeof(int));
+	agregar_valor_a_paquete(paquete, &(pagina->numero_pagina), sizeof(int));
+}
+
+t_pagina* recibir_pagina(int socket_cliente){
+	int desplazamiento = 0;
+	int size;
+	void * buffer;
+
+	buffer = recibir_buffer(&size, socket_cliente);
+	t_pagina* pagina = malloc(sizeof(t_pagina));
+
+	memcpy(&(pagina->indice_tabla_de_pagina), buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	memcpy(&(pagina->numero_pagina), buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	free(buffer);
+	return pagina;
+}
+
+void enviar_indices_tabla_paginas(t_list* indices, int socket_cliente) {
+	t_paquete *paquete = new_paquete_con_codigo_de_operacion(OKI_ESTRUCTURAS);
+	
+	empaquetar_strings(indices, paquete);
+	
+	enviar_paquete(paquete, socket_cliente);
+	eliminar_paquete(paquete);
+}
+
+t_list* recibir_indices_tabla_paginas(int socket_cliente){
+	int desplazamiento = 0;
+	int size;
+	void * buffer;
+	t_list* lista_indices;
+
+	buffer = recibir_buffer(&size, socket_cliente);
+
+	lista_indices = deserializar_paquete_mensaje(&desplazamiento, buffer);
+	
+	free(buffer);
+	return lista_indices;
+}
+
 /* SEGMENTOS */
 
 void empaquetar_strings(t_list* strings, t_paquete* paquete){
@@ -412,29 +469,6 @@ void enviar_pcb_memoria(t_pcb_memoria* pcb, int socket_cliente) {
 	
 	enviar_paquete(paquete, socket_cliente);
 	eliminar_paquete(paquete);
-}
-
-void enviar_indices_tabla_paginas(t_list* indices, int socket_cliente) {
-	t_paquete *paquete = new_paquete_con_codigo_de_operacion(OKI_ESTRUCTURAS);
-	
-	empaquetar_strings(indices, paquete);
-	
-	enviar_paquete(paquete, socket_cliente);
-	eliminar_paquete(paquete);
-}
-
-t_list* recibir_indices_tabla_paginas(int socket_cliente){
-	int desplazamiento = 0;
-	int size;
-	void * buffer;
-	t_list* lista_indices;
-
-	buffer = recibir_buffer(&size, socket_cliente);
-
-	lista_indices = deserializar_paquete_mensaje(&desplazamiento, buffer);
-	
-	free(buffer);
-	return lista_indices;
 }
 
 t_pcb* recibir_pcb(int socket_cliente){

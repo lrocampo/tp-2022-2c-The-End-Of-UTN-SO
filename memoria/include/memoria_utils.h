@@ -62,12 +62,16 @@ void crear_tablas_de_pagina(t_pcb_memoria*);
 void* atender_pedido_de_memoria(void*);
 void* atender_kernel(void*);
 int obtener_numero_de_marco(t_pagina*);
+int cantidad_de_paginas_en_memoria_proceso(int);
 void * configurar_memoria(t_config*);
 void esperar_conexiones();
 t_list* obtener_indices_tablas_de_pagina(t_pcb_memoria*);
 void terminar_modulo();
+t_list* obtener_tablas_por_pid(int);
+void escribir_en_memoria(void*, void*);
 void memoria_config_destroy();
 bool marco_libre(t_marco*);
+bool pagina_presente(t_entrada_tp*);
 void escribir_en_memoria_principal(int, int*);
 int leer_en_memoria_principal(int);
 

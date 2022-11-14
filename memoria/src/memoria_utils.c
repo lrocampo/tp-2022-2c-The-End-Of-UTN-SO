@@ -163,20 +163,27 @@ void* atender_kernel(void* args) {
 			log_debug(memoria_logger, "Recibi pcb con pid: %d",pcb->pid);
 			crear_tablas_de_pagina(pcb);
 			t_list* indices = obtener_indices_tablas_de_pagina(pcb);
-			// esto esta mal, porque deberia enviar la tabla de segmentos
 			mensaje = OKI_ESTRUCTURAS;
 			log_debug(memoria_logger, "llegue aca, por eviar cosas");
-
  			enviar_indices_tabla_paginas(indices, cliente_kernel_fd);
-
 			list_destroy_and_destroy_elements(indices, free);
 			pcb_memoria_destroy(pcb);
-			
 			break;
-		case PAGE_SWAP:
-			//t_pagina* pagina = recibir_pagina(cliente_kernel_fd);
+		case PAGINA:
+			t_pagina* pagina = recibir_pagina(cliente_kernel_fd);
 			log_debug(memoria_logger, "Messi.");
-			mensaje = OKI_PAGE_SWAP;
+			// mutex
+			t_tabla_de_paginas* tabla_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
+			// mutex
+			int cantidad_paginas_proceso = cantidad_de_paginas_en_memoria_proceso(tabla_paginas->pid);
+			if(cantidad_paginas_proceso < memoria_config->marcos_por_proceso){
+				// obtener marco libre
+			}
+			else {
+				// ejecutar algoritmo
+			}
+
+			mensaje = OKI_PAGINA;
  			enviar_datos(cliente_kernel_fd, &mensaje, sizeof(cod_mensaje));		
 			break;
 		default:
@@ -186,20 +193,40 @@ void* atender_kernel(void* args) {
  	}
  }
 
+int cantidad_de_paginas_en_memoria_proceso(int pid){
+	int cantidad = 0;
+
+	t_list* tablas_paginas_proceso = obtener_tablas_por_pid(pid);
+	for(int i = 0; i < list_size(tablas_paginas_proceso); i++){
+		t_tabla_de_paginas* tabla = list_get(tablas_paginas_proceso, i);
+		t_list* entradas_presentes = list_filter(tabla->entradas, (void*) pagina_presente);
+		cantidad += list_size(entradas_presentes);
+		list_destroy(entradas_presentes);
+	}
+	list_destroy(tablas_paginas_proceso);
+	return cantidad;
+}
+
+bool pagina_presente(t_entrada_tp* entrada){
+	return entrada->presencia;
+}
+
 t_list* obtener_indices_tablas_de_pagina(t_pcb_memoria* pcb){
 	
 	t_list* tablas_buscadas;
 	t_list* indices;
 	
-	bool by_pid(t_tabla_de_paginas* tabla){
-		return tabla->pid == pcb->pid;
-	}
+	// bool by_pid(t_tabla_de_paginas* tabla){
+	// 	return tabla->pid == pcb->pid;
+	// }
+
+	tablas_buscadas = obtener_tablas_por_pid(pcb->pid);
 
 	char* to_idx(t_tabla_de_paginas* tabla){
 		return string_itoa(tabla->indice_tabla_de_pagina);
-	}
-	
-	tablas_buscadas = list_filter(lista_de_tablas_de_paginas, (void*) by_pid);
+	}	
+
+	// tablas_buscadas = list_filter(lista_de_tablas_de_paginas, (void*) by_pid);
 
 	log_debug(memoria_logger, "cantidad de tablas de pid: %d : %d", pcb->pid, list_size(tablas_buscadas));
 
@@ -207,6 +234,13 @@ t_list* obtener_indices_tablas_de_pagina(t_pcb_memoria* pcb){
 	list_destroy(tablas_buscadas);
 
 	return indices;
+}
+
+t_list* obtener_tablas_por_pid(int pid){
+	bool by_pid(t_tabla_de_paginas* tabla){
+		return tabla->pid == pid;
+	}
+	return list_filter(lista_de_tablas_de_paginas, (void*) by_pid);
 }
 
 void escribir_en_memoria_principal(int direccion_fisica, int *valor) {

@@ -31,8 +31,8 @@ typedef enum
 	OKI_PANTALLA,
 	OKI_TECLADO,
 	OKI_ESTRUCTURAS,
-	OKI_PAGE_SWAP,
-	PAGE_SWAP
+	OKI_PAGINA,
+	PAGINA
 } cod_mensaje;
 
 typedef struct
@@ -76,6 +76,7 @@ t_proceso* deserializar_proceso(int);
 t_pcb* recibir_pcb(int);
 t_pcb_memoria* recibir_pcb_memoria(int);
 int recibir_valor(int);
+t_pagina* recibir_pagina(int);
 
 void enviar_valor_con_codigo(int, cod_mensaje, int);
 void enviar_valor_a_imprimir(int, int);
@@ -85,6 +86,7 @@ void* enviar_interrupt(void*);
 void enviar_pcb(t_pcb*, int);
 void enviar_pcb_memoria(t_pcb_memoria*, int);
 void enviar_proceso(t_proceso*, int);
+void enviar_pagina(t_pagina*, int);
 void enviar_indices_tabla_paginas(t_list*, int);
 int enviar_datos(int , void *, uint32_t);
 
@@ -94,6 +96,7 @@ void empaquetar_tabla_segmentos(t_list*, t_paquete*);
 void empaquetar_registros(registros_de_proposito_general, t_paquete*);
 void empaquetar_proceso(t_proceso*,t_paquete*);
 void empaquetar_strings(t_list*,t_paquete*);
+void empaquetar_pagina(t_pagina*, t_paquete*);
 void agregar_valor_a_paquete(t_paquete* , void* , int );
 void serializar_instruccion(instruccion*,t_paquete*);
 

@@ -41,13 +41,40 @@ void ocupar_posicion_swap(int pid, int posicion){
     marco_buscado->pid = pid;
 }
 
-void escribir_en_swap(t_entrada_tp* entrada_pagina){
-	log_info(memoria_logger,"Escribiendo pagina en swap \n");
+void escribir_pagina_en_swap(t_entrada_tp* entrada_pagina){
+	log_debug(memoria_logger,"Escribiendo pagina en swap \n");
+	int posicion = entrada_pagina->marco * memoria_config->tamanio_pagina;
+    void* source = espacio_memoria + posicion;
+    void* dest = swap + entrada_pagina->posicion_swap;
+    escribir_en_memoria(dest, source);
+    log_debug(memoria_logger,"Se escribio pagina en swap \n");
+}
+
+void poner_pagina_en_memoria_principal(t_entrada_tp* entrada_pagina){
+	log_debug(memoria_logger,"Escribiendo pagina en memoria principal \n");
+    int posicion = entrada_pagina->marco * memoria_config->tamanio_pagina;
+	void* dest = espacio_memoria + posicion;
+    void* source = swap + entrada_pagina->posicion_swap;
+    escribir_en_memoria(dest, source);
+	log_debug(memoria_logger,"Se escribio pagina en memoria principal \n");
+}
+
+void escribir_en_memoria(void* dest, void* source){
     ejecutar_espera(memoria_config->retardo_swap);
     pthread_mutex_lock(&memoria_swap_mutex);
-    pthread_mutex_lock(&memoria_usuario_mutex);
-    memcpy(swap + entrada_pagina->posicion_swap, espacio_memoria + (entrada_pagina->marco * memoria_config->tamanio_pagina), memoria_config->tamanio_pagina);
-    pthread_mutex_unlock(&memoria_usuario_mutex);
+	pthread_mutex_lock(&memoria_usuario_mutex);
+	memcpy(dest, source, sizeof(memoria_config->tamanio_pagina));
+	pthread_mutex_unlock(&memoria_usuario_mutex);
     pthread_mutex_unlock(&memoria_swap_mutex);
-	log_info(memoria_logger,"Se escribio pagina en swap \n");
+}
+
+void* obtener_pagina_de_swap(t_entrada_tp* entrada_pagina){
+    log_info(memoria_logger,"Obteniendo pagina de swap \n");
+    void* pagina = NULL;
+    ejecutar_espera(memoria_config->retardo_swap);
+    pthread_mutex_lock(&memoria_swap_mutex);
+    memcpy(pagina, swap + entrada_pagina->posicion_swap, memoria_config->tamanio_pagina);
+    pthread_mutex_unlock(&memoria_swap_mutex);
+	log_info(memoria_logger,"Se Obtuvo pagina en swap \n");
+    return pagina;
 }
