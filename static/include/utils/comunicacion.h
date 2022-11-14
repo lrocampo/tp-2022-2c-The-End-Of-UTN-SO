@@ -90,6 +90,7 @@ void enviar_proceso(t_proceso*, int);
 void enviar_pagina(t_pagina*, int);
 void enviar_indices_tabla_paginas(t_list*, int);
 void enviar_configuracion_memoria(int, int, int);
+t_list* recibir_configuracion_memoria(int);
 int enviar_datos(int , void *, uint32_t);
 
 void empaquetar_instrucciones(t_list*, t_paquete*);

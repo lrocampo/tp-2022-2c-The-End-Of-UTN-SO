@@ -369,6 +369,31 @@ void enviar_configuracion_memoria(int tamanio_pagina, int entradas, int cpu_fd) 
 	eliminar_paquete(paquete);
 }
 
+t_list* recibir_configuracion_memoria(int socket_memoria) {
+	int desplazamiento = 0;
+	int size;
+	void * buffer;
+	int tamanio_pagina;
+	int cantidad_de_entradas;
+
+	buffer = recibir_buffer(&size, socket_memoria);
+	t_list* lista = list_create();
+
+	memcpy(&tamanio_pagina, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	list_add(lista, tamanio_pagina);
+
+	memcpy(&cantidad_de_entradas, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	list_add(lista, cantidad_de_entradas);
+
+	free(buffer);
+	return lista;
+}
+
+
 t_list* recibir_indices_tabla_paginas(int socket_cliente){
 	int desplazamiento = 0;
 	int size;
