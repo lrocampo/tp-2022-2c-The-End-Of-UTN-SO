@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <utils/socket.h>
 #include <swap.h>
+#include <esquema.h>
 #include <pthread.h>
 #include <utils/comunicacion.h>
 #include "../../static/include/utils/logger.h"
@@ -34,45 +35,44 @@ typedef struct {
 
 extern t_log *memoria_logger;
 extern t_memoria_config* memoria_config;
+
 extern int memoria_server_cpu_fd;
 extern int memoria_server_kernel_fd;
 extern int cliente_kernel_fd;
 extern int cliente_cpu_fd;
+
 extern t_list* lista_de_marcos;
 extern t_list* lista_de_marcos_swap;
 extern t_list* lista_de_tablas_de_paginas;  
 
 extern void* espacio_memoria;
+extern void* swap;
 
 extern pthread_t th_atender_pedido_de_memoria;
 extern pthread_t th_atender_kernel;
 
 extern pthread_mutex_t memoria_swap_mutex;
 extern pthread_mutex_t memoria_usuario_mutex;
-
 extern pthread_mutex_t lista_de_tablas_de_paginas_mutex;
 extern pthread_mutex_t lista_de_tablas_de_paginas_swap_mutex;
 
 void memoria_principal_init();
 void marcos_memoria_principal_init();
+t_marco* obtener_marco_libre(t_list*);
+int obtener_marco_libre_memoria();
 void marcos_init(t_list*, int, int);
 void algoritmo_init();
 void solicitudes_a_memoria_init();
-void crear_tablas_de_pagina(t_pcb_memoria*);
 void* atender_pedido_de_memoria(void*);
 void* atender_kernel(void*);
 int obtener_numero_de_marco(t_pagina*);
-int cantidad_de_paginas_en_memoria_proceso(int);
 void * configurar_memoria(t_config*);
 void esperar_conexiones();
-t_list* obtener_indices_tablas_de_pagina(t_pcb_memoria*);
 void terminar_modulo();
-t_list* obtener_tablas_por_pid(int);
 void escribir_en_memoria(void*, void*);
 void memoria_config_destroy();
 bool marco_libre(t_marco*);
-bool pagina_presente(t_entrada_tp*);
 void escribir_en_memoria_principal(int, int*);
 int leer_en_memoria_principal(int);
 
-#endif
+#endif /* MEMORIA_INCLUDE_MEMORIA_UTILS_H_ */

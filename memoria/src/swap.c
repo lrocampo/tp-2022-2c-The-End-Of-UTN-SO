@@ -32,8 +32,8 @@ void swap_create(){
 }
 
 int obtener_posicion_libre_swap(){
-    t_marco* marco_buscado = list_find(lista_de_marcos_swap,  (void*) marco_libre);
-    return marco_buscado->numero_marco * memoria_config->tamanio_pagina;
+    //t_marco* marco_buscado = list_find(lista_de_marcos_swap,  (void*) marco_libre);
+    return obtener_marco_libre(lista_de_marcos_swap)->numero_marco * memoria_config->tamanio_pagina;//marco_buscado->numero_marco * memoria_config->tamanio_pagina;
 }
 
 void ocupar_posicion_swap(int pid, int posicion){

@@ -8,13 +8,6 @@
 #include <pthread.h>
 #include <fcntl.h>
 
-extern void* swap;
-
-extern void* espacio_memoria;
-extern pthread_mutex_t memoria_swap_mutex;
-extern pthread_mutex_t memoria_usuario_mutex;
-
-
 void swap_init();
 void escribir_pagina_en_swap(t_entrada_tp*);
 int obtener_posicion_libre_swap();
