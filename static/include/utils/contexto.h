@@ -77,7 +77,10 @@ typedef struct
 // Me interrumpiste
 // Entrada y salida
 // Termine
-
+typedef struct {
+	int indice_tabla_de_pagina;
+	int numero_pagina;
+}t_pagina;
 typedef struct {
 	uint32_t pid;
 	uint32_t program_counter;
@@ -88,7 +91,7 @@ typedef struct {
 	t_list* tabla_de_segmentos;
 	t_list* tamanio_segmentos;
 	registros_de_proposito_general registros;
-	t_pagina pagina_fault;
+	t_pagina* pagina_fault;
 	bool con_desalojo;
 	bool page_fault;
 	bool segmentation_fault;
@@ -108,11 +111,6 @@ typedef struct {
 	int pid;
 	t_list* entradas;
 }t_tabla_de_paginas;
-
-typedef struct {
-	int indice_tabla_de_pagina;
-	int numero_pagina;
-}t_pagina;
 
 typedef struct {
 	int numero_marco;

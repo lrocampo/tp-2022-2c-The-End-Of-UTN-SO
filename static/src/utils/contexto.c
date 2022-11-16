@@ -22,6 +22,8 @@ t_pcb* pcb_create(t_proceso* proceso, uint32_t pid, int socket){
     pcb->pid = pid;
     pcb->socket_consola = socket;
     pcb->program_counter = 0;
+    pcb->page_fault = false;
+    pcb->segmentation_fault = false;
     pcb->interrupcion = false;
     pcb->registros.ax = 0;
     pcb->registros.bx = 0;
@@ -46,7 +48,7 @@ t_marco* marco_create(uint32_t pid, int numero_marco){
     t_marco* marco = malloc(sizeof(t_marco));
 
     marco->numero_marco = numero_marco;
-    marc0->pid = pid;
+    marco->pid = pid;
 
     return marco;
 }

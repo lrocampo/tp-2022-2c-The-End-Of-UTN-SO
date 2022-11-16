@@ -143,6 +143,8 @@ void atender_pedido_de_escritura() {
 	log_debug(memoria_logger, "dir fisica: %d, valor a escribir: %d", direccion_fisica, valor);
 	escribir_en_memoria_principal(direccion_fisica, valor);
 	log_debug(memoria_logger, "Valor escrito");
+	mensaje = OKI_ESCRIBIR;
+	enviar_datos(cliente_cpu_fd, &mensaje, sizeof(mensaje));
 }
 
 void* atender_cpu(void* args){
@@ -157,8 +159,7 @@ void* atender_cpu(void* args){
 
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_cpu_fd);
-		int direccion_fisica;
-		int valor;
+		
 		switch (mensaje)
 		{
 		case PEDIDO_MARCO:
@@ -171,7 +172,8 @@ void* atender_cpu(void* args){
 			atender_pedido_de_escritura();
 			break;
 		default:
-			error_show("Mensaje desconocido!");
+			log_debug(memoria_logger,"Se desconecto el cliente.");
+			pthread_exit(NULL);
 			break;
 		}
 	}

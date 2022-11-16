@@ -89,6 +89,7 @@ t_list* deserializar_paquete_mensaje(int*, void*);
 t_list* deserializar_instrucciones(int*, void*);
 t_list* deserializar_tabla_segmentos(int*, void*);
 t_proceso* deserializar_proceso(int);
+t_pagina* deserializar_pagina(int*, void*);
 
 t_pcb* recibir_pcb(int);
 t_pcb_memoria* recibir_pcb_memoria(int);
@@ -116,7 +117,7 @@ void empaquetar_tabla_segmentos(t_list*, t_paquete*);
 void empaquetar_registros(registros_de_proposito_general, t_paquete*);
 void empaquetar_proceso(t_proceso*,t_paquete*);
 void empaquetar_strings(t_list*,t_paquete*);
-void empaquetar_pagina(t_pagina*, t_paquete*);
+void empaquetar_pagina(t_paquete*, t_pagina*);
 void agregar_valor_a_paquete(t_paquete* , void* , int );
 void serializar_instruccion(instruccion*,t_paquete*);
 

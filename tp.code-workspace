@@ -38,7 +38,7 @@
 			"memoria.h": "c",
 			"pthread.h": "c",
 			"fcntl.h": "c",
-			"esquema.h": "c"
+			"esquema.h": "c",
 		}
 	}
 }

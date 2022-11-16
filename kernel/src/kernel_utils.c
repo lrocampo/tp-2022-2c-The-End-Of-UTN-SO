@@ -38,6 +38,7 @@ pthread_t th_timer;
 pthread_t th_conexiones;
 pthread_t th_ejecucion;
 pthread_t th_transiciones_ready;
+pthread_t th_manejo_page_fault;
 pthread_t th_rajar_pcb;
 
 /* Planificacion */
@@ -156,13 +157,15 @@ t_pcb* obtener_proceso_ejecutado(){
 		pthread_exit(NULL);
     }  
 }
-void manejar_page_fault(t_pcb* pcb)
+void* manejar_page_fault(void* arg)
 {	
+	t_pcb* pcb = (t_pcb*) arg;
 	cambiar_estado(pcb, BLOCK);
-	enviar_pagina(pcb->page_fault, conexion_memoria);
+	enviar_pagina(pcb->pagina_fault, conexion_memoria);
 	cod_mensaje cod_mensaje_memoria = recibir_operacion(conexion_memoria); //consultar si es correcto
 	if(cod_mensaje_memoria == OKI_PAGINA)
 	{
+		log_debug(kernel_logger, "page fault solucionado pid: %d", pcb->pid);
 		pasar_a_ready(pcb);
 	}
 	pthread_exit(NULL);
@@ -180,8 +183,9 @@ void analizar_contexto_recibido(t_pcb* pcb){
 		pcb->con_desalojo = false;
 	}
 	if(pcb->page_fault){
-		pthread_create (&th_manejo_page_fault,NULL, &manejar_page_fault, (void*)pcb);
-		pthread_detach;
+		log_debug(kernel_logger, "page faulted PCB pid: %d", pcb->pid);
+		pthread_create(&th_manejo_page_fault, NULL, &manejar_page_fault, (void*) pcb);
+		pthread_detach(th_manejo_page_fault);
 	}
 }
 
@@ -270,7 +274,6 @@ void* transicion_proceso_a_ready(void* arg){
         pasar_a_ready(pcb);
 	}
 }
-// todo mauro
 void solicitar_creacion_estructuras_administrativas(t_pcb* pcb) {
 	t_pcb_memoria* pcb_memoria = malloc(sizeof(t_pcb_memoria));
 	pcb_memoria->pid = pcb->pid;
@@ -372,12 +375,15 @@ t_pcb* pop_ready_pcb(){
 void push_ready_pcb(t_pcb* pcb){
 	if((algoritmo == FEEDBACK && (pcb->estado == NEW || pcb->estado == BLOCK)) || algoritmo == RR) {
 		pcb->con_desalojo = true;
-		pcb->interrupcion = true;
+		// saque un pcb->interrupcion = true; TODO: VALIDAR con las pruebas si esta bien
         safe_pcb_push(cola_ready_RR_pcbs, pcb, cola_ready_RR_pcbs_mutex);
 	} else {
 		pcb->con_desalojo = false;
         safe_pcb_push(cola_ready_FIFO_pcbs, pcb, cola_ready_FIFO_pcbs_mutex);
 	}
+		pcb->interrupcion = false;
+		pcb->page_fault = false;
+		pcb->segmentation_fault = false;
 }
 
 /* Utils */

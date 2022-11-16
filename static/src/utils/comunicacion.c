@@ -325,13 +325,18 @@ t_proceso* deserializar_proceso(int socket_cliente){
 void enviar_pagina(t_pagina* pagina, int socket_cliente){
 	t_paquete *paquete = new_paquete_con_codigo_de_operacion(PAGINA);
 
-	empaquetar_pagina(pagina, paquete);
+	empaquetar_pagina(paquete, pagina);
 
 	enviar_paquete(paquete, socket_cliente);
 	eliminar_paquete(paquete);
 }
 
-void empaquetar_pagina(t_pagina* pagina, t_paquete* paquete){
+void empaquetar_pagina(t_paquete* paquete, t_pagina* pagina){
+	if(pagina == NULL){
+		pagina = malloc(sizeof(t_pagina));
+		pagina->indice_tabla_de_pagina = -1;
+		pagina->numero_pagina = -1;
+	}
 	agregar_valor_a_paquete(paquete, &(pagina->indice_tabla_de_pagina), sizeof(int));
 	agregar_valor_a_paquete(paquete, &(pagina->numero_pagina), sizeof(int));
 }
@@ -342,15 +347,21 @@ t_pagina* recibir_pagina(int socket_cliente){
 	void * buffer;
 
 	buffer = recibir_buffer(&size, socket_cliente);
-	t_pagina* pagina = malloc(sizeof(t_pagina));
-
-	memcpy(&(pagina->indice_tabla_de_pagina), buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-
-	memcpy(&(pagina->numero_pagina), buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
+	t_pagina* pagina = deserializar_pagina(&desplazamiento, buffer);
 
 	free(buffer);
+	return pagina;
+}
+
+t_pagina* deserializar_pagina(int* desplazamiento, void* buffer){
+	t_pagina* pagina = malloc(sizeof(t_pagina));
+
+	memcpy(&(pagina->indice_tabla_de_pagina), buffer + (*desplazamiento), sizeof(int));
+	(*desplazamiento) += sizeof(int);
+
+	memcpy(&(pagina->numero_pagina), buffer + (*desplazamiento), sizeof(int));
+	(*desplazamiento) += sizeof(int);
+
 	return pagina;
 }
 
@@ -471,7 +482,8 @@ void empaquetar_pcb(t_pcb* pcb,t_paquete* paquete){
 	agregar_valor_a_paquete(paquete, &(pcb->interrupcion), sizeof(bool));
 	agregar_valor_a_paquete(paquete, &(pcb->con_desalojo), sizeof(bool));
 	agregar_valor_a_paquete(paquete, &(pcb->page_fault), sizeof(bool));
-	empaquetar_pagina(paquete, &(pcb->pagina_fault));
+	agregar_valor_a_paquete(paquete, &(pcb->segmentation_fault), sizeof(bool));
+	empaquetar_pagina(paquete, pcb->pagina_fault);
 	empaquetar_registros(pcb->registros, paquete);
 	empaquetar_instrucciones(pcb->instrucciones, paquete);
 	empaquetar_tabla_segmentos(pcb->tabla_de_segmentos, paquete);
@@ -538,6 +550,12 @@ t_pcb* recibir_pcb(int socket_cliente){
 	memcpy(&(nueva_pcb->con_desalojo), buffer + desplazamiento, sizeof(bool));
 	desplazamiento += sizeof(bool);
 
+	memcpy(&(nueva_pcb->page_fault), buffer + desplazamiento, sizeof(bool));
+	desplazamiento += sizeof(bool);
+
+	memcpy(&(nueva_pcb->segmentation_fault), buffer + desplazamiento, sizeof(bool));
+	desplazamiento += sizeof(bool);
+
 	memcpy(&(nueva_pcb->registros.ax), buffer + desplazamiento, sizeof(u_int32_t));
 	desplazamiento += sizeof(u_int32_t);
 
@@ -550,11 +568,12 @@ t_pcb* recibir_pcb(int socket_cliente){
 	memcpy(&(nueva_pcb->registros.dx), buffer + desplazamiento, sizeof(u_int32_t));
 	desplazamiento += sizeof(u_int32_t);
 	
+	pagina = deserializar_pagina(&desplazamiento,buffer);
 	lista_instrucciones = deserializar_instrucciones(&desplazamiento, buffer);
 	tabla_segmentos = deserializar_tabla_segmentos(&desplazamiento, buffer);
-	pagina = deserializar_pagina(&desplazamiento,buffer);
 	nueva_pcb->instrucciones = lista_instrucciones;
 	nueva_pcb->tabla_de_segmentos = tabla_segmentos;
+	nueva_pcb->pagina_fault = pagina;
 
 	free(buffer);
 	return nueva_pcb;
