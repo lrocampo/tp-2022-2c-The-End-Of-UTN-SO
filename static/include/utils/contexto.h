@@ -130,6 +130,8 @@ typedef struct {
 } t_pcb_memoria;
 
 t_pcb* pcb_create(t_proceso*, uint32_t, int);
+t_pagina* pagina_create(int indice_tabla_paginas, int numero_pagina);
+t_marco* marco_create(uint32_t pid, int numero_marco);
 cod_operacion string_to_cod_op(char*);
 void pcb_destroy(void*);
 void pcb_memoria_destroy(t_pcb_memoria*);

@@ -33,6 +33,24 @@ t_pcb* pcb_create(t_proceso* proceso, uint32_t pid, int socket){
     return pcb;
 }
 
+t_pagina* pagina_create(int indice_tabla_paginas, int numero_pagina){
+    t_pagina* pagina = malloc(sizeof(t_pagina));
+
+    pagina->indice_tabla_de_pagina = indice_tabla_paginas;
+    pagina->numero_pagina = numero_pagina;
+
+    return pagina;
+}
+
+t_marco* marco_create(uint32_t pid, int numero_marco){
+    t_marco* marco = malloc(sizeof(t_marco));
+
+    marco->numero_marco = numero_marco;
+    marc0->pid = pid;
+
+    return marco;
+}
+
 void pcb_destroy(void* arg){
     t_pcb* pcb = (t_pcb*) arg;
     list_destroy_and_destroy_elements(pcb->instrucciones, instruccion_destroy);

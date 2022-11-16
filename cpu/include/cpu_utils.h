@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <tlb.h>
+#include <mmu.h>
+#include <memoria.utils.h>
 
 #define RUTA_LOGGER_CPU "./cpu.log"
 #define RUTA_LOGGER_DEBUG_CPU "./cpu_db.log"
@@ -24,6 +26,16 @@ typedef struct {
 	char* puerto_escucha_interrupt;
 	int   retardo_intruccion;
 }t_cpu_config;
+
+typedef struct {
+	int entradas_tlb;
+    char* reemplazo_tlb;
+	int retardo_instruccion;
+	char* ip_memoria;
+	int puerto_memoria;
+	int puerto_escucha_dispatch;
+	int puerto_escucha_interrupt;
+}t_tlb_config;
 
 extern t_log *cpu_logger;
 extern t_cpu_config* cpu_config;
@@ -63,6 +75,9 @@ void valor_retardo_instruccion(uint32_t);
 /* Conexiones con Kernel */
 void* atender_kernel_dispatch(void*);
 void* atender_kernel_interrupt(void*);
+
+/* Traduccion direcciones logicas a fisicas*/
+
 
 #endif
 

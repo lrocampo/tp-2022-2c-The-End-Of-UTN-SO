@@ -2,6 +2,7 @@
 
 t_log *cpu_logger;
 t_cpu_config* cpu_config;
+t_memoria_config* memoria_config;
 int server_fd_dispatch;
 int cliente_fd_dispatch;
 int conexion_memoria;
@@ -27,6 +28,21 @@ void * configurar_cpu(t_config* config){
 	cpu_config->retardo_intruccion = config_get_int_value(config, "RETARDO_INSTRUCCION");
 	return cpu_config;
 }
+
+void* configurar_tlb(t_config* config){
+	t_tlb_config* tlb_config;
+	tlb_config = malloc(sizeof(t_tlb_config));
+	tlb_config-> entradas_tlb = strdup(config_get_string_value(config, "ENTRADAS_TLB"));
+    tlb_config-> reemplazo_tlb = strdup(config_get_string_value(config, "REEMPLAZO_TLB"));
+	tlb_config-> retardo_instruccion = strdup(config_get_string_value(config, "RETARDO_INSTRUCCION"));
+	tlb_config-> ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
+	tlb_config-> puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
+	tlb_config-> puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
+	tlb_config-> puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
+	return tlb_config;
+}
+
+//Hacer malloc tanto de pagina como de marco
 
 void iniciar_conexion_con_memoria() {
 	conexion_memoria = crear_conexion(cpu_config->ip_memoria, cpu_config->puerto_memoria);
@@ -116,48 +132,53 @@ instruccion* fetch(t_pcb* pcb_to_exec) {
 
 cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar) {
 	cod_operacion operacion = instruccion_a_decodificar->operacion;
-	// t_marco* marco; (hacer malloc)
-	// t_pagina* pagina; (hacer malloc)
-	// int resultado;
-	// int offset;
-	if(operacion == MOV_IN || operacion == MOV_OUT) {
+	char* registro;
+	int dir_logica;
+	t_marco* marco;
+	t_pagina* pagina;
+	int nro_pagina;
+	int desplazamiento_segmento;
+	t_segmento* segmento;
+	int resultado_pedir_marco;
+	int offset;
+	int cantidad_entradas; //= memoria_config->entradas_por_tabla;
+	int tamanio_pagina; //= memoria_config->tamanio_pagina;
+	int tam_max_segmento = cantidad_entradas * tamanio_pagina;
+	if(operacion == MOV_IN || operacion == MOV_OUT){
+		
+		if(operacion == MOV_IN) {
+		registro = instruccion_a_decodificar->parametro1
+		dir_logica = (int) strtol(instruccion_a_decodificar->parametro2, NULL, 10);
+	    }
+	    if(operacion == MOV_OUT){
+		registro = instruccion_a_decodificar->parametro2
+		dir_logica = (int) strtol(instruccion_a_decodificar->parametro1, NULL, 10);
+	    }
+		
+		desplazamiento_segmento = obtener_desplazamiento_segmento(dir_logica, tam_max_segmento);
+		//Si hay segmentation fault, envio mensaje a kernel con el pcb sin actualizar el pc
+		if(desplazamiento_segmento > tam_max_segmento){//(*)tam_max_segmento o tam_segmento ??
+			 enviar_mensaje("segmentation fault", conexion_kernel);
+			 puts("Enviano pcb sin pc actualizado");
 
-		// Los prototipos de las funciones de mmu que no impacten contra la tlb deben escribirse en mmu.h
-		// Las implementaciones de las funciones de mmu que no impacten contra la tlb deben escribirse en mmu.c
-
-		// Guiarse de la pagina 20 del TP para no perderse nada
-
-		// Si van a pasar una estructura por parametro de una funcion, 
-		// en el prototipo de la funcion el tipo de dato debe ser un puntero
-		// a una estructura, ejemplo void mi_funcion(t_pagina* pagina)
-
-		// Los prototipos de las funciones de tlb deben escribirse en tlb.h
-		// Las implementaciones de las funciones de tlb deben escribirse en tlb.c
-
-		// Para obtener la pagina, necesitamos conocer ademas 
-		// pagina = obtener_pagina(pcb_to_exec->pid, instrucion_a_decodificar)
-
-		// segmento = obtener_segmento(pagina->numero_pagina, tam_max_segmento);
-
-		// Para buscar una pagina en la tlb, necesitamos conocer ademas el pid del proceso y el segmento
-		// resultado = buscar_en_tlb(pcb_to_exec, pagina->numero_pagina, segmento);
-
-		// No olvidar mapear el numero de marco y el offset a una estructura t_direccion_fisica (ver contexto.h)
-		// if (resultado == SEG_FAULT) {
-		//  No encontro la pagina en la tlb, entonces comienza a traducir la direccion logica a fisica, comunicandose con memoria
-		// 	marco = obtener_numero_de_marco(pagina)
-		// 	offset = obtener_offset(pagina);
-		// 	actualizar_tlb(pcb_to_exec->pid, pagina->numero_pagina, segmento)
-		// } 
-
-		enviar_mensaje("pido memoria", conexion_memoria);
-		puts("Solicitando memoria");
-		cod_mensaje mensaje = recibir_operacion(conexion_memoria);
-		puts("Recibi la operacion");
-		if(mensaje == MENSAJE){
-			recibir_mensaje(cpu_logger, conexion_memoria);
 		}
+
+		nro_pagina = obtener_nro_pagina(dir_logica, tam_max_segmento, tamanio_pagina);
+	    resultado_pedir_marco = buscar_en_tlb(pcb_to_exec->pid, nro_pagina);
+		
+	    // si la tlb no encontró la pagina, envia mensaje a memoria solicitando el marco
+	    if (resultado == -1) {
+			enviar_mensaje("no se encontró la pagina en la tlb", conexion_memoria);
+			puts("Enviando nro de pagina y pid");
+			//si la memoria devuelve page fault, envio mensaje a kernel con el pcb sin actualizar el pc
+			if(mensaje == PAGE_FAULT){
+				enviar_mensaje("la memoria devolvió page fault", conexion_kernel);
+			    puts("Enviano pcb sin pc actualizado");
+			}
+			
+	    } 
 	}
+	
 
 	return operacion;
 }
