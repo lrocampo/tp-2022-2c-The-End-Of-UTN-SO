@@ -64,6 +64,8 @@ void marcos_init(t_list*, int, int);
 void algoritmo_init();
 void solicitudes_a_memoria_init();
 void atender_pedido_de_marco();
+void atender_pedido_de_lectura();
+void atender_pedido_de_escritura();
 void* atender_cpu(void*);
 void* atender_kernel(void*);
 int obtener_numero_de_marco(t_pagina*);

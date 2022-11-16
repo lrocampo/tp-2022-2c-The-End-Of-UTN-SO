@@ -118,6 +118,33 @@ void atender_pedido_de_marco() {
 	}
 }
 
+void atender_pedido_de_lectura() {
+	int direccion_fisica;
+	int valor;
+	cod_mensaje mensaje;
+
+	log_debug(memoria_logger, "Se pidio leer");
+	direccion_fisica = recibir_valor(cliente_cpu_fd);
+	valor = leer_en_memoria_principal(direccion_fisica);
+	mensaje = OKI_LEER;
+	log_debug(memoria_logger, "dir fisica: %d, valor leido: %d", direccion_fisica, valor);
+	enviar_valor_con_codigo(valor, mensaje, cliente_cpu_fd);
+	log_debug(memoria_logger, "Valor enviado");
+}
+
+void atender_pedido_de_escritura() {
+	int direccion_fisica;
+	int valor;
+	cod_mensaje mensaje;
+
+	log_debug(memoria_logger, "Se pidio escribir");
+	recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int));
+	recibir_datos(cliente_cpu_fd, &valor, sizeof(int));
+	log_debug(memoria_logger, "dir fisica: %d, valor a escribir: %d", direccion_fisica, valor);
+	escribir_en_memoria_principal(direccion_fisica, valor);
+	log_debug(memoria_logger, "Valor escrito");
+}
+
 void* atender_cpu(void* args){
 	memoria_server_cpu_fd = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_cpu);
 	if(memoria_server_cpu_fd == -1){
@@ -138,33 +165,14 @@ void* atender_cpu(void* args){
 			atender_pedido_de_marco();
 			break;
 		case LEER:
-			log_debug(memoria_logger, "Se pidio leer");
-			direccion_fisica = recibir_valor(cliente_cpu_fd);
-			valor = leer_en_memoria_principal(direccion_fisica);
-			mensaje = OKI_LEER;
-			log_debug(memoria_logger, "dir fisica: %d, valor leido: %d", direccion_fisica, valor);
-			enviar_valor_con_codigo(valor, mensaje, cliente_cpu_fd);
-			log_debug(memoria_logger, "Valor enviado");
+			atender_pedido_de_lectura();
 			break;
 		case ESCRIBIR:
-			log_debug(memoria_logger, "Se pidio escribir");
-			recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int));
-			recibir_datos(cliente_cpu_fd, &valor, sizeof(int));
-			log_debug(memoria_logger, "dir fisica: %d, valor a escribir: %d", direccion_fisica, valor);
-			escribir_en_memoria_principal(direccion_fisica, valor);
-			log_debug(memoria_logger, "Valor escrito");
+			atender_pedido_de_escritura();
 			break;
 		default:
 			error_show("Mensaje desconocido!");
 			break;
-		}
-		if(mensaje == MENSAJE){
-			recibir_mensaje(memoria_logger, cliente_cpu_fd);
-			enviar_mensaje("Quien te conoce pa?", cliente_cpu_fd);
-		}
-		else {
-			log_debug(memoria_logger,"Se desconecto el cliente.");
-			pthread_exit(NULL);
 		}
 	}
 	
@@ -231,7 +239,7 @@ int leer_en_memoria_principal(int direccion_fisica) {
 	pthread_mutex_lock(&memoria_usuario_mutex);
     memcpy(&valor, espacio_memoria + direccion_fisica, sizeof(int));
     pthread_mutex_unlock(&memoria_usuario_mutex);
-
+	// obtener pagina y actualizar bit de uso en 1?
 	return valor;
  }
 
@@ -271,6 +279,7 @@ int leer_en_memoria_principal(int direccion_fisica) {
 		return PAGE_FAULT;
 	}
 	else {
+		// actualizar bit de uso a 1?
 		return entrada_pagina->marco;
 	}
  }
