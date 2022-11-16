@@ -13,6 +13,7 @@
 #include <semaphore.h>
 #include <stdlib.h>
 #include <kernel.h>
+#include <io.h>
 
 typedef struct {
 	char* ip_cpu;
@@ -70,6 +71,7 @@ extern pthread_t th_manejo_page_fault;
 /* Largo plazo */
 void largo_plazo_init();
 void* atender_nueva_consola(void*);
+void solicitar_creacion_estructuras_administrativas(t_pcb*);
 void* rajar_pcb(void*);
 
 /* Corto plazo */
@@ -98,18 +100,6 @@ t_pcb* pop_ready_pcb();
 /* Utils */
 void safe_pcb_push(t_queue*, t_pcb*, pthread_mutex_t);
 t_pcb* safe_pcb_pop(t_queue*, pthread_mutex_t);
-
-
-/* IO */
-void* ejecucion_io(void*);
-void solicitar_dispositivo(t_pcb*,instruccion*);
-void solicitar_io(t_pcb*, instruccion*);
-void dispositivos_io_init();
-t_dispositivo* obtener_dispositivo_por_nombre(char*);
 instruccion* obtener_ultima_instruccion(t_pcb* pcb);
-void solicitar_dispositivo(t_pcb*, instruccion*);
-void solicitar_creacion_estructuras_administrativas(t_pcb*);
-void solicitud(instruccion*, t_pcb *);
-void* solicitar_io_consola(void *);
 
 #endif /* KERNEL_INCLUDE_KERNEL_UTILS_H_ */
