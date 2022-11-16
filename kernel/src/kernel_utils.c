@@ -156,6 +156,18 @@ t_pcb* obtener_proceso_ejecutado(){
 		pthread_exit(NULL);
     }  
 }
+void manejar_page_fault(t_pcb* pcb)
+{	
+	cambiar_estado(pcb, BLOCK);
+	enviar_pagina(pcb->page_fault, conexion_memoria);
+	cod_mensaje cod_mensaje_memoria = recibir_operacion(conexion_memoria); //consultar si es correcto
+	if(cod_mensaje_memoria == OKI_PAGINA)
+	{
+		pasar_a_ready(pcb);
+	}
+	pthread_exit(NULL);
+}
+
 
 void analizar_contexto_recibido(t_pcb* pcb){
     if(pcb->con_desalojo) {
@@ -167,7 +179,12 @@ void analizar_contexto_recibido(t_pcb* pcb){
 		pcb->interrupcion = false;
 		pcb->con_desalojo = false;
 	}
+	if(pcb->page_fault){
+		pthread_create (&th_manejo_page_fault,NULL, &manejar_page_fault, (void*)pcb);
+		pthread_detach;
+	}
 }
+
 
 void dirigir_proceso_ejecutado(t_pcb* pcb){ // corto plazo // tener en cuenta page default ya que no deberiamos modificar el program counter
 	instruccion* ultima_instruccion = obtener_ultima_instruccion(pcb);
@@ -212,7 +229,7 @@ void* solicitar_io_consola(void *arg){
 	pasar_a_ready(pcb);
 	pthread_exit(NULL);
 }
-
+// Funcion que se comunica con la memoria
 // La funcion que se comunica con la consola
 	void solicitud(instruccion* instruccionIO, t_pcb *pcb) {
 	cod_mensaje cod_msj;

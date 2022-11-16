@@ -88,6 +88,7 @@ typedef struct {
 	t_list* tabla_de_segmentos;
 	t_list* tamanio_segmentos;
 	registros_de_proposito_general registros;
+	t_pagina pagina_fault;
 	bool con_desalojo;
 	bool page_fault;
 	bool segmentation_fault;

@@ -470,6 +470,8 @@ void empaquetar_pcb(t_pcb* pcb,t_paquete* paquete){
 	agregar_valor_a_paquete(paquete, &(pcb->socket_consola), sizeof(int));
 	agregar_valor_a_paquete(paquete, &(pcb->interrupcion), sizeof(bool));
 	agregar_valor_a_paquete(paquete, &(pcb->con_desalojo), sizeof(bool));
+	agregar_valor_a_paquete(paquete, &(pcb->page_fault), sizeof(bool));
+	empaquetar_pagina(paquete, &(pcb->pagina_fault));
 	empaquetar_registros(pcb->registros, paquete);
 	empaquetar_instrucciones(pcb->instrucciones, paquete);
 	empaquetar_tabla_segmentos(pcb->tabla_de_segmentos, paquete);
@@ -512,6 +514,7 @@ t_pcb* recibir_pcb(int socket_cliente){
 	void * buffer;
 	t_list* lista_instrucciones;
 	t_list* tabla_segmentos;
+	t_pagina *pagina;
 
 	buffer = recibir_buffer(&size, socket_cliente);
 
@@ -546,10 +549,10 @@ t_pcb* recibir_pcb(int socket_cliente){
 
 	memcpy(&(nueva_pcb->registros.dx), buffer + desplazamiento, sizeof(u_int32_t));
 	desplazamiento += sizeof(u_int32_t);
-
+	
 	lista_instrucciones = deserializar_instrucciones(&desplazamiento, buffer);
 	tabla_segmentos = deserializar_tabla_segmentos(&desplazamiento, buffer);
-
+	pagina = deserializar_pagina(&desplazamiento,buffer);
 	nueva_pcb->instrucciones = lista_instrucciones;
 	nueva_pcb->tabla_de_segmentos = tabla_segmentos;
 

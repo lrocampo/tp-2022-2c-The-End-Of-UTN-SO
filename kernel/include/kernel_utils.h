@@ -66,6 +66,7 @@ extern pthread_t th_ejecucion;
 extern pthread_t th_transiciones_ready;
 extern pthread_t th_rajar_pcb;
 
+extern pthread_t th_manejo_page_fault;
 
 /* Largo plazo */
 void largo_plazo_init();
@@ -81,6 +82,7 @@ t_pcb* obtener_proceso_ejecutado();
 void analizar_contexto_recibido(t_pcb*);
 void dirigir_proceso_ejecutado(t_pcb*);
 void* transicion_proceso_a_ready(void*); // transicion_new_a_ready
+void manejar_page_fault(t_pcb*);
 // TODO: transicion_block_a_ready
 
 t_list* crear_tabla_segmentos(t_list*, t_list*);
