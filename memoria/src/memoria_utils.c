@@ -18,6 +18,8 @@ void* swap;
 pthread_t th_atender_cpu;
 pthread_t th_atender_kernel;
 
+t_list* cursores;
+
 pthread_mutex_t memoria_swap_mutex;
 pthread_mutex_t memoria_usuario_mutex;
 pthread_mutex_t lista_de_tablas_de_paginas_mutex;
@@ -65,6 +67,7 @@ void memoria_config_destroy(){
 /* Inicializacion */
 
 void memoria_principal_init() {
+	cursores = list_create();
 	pthread_mutex_init(&memoria_usuario_mutex, NULL);
 	log_debug(memoria_logger, "Creando espacio de memoria...");
 	espacio_memoria = malloc(memoria_config->tamanio_memoria);
@@ -208,18 +211,23 @@ void* atender_kernel(void* args) {
 			break;
 		case PAGINA:
 			t_pagina* pagina = recibir_pagina(cliente_kernel_fd);
+			t_marco* marco_libre;
 			log_debug(memoria_logger, "Messi.");
 			pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 			t_tabla_de_paginas* tabla_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
 			pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
-			int cantidad_paginas_proceso = cantidad_de_paginas_en_memoria_proceso(tabla_paginas->pid);
-			if(cantidad_paginas_proceso < memoria_config->marcos_por_proceso){
-				// obtener marco libre
-			}
-			else {
+			int cantidad_paginas_proceso = cantidad_de_marcos_en_memoria_proceso(tabla_paginas->pid);
+			if(cantidad_paginas_proceso == memoria_config->marcos_por_proceso){
 				// ejecutar algoritmo
 			}
-
+			else{
+				marco_libre = obtener_marco_libre(lista_de_marcos);
+			}
+			t_entrada_tp* entrada = obtener_entrada_tp(pagina);
+			entrada->presencia = true;
+			entrada->marco = marco_libre->numero_marco;
+			entrada->uso = true;
+			//actualizar_cursor(pagina);
 			mensaje = OKI_PAGINA;
  			enviar_datos(cliente_kernel_fd, &mensaje, sizeof(cod_mensaje));		
 			break;
@@ -241,7 +249,6 @@ int leer_en_memoria_principal(int direccion_fisica) {
 	pthread_mutex_lock(&memoria_usuario_mutex);
     memcpy(&valor, espacio_memoria + direccion_fisica, sizeof(int));
     pthread_mutex_unlock(&memoria_usuario_mutex);
-	// obtener pagina y actualizar bit de uso en 1?
 	return valor;
  }
 
@@ -287,8 +294,7 @@ int leer_en_memoria_principal(int direccion_fisica) {
  }
 
 int obtener_marco_libre_memoria(){
-   // t_marco* marco_buscado = list_find(lista_de_marcos,  (void*) marco_libre);
-    return obtener_marco_libre(lista_de_marcos)->numero_marco;//marco_buscado->numero_marco;
+    return obtener_marco_libre(lista_de_marcos)->numero_marco;
 }
 
 t_marco* obtener_marco_libre(t_list* marcos){

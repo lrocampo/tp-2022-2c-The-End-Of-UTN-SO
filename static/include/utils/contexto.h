@@ -35,7 +35,7 @@ typedef enum{
 } estado_proceso;
 
 typedef enum {
-	FIFO, RR, FEEDBACK
+	FIFO, RR, FEEDBACK, CLOCK, CLOCK_M
 } t_algoritmo;
 
 typedef enum{

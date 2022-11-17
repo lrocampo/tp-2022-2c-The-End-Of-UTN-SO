@@ -48,6 +48,8 @@ extern t_list* lista_de_tablas_de_paginas;
 extern void* espacio_memoria;
 extern void* swap;
 
+extern t_list* cursores;
+
 extern pthread_t th_atender_cpu;
 extern pthread_t th_atender_kernel;
 
@@ -70,6 +72,7 @@ void* atender_cpu(void*);
 void* atender_kernel(void*);
 int obtener_numero_de_marco(t_pagina*);
 void * configurar_memoria(t_config*);
+t_entrada_tp* obtener_entrada_tp(t_pagina*);
 void esperar_conexiones();
 void terminar_modulo();
 void escribir_en_memoria(void*, void*);
