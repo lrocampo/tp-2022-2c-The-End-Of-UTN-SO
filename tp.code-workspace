@@ -39,6 +39,8 @@
 			"pthread.h": "c",
 			"fcntl.h": "c",
 			"esquema.h": "c",
+			"tlb.h": "c",
+			"mmu.h": "c"
 		}
 	}
 }

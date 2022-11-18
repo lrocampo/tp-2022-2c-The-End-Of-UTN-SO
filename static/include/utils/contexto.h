@@ -45,7 +45,8 @@ typedef enum{
 	MOV_OUT,
 	IO,
 	EXIT,
-	UNKNOWN_OP
+	UNKNOWN_OP,
+	ERROR_MEMORIA
 } cod_operacion;
 
 typedef struct {

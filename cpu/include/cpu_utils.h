@@ -10,7 +10,7 @@
 #include <pthread.h>
 #include <tlb.h>
 #include <mmu.h>
-#include <memoria.utils.h>
+//#include <memoria_utils.h>
 
 #define RUTA_LOGGER_CPU "./cpu.log"
 #define RUTA_LOGGER_DEBUG_CPU "./cpu_db.log"
@@ -77,7 +77,9 @@ void* atender_kernel_dispatch(void*);
 void* atender_kernel_interrupt(void*);
 
 /* Traduccion direcciones logicas a fisicas*/
-
+void set_dir_fisica_a_instruccion(instruccion*, int);
+int obtener_dir_logica(instruccion*);
+void set_valor_en_registro(int, t_pcb* , char*);
 
 #endif
 

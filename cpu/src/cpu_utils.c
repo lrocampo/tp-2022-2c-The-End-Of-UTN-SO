@@ -2,7 +2,7 @@
 
 t_log *cpu_logger;
 t_cpu_config* cpu_config;
-t_memoria_config* memoria_config;
+//t_memoria_config* memoria_config;
 int server_fd_dispatch;
 int cliente_fd_dispatch;
 int conexion_memoria;
@@ -29,18 +29,18 @@ void * configurar_cpu(t_config* config){
 	return cpu_config;
 }
 
-void* configurar_tlb(t_config* config){
-	t_tlb_config* tlb_config;
-	tlb_config = malloc(sizeof(t_tlb_config));
-	tlb_config-> entradas_tlb = strdup(config_get_string_value(config, "ENTRADAS_TLB"));
-    tlb_config-> reemplazo_tlb = strdup(config_get_string_value(config, "REEMPLAZO_TLB"));
-	tlb_config-> retardo_instruccion = strdup(config_get_string_value(config, "RETARDO_INSTRUCCION"));
-	tlb_config-> ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
-	tlb_config-> puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
-	tlb_config-> puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
-	tlb_config-> puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
-	return tlb_config;
-}
+// void* configurar_tlb(t_config* config){
+// 	t_tlb_config* tlb_config;
+// 	tlb_config = malloc(sizeof(t_tlb_config));
+// 	tlb_config-> entradas_tlb = strdup(config_get_string_value(config, "ENTRADAS_TLB"));
+//     tlb_config-> reemplazo_tlb = strdup(config_get_string_value(config, "REEMPLAZO_TLB"));
+// 	tlb_config-> retardo_instruccion = strdup(config_get_string_value(config, "RETARDO_INSTRUCCION"));
+// 	tlb_config-> ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
+// 	tlb_config-> puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
+// 	tlb_config-> puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
+// 	tlb_config-> puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
+// 	return tlb_config;
+// }
 
 //Hacer malloc tanto de pagina como de marco
 
@@ -81,6 +81,27 @@ void terminar_modulo(){
 	cpu_config_destroy();
 }
 
+void set_dir_fisica_a_instruccion(instruccion* instruccion, int dir_fisica) {
+	cod_operacion operacion = instruccion->operacion;
+	if(operacion == MOV_IN) {
+		instruccion->parametro2 = string_itoa(dir_fisica);
+	}
+	if(operacion == MOV_OUT) {
+		instruccion->parametro1 = string_itoa(dir_fisica);
+	}
+}
+
+int obtener_dir_logica(instruccion* instruccion) {
+	cod_operacion operacion = instruccion->operacion;
+
+	if(operacion == MOV_IN) {
+		return atoi(instruccion->parametro2);
+	}
+	else {
+		return atoi(instruccion->parametro1);
+	}
+}
+
 /* Ciclo de instruccion */
 void ciclo_de_instruccion_init() {
 	pthread_create(&th_kernel_dispatch, NULL, &atender_kernel_dispatch, NULL);
@@ -101,6 +122,8 @@ void iniciar_ciclo_de_instruccion(t_pcb* pcb_to_exec) {
 
 		// decode()
 		operacion_a_ejecutar = decode(pcb_to_exec, instruccion);
+
+		if(pcb_to_exec->segmentation_fault || pcb_to_exec->page_fault) break;
 
 		// execute()
 		ejecutar_instruccion(pcb_to_exec, operacion_a_ejecutar, instruccion);
@@ -132,54 +155,63 @@ instruccion* fetch(t_pcb* pcb_to_exec) {
 
 cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar) {
 	cod_operacion operacion = instruccion_a_decodificar->operacion;
-	char* registro;
 	int dir_logica;
-	t_marco* marco;
-	t_pagina* pagina;
+	t_pagina* pagina = malloc(sizeof(t_pagina));
 	int nro_pagina;
 	int desplazamiento_segmento;
-	t_segmento* segmento;
 	int resultado_pedir_marco;
-	int offset;
-	int cantidad_entradas; //= memoria_config->entradas_por_tabla;
-	int tamanio_pagina; //= memoria_config->tamanio_pagina;
-	int tam_max_segmento = cantidad_entradas * tamanio_pagina;
+	int tam_max_segmento = pagina_config->cantidad_entradas * pagina_config->tamanio_pagina;
+	int nro_marco;
+	int desplazamiento_pagina;
+	int direccion_fisica;
+
 	if(operacion == MOV_IN || operacion == MOV_OUT){
+		dir_logica = obtener_dir_logica(instruccion_a_decodificar);
 		
-		if(operacion == MOV_IN) {
-		registro = instruccion_a_decodificar->parametro1
-		dir_logica = (int) strtol(instruccion_a_decodificar->parametro2, NULL, 10);
-	    }
-	    if(operacion == MOV_OUT){
-		registro = instruccion_a_decodificar->parametro2
-		dir_logica = (int) strtol(instruccion_a_decodificar->parametro1, NULL, 10);
-	    }
-		
+		t_segmento* segmento = list_get(pcb_to_exec->tabla_de_segmentos, obtener_nro_segmento(dir_logica, tam_max_segmento));
+
+
 		desplazamiento_segmento = obtener_desplazamiento_segmento(dir_logica, tam_max_segmento);
 		//Si hay segmentation fault, envio mensaje a kernel con el pcb sin actualizar el pc
-		if(desplazamiento_segmento > tam_max_segmento){//(*)tam_max_segmento o tam_segmento ??
-			 enviar_mensaje("segmentation fault", conexion_kernel);
-			 puts("Enviano pcb sin pc actualizado");
-
+		if(desplazamiento_segmento > segmento->tamanio_segmento){
+			pcb_to_exec->segmentation_fault = true;
+			return ERROR_MEMORIA;
 		}
 
-		nro_pagina = obtener_nro_pagina(dir_logica, tam_max_segmento, tamanio_pagina);
+		nro_pagina = obtener_nro_pagina(dir_logica, tam_max_segmento, pagina_config->tamanio_pagina);
 	    resultado_pedir_marco = buscar_en_tlb(pcb_to_exec->pid, nro_pagina);
 		
 	    // si la tlb no encontró la pagina, envia mensaje a memoria solicitando el marco
-	    if (resultado == -1) {
-			enviar_mensaje("no se encontró la pagina en la tlb", conexion_memoria);
-			puts("Enviando nro de pagina y pid");
-			//si la memoria devuelve page fault, envio mensaje a kernel con el pcb sin actualizar el pc
-			if(mensaje == PAGE_FAULT){
-				enviar_mensaje("la memoria devolvió page fault", conexion_kernel);
-			    puts("Enviano pcb sin pc actualizado");
+	    if (resultado_pedir_marco == -1) {
+			// TLB MISS
+			pagina->numero_pagina = nro_pagina;
+			pagina->indice_tabla_de_pagina = segmento->indice_tabla_paginas;
+			enviar_pagina(pagina, conexion_memoria);
+
+			cod_mensaje cod_msj = recibir_operacion(conexion_memoria);
+			if(cod_msj == OKI_MARCO) {
+				log_debug(cpu_logger, "Memoria encontro el numero de marco");
+				nro_marco = recibir_valor(conexion_memoria);
 			}
-			
-	    } 
+			else if(cod_msj == PAGE_NOT_FOUND_404) {
+				log_debug(cpu_logger, "Memoria no encontro el numero de marco. PAGE FAULT.");
+				pcb_to_exec->page_fault = true;
+				pcb_to_exec->pagina_fault->numero_pagina = nro_pagina;
+				pcb_to_exec->pagina_fault->indice_tabla_de_pagina = segmento->indice_tabla_paginas;
+				return ERROR_MEMORIA;
+			}
+	    }
+		else {
+			// TLB HIT
+			nro_marco = resultado_pedir_marco;
+			// actualizar_pcb()
+		} 
+
+		desplazamiento_pagina = obtener_desplazamiento_pagina(dir_logica, tam_max_segmento, pagina_config->tamanio_pagina);
+		direccion_fisica = nro_marco + desplazamiento_pagina;
+		set_dir_fisica_a_instruccion(instruccion_a_decodificar, direccion_fisica);
 	}
 	
-
 	return operacion;
 }
 
@@ -217,6 +249,21 @@ void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instru
 	free(operacion_string);
 }
 
+void set_valor_en_registro(int valor, t_pcb* pcb, char* parametro) {
+	if(string_equals_ignore_case(parametro, "AX")) {
+		pcb->registros.ax = valor;
+	}
+	else if(string_equals_ignore_case(parametro, "BX")) {
+		pcb->registros.bx = valor;
+	}
+	else if(string_equals_ignore_case(parametro, "CX")) {
+		pcb->registros.cx = valor;
+	}
+	else if(string_equals_ignore_case(parametro, "DX")) {
+		pcb->registros.dx = valor;
+	}
+}
+
 void ejecutar_set(t_pcb* pcb, char* parametro1, char* parametro2) {
 	set_valor_registro(pcb, parametro1, parametro2);
 }
@@ -235,11 +282,28 @@ void ejecutar_add(t_pcb* pcb, char* parametro1, char* parametro2) {
 }
 
 void ejecutar_mov_in(t_pcb* pcb, char* parametro1, char* parametro2) {
-	log_debug(cpu_logger,"MOV_IN: no hago nada, todavia....");
+	log_debug(cpu_logger,"MOV_IN: finalmente laburo como una persona digna");
+	int dir_fisica = atoi(parametro2);
+	enviar_valor_con_codigo(dir_fisica, LEER, conexion_memoria);
+	cod_mensaje cod_msj = recibir_operacion(conexion_memoria);
+	if(cod_msj == OKI_LEER) {
+		int valor = recibir_valor(conexion_memoria);
+		log_debug(cpu_logger, "Se leyó el valor %d", valor);
+		set_valor_en_registro(valor, pcb, parametro1);
+	}
 }
 
 void ejecutar_mov_out(t_pcb* pcb, char* parametro1, char* parametro2) {
-	log_debug(cpu_logger,"MOV_OUT: no hago nada, todavia....");
+	log_debug(cpu_logger,"MOV_OUT: finalmente laburo como una persona digna");
+	int dir_fisica = atoi(parametro1);
+	int valor = obtener_valor_del_registro(pcb, parametro2);
+	enviar_valor_con_codigo(dir_fisica, ESCRIBIR, conexion_memoria);
+	enviar_datos(conexion_memoria, &dir_fisica, sizeof(dir_fisica));
+	enviar_datos(conexion_memoria, &valor, sizeof(dir_fisica));
+	cod_mensaje cod_msj = recibir_operacion(conexion_memoria);
+	if(cod_msj == OKI_ESCRIBIR) {
+		log_debug(cpu_logger, "Se pudo escribir en memoria");
+	}
 }
 
 /* Retardo de instruccion */
