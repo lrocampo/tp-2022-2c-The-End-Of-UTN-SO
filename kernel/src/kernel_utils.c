@@ -121,7 +121,7 @@ void* planificar_ejecucion(void* arg){
         pcb_destroy(pcb);
         pcb = obtener_proceso_ejecutado();
         analizar_contexto_recibido(pcb);
-        dirigir_proceso_ejecutado(pcb);
+	    dirigir_proceso_ejecutado(pcb);
 	}
 }
 
@@ -157,7 +157,6 @@ t_pcb* obtener_proceso_ejecutado(){
 void* manejar_page_fault(void* arg)
 {	
 	t_pcb* pcb = (t_pcb*) arg;
-	cambiar_estado(pcb, BLOCK);
 	enviar_pagina(pcb->pagina_fault, conexion_memoria);
 	cod_mensaje cod_mensaje_memoria = recibir_operacion(conexion_memoria); //consultar si es correcto
 	if(cod_mensaje_memoria == OKI_PAGINA)
@@ -165,7 +164,9 @@ void* manejar_page_fault(void* arg)
 		log_debug(kernel_logger, "page fault solucionado pid: %d", pcb->pid);
 		pasar_a_ready(pcb);
 	}
-	pthread_exit(NULL);
+	else {
+		pthread_exit(NULL);
+	} 
 }
 
 
@@ -189,16 +190,22 @@ void analizar_contexto_recibido(t_pcb* pcb){
 
 void dirigir_proceso_ejecutado(t_pcb* pcb){ // corto plazo // tener en cuenta page default ya que no deberiamos modificar el program counter
 	instruccion* ultima_instruccion = obtener_ultima_instruccion(pcb);
-	switch(ultima_instruccion->operacion){
-		case EXIT:
-            solicitar_finalizacion(pcb);
-			break;
-		case IO:
-            solicitar_io(pcb, ultima_instruccion);
-			break;
-		default:
-            pasar_a_ready(pcb);
-			break;
+	if(pcb->segmentation_fault) solicitar_finalizacion(pcb);
+	if(pcb->page_fault) {
+		cambiar_estado(pcb, BLOCK);
+	}
+	else {
+		switch(ultima_instruccion->operacion){
+			case EXIT:
+				solicitar_finalizacion(pcb);
+				break;
+			case IO:
+				solicitar_io(pcb, ultima_instruccion);
+				break;
+			default:
+				pasar_a_ready(pcb);
+				break;
+		}
 	}
 }
 

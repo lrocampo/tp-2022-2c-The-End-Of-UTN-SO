@@ -42,6 +42,7 @@ void * configurar_memoria(t_config* config){
 	memoria_config->entradas_por_tabla = config_get_int_value(config, "ENTRADAS_POR_TABLA");
 	memoria_config->path_swap =  strdup(config_get_string_value(config, "PATH_SWAP"));
 	memoria_config->retardo_memoria =  config_get_int_value(config, "RETARDO_MEMORIA");
+	memoria_config->marcos_por_proceso =  config_get_int_value(config, "MARCOS_POR_PROCESO");
 	return memoria_config;
 }
 
@@ -70,6 +71,8 @@ void memoria_config_destroy(){
 void memoria_principal_init() {
 	cursores = list_create();
 	pthread_mutex_init(&memoria_usuario_mutex, NULL);
+	pthread_mutex_init(&lista_de_tablas_de_paginas_mutex, NULL);
+
 	log_debug(memoria_logger, "Creando espacio de memoria...");
 	espacio_memoria = malloc(memoria_config->tamanio_memoria);
 
@@ -110,6 +113,7 @@ void solicitudes_a_memoria_init() {
 
 void atender_pedido_de_marco() {
 	cod_mensaje mensaje;
+	log_debug(memoria_logger, "Recibiendo pedido de marco");
 	t_pagina* pagina = recibir_pagina(cliente_cpu_fd);
 	int marco = obtener_numero_de_marco(pagina);
 	if(marco == PAGE_FAULT) {
@@ -168,7 +172,7 @@ void* atender_cpu(void* args){
 		
 		switch (mensaje)
 		{
-		case PEDIDO_MARCO:
+		case PAGINA:
 			atender_pedido_de_marco();
 			break;
 		case LEER:
@@ -215,22 +219,22 @@ void* atender_kernel(void* args) {
 		case PAGINA:
 			t_pagina* pagina = recibir_pagina(cliente_kernel_fd);
 			t_marco* marco_libre;
-			log_debug(memoria_logger, "Messi.");
+			log_debug(memoria_logger, "pagina page fault: %d", pagina->numero_pagina);
 			pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 			t_tabla_de_paginas* tabla_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
 			pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
-			int cantidad_paginas_proceso = cantidad_de_marcos_en_memoria_proceso(tabla_paginas->pid);
-			if(cantidad_paginas_proceso == memoria_config->marcos_por_proceso){
-				// ejecutar algoritmo
+			log_debug(memoria_logger, "Tabla de paginas: %d", pagina->indice_tabla_de_pagina);
+			int cantidad_marcos_cargados = cantidad_de_marcos_en_memoria_proceso(tabla_paginas->pid);
+			log_debug(memoria_logger, "Cantidad de marcos en memoria del proceso: %d", cantidad_marcos_cargados);
+			if(cantidad_marcos_cargados == memoria_config->marcos_por_proceso){
+				t_entrada_tp* entrada_a_reemplazar = obtener_victima_a_reemplazar(tabla_paginas->pid);
+				rajar_pagina(entrada_a_reemplazar);				
+				marco_libre = list_get(lista_de_marcos, entrada_a_reemplazar->marco);
 			}
 			else{
 				marco_libre = obtener_marco_libre(lista_de_marcos);
 			}
-			t_entrada_tp* entrada = obtener_entrada_tp(pagina);
-			entrada->presencia = true;
-			entrada->marco = marco_libre->numero_marco;
-			entrada->uso = true;
-			//actualizar_cursor(pagina);
+			cargar_pagina_en_memoria_principal(pagina, marco_libre, tabla_paginas->pid);
 			mensaje = OKI_PAGINA;
  			enviar_datos(cliente_kernel_fd, &mensaje, sizeof(cod_mensaje));		
 			break;
@@ -265,15 +269,29 @@ int leer_en_memoria_principal(int direccion_fisica) {
 		t_tabla_de_paginas* tabla = list_get(tablas, i); 
 		for(j = 0; j < list_size(tabla->entradas); j++) {
 			t_entrada_tp* entrada = list_get(tabla->entradas, j);
-			if(entrada->presencia) {
-				t_marco* marco = list_get(lista_de_marcos, entrada->marco);
-				marco->pid = -1;
-			}
-			t_marco* marco_swap = list_get(lista_de_marcos_swap, entrada->posicion_swap / memoria_config->tamanio_pagina);
-			marco_swap->pid = -1;
+			// if(entrada->presencia) {
+			// 	t_marco* marco = list_get(lista_de_marcos, entrada->marco);
+			// 	marco->pid = -1;
+			// }
+			liberar_marco_memoria(entrada);
+			liberar_marco_swap(entrada);
+			// t_marco* marco_swap = list_get(lista_de_marcos_swap, entrada->posicion_swap / memoria_config->tamanio_pagina);
+			// marco_swap->pid = -1;
 		}
 	}
 	log_debug(memoria_logger, "Memoria liberada con exito. Vuelvas prontos.");
+ }
+
+ void liberar_marco_memoria(t_entrada_tp* entrada){
+	if(entrada->presencia) {
+		t_marco* marco = list_get(lista_de_marcos, entrada->marco);
+		marco->pid = -1;
+	}
+ }
+
+ void liberar_marco_swap(t_entrada_tp* entrada){
+	t_marco* marco_swap = list_get(lista_de_marcos_swap, entrada->posicion_swap / memoria_config->tamanio_pagina);
+	marco_swap->pid = -1;
  }
 
  t_entrada_tp* obtener_entrada_tp(t_pagina* pagina){
@@ -287,20 +305,19 @@ int leer_en_memoria_principal(int direccion_fisica) {
  int obtener_numero_de_marco(t_pagina* pagina) {
 	t_entrada_tp* entrada_pagina = obtener_entrada_tp(pagina);
 
-	if(entrada_pagina->presencia == 0) {
-		return PAGE_FAULT;
+	if(entrada_pagina->presencia) {
+		log_debug(memoria_logger, "Presencia de marco: %d", entrada_pagina->marco);
+		return entrada_pagina->marco;
 	}
 	else {
+		log_debug(memoria_logger, "PAGE FAULT");
 		// actualizar bit de uso a 1?
-		return entrada_pagina->marco;
+		return PAGE_FAULT;
 	}
  }
 
-int obtener_marco_libre_memoria(){
-    return obtener_marco_libre(lista_de_marcos)->numero_marco;
-}
-
 t_marco* obtener_marco_libre(t_list* marcos){
+	log_debug(memoria_logger, "Obteniendo marco libre");
 	return list_find(marcos,  (void*) marco_libre);
 }
 

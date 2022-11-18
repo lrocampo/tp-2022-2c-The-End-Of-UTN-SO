@@ -2,6 +2,7 @@
 
 void swap_init(){
 	pthread_mutex_init(&memoria_swap_mutex, NULL);
+	pthread_mutex_init(&lista_de_tablas_de_paginas_swap_mutex, NULL);
     marcos_swap_init();
     swap_create();
 
@@ -51,12 +52,17 @@ void escribir_pagina_en_swap(t_entrada_tp* entrada_pagina){
     log_debug(memoria_logger,"Se escribio pagina en swap \n");
 }
 
-void poner_pagina_en_memoria_principal(t_entrada_tp* entrada_pagina){
+void cargar_pagina_en_memoria_principal(t_pagina* pagina, t_marco* marco, int pid/*t_entrada_tp* entrada_pagina*/){
 	log_debug(memoria_logger,"Escribiendo pagina en memoria principal \n");
-    int posicion = entrada_pagina->marco * memoria_config->tamanio_pagina;
+	t_entrada_tp* entrada_a_cargar = obtener_entrada_tp(pagina);
+	entrada_a_cargar->marco = marco->numero_marco;
+    int posicion = entrada_a_cargar->marco * memoria_config->tamanio_pagina;
 	void* dest = espacio_memoria + posicion;
-    void* source = swap + entrada_pagina->posicion_swap;
+    void* source = swap + entrada_a_cargar->posicion_swap;
     escribir_en_memoria(dest, source);
+    entrada_a_cargar->presencia = true;
+	entrada_a_cargar->uso = true;
+	marco->pid = pid;
     // actualizar bit de presencia a 1
 	log_debug(memoria_logger,"Se escribio pagina en memoria principal \n");
 }
