@@ -26,7 +26,7 @@ typedef struct {
 	int tamanio_memoria;
 	int tamanio_pagina;
 	int entradas_por_tabla;
-	/* int retardo_memoria; */
+	int retardo_memoria;
 	/* char* algoritmo_reemplazo; */
 	int marcos_por_proceso;
 	int retardo_swap;

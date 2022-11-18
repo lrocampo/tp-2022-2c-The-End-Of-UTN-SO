@@ -41,6 +41,7 @@ void * configurar_memoria(t_config* config){
 	memoria_config->retardo_swap = config_get_int_value(config, "RETARDO_SWAP");
 	memoria_config->entradas_por_tabla = config_get_int_value(config, "ENTRADAS_POR_TABLA");
 	memoria_config->path_swap =  strdup(config_get_string_value(config, "PATH_SWAP"));
+	memoria_config->retardo_memoria =  config_get_int_value(config, "RETARDO_MEMORIA");
 	return memoria_config;
 }
 
@@ -127,6 +128,7 @@ void atender_pedido_de_lectura() {
 	cod_mensaje mensaje;
 
 	log_debug(memoria_logger, "Se pidio leer");
+	ejecutar_espera(memoria_config->retardo_memoria);
 	direccion_fisica = recibir_valor(cliente_cpu_fd);
 	valor = leer_en_memoria_principal(direccion_fisica);
 	mensaje = OKI_LEER;
@@ -141,6 +143,7 @@ void atender_pedido_de_escritura() {
 	cod_mensaje mensaje;
 
 	log_debug(memoria_logger, "Se pidio escribir");
+	ejecutar_espera(memoria_config->retardo_memoria);
 	recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int));
 	recibir_datos(cliente_cpu_fd, &valor, sizeof(int));
 	log_debug(memoria_logger, "dir fisica: %d, valor a escribir: %d", direccion_fisica, valor);
