@@ -90,9 +90,6 @@ void* rajar_pcb(void* arg) {
 	while(1) {
 		sem_wait(&procesos_finalizados);
 		t_pcb* pcb = safe_pcb_pop(cola_exit_pcbs, cola_exit_pcbs_mutex);
-        pthread_mutex_lock(&pid_mutex);
-        --pid_actual;
-        pthread_mutex_unlock(&pid_mutex);
 		log_debug(kernel_logger,"PCB con id: %d ha finalizado.",pcb->pid);
 		pcb_destroy(pcb);
 		sem_post(&multiprogramacion);
