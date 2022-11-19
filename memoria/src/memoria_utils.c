@@ -115,6 +115,7 @@ void atender_pedido_de_marco() {
 	cod_mensaje mensaje;
 	log_debug(memoria_logger, "Recibiendo pedido de marco");
 	t_pagina* pagina = recibir_pagina(cliente_cpu_fd);
+	log_debug(memoria_logger, "Pagina solicitada: %d", pagina->numero_pagina);
 	int marco = obtener_numero_de_marco(pagina);
 	if(marco == PAGE_FAULT) {
 		mensaje = PAGE_NOT_FOUND_404;

@@ -483,8 +483,8 @@ void empaquetar_pcb(t_pcb* pcb,t_paquete* paquete){
 	agregar_valor_a_paquete(paquete, &(pcb->con_desalojo), sizeof(bool));
 	agregar_valor_a_paquete(paquete, &(pcb->page_fault), sizeof(bool));
 	agregar_valor_a_paquete(paquete, &(pcb->segmentation_fault), sizeof(bool));
-	empaquetar_pagina(paquete, pcb->pagina_fault);
 	empaquetar_registros(pcb->registros, paquete);
+	empaquetar_pagina(paquete, pcb->pagina_fault);
 	empaquetar_instrucciones(pcb->instrucciones, paquete);
 	empaquetar_tabla_segmentos(pcb->tabla_de_segmentos, paquete);
 }

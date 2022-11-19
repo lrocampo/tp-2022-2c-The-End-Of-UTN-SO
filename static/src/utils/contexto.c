@@ -29,6 +29,8 @@ t_pcb* pcb_create(t_proceso* proceso, uint32_t pid, int socket){
     pcb->registros.bx = 0;
     pcb->registros.cx = 0;
     pcb->registros.dx = 0;
+    pcb->pagina_fault = NULL;
+    pcb->tabla_de_segmentos = NULL;
     pcb->con_desalojo = false;
     pcb->tamanio_segmentos = proceso->segmentos;
 

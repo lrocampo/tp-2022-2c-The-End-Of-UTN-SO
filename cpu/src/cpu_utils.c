@@ -186,6 +186,7 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 			// TLB MISS
 			pagina->numero_pagina = nro_pagina;
 			pagina->indice_tabla_de_pagina = segmento->indice_tabla_paginas;
+			log_debug(cpu_logger, "enviando pagina: %d", pagina->numero_pagina);
 			enviar_pagina(pagina, conexion_memoria);
 
 			cod_mensaje cod_msj = recibir_operacion(conexion_memoria);
@@ -194,10 +195,9 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 				nro_marco = recibir_valor(conexion_memoria);
 			}
 			else if(cod_msj == PAGE_NOT_FOUND_404) {
-				log_debug(cpu_logger, "Memoria no encontro el numero de marco. PAGE FAULT.");
+				log_debug(cpu_logger, "Memoria no encontro el numero de marco. PAGE FAULT. Pagina: %d", pagina->numero_pagina);
 				pcb_to_exec->page_fault = true;
-				pcb_to_exec->pagina_fault->numero_pagina = nro_pagina;
-				pcb_to_exec->pagina_fault->indice_tabla_de_pagina = segmento->indice_tabla_paginas;
+				pcb_to_exec->pagina_fault = pagina;
 				return ERROR_MEMORIA;
 			}
 	    }
@@ -295,11 +295,13 @@ void ejecutar_mov_in(t_pcb* pcb, char* parametro1, char* parametro2) {
 
 void ejecutar_mov_out(t_pcb* pcb, char* parametro1, char* parametro2) {
 	log_debug(cpu_logger,"MOV_OUT: finalmente laburo como una persona digna");
+	cod_mensaje mensaje = ESCRIBIR;
 	int dir_fisica = atoi(parametro1);
 	int valor = obtener_valor_del_registro(pcb, parametro2);
-	enviar_valor_con_codigo(dir_fisica, ESCRIBIR, conexion_memoria);
+	//enviar_valor_con_codigo(dir_fisica, ESCRIBIR, conexion_memoria);
+	enviar_datos(conexion_memoria, &mensaje, sizeof(mensaje));
 	enviar_datos(conexion_memoria, &dir_fisica, sizeof(dir_fisica));
-	enviar_datos(conexion_memoria, &valor, sizeof(dir_fisica));
+	enviar_datos(conexion_memoria, &valor, sizeof(valor));
 	cod_mensaje cod_msj = recibir_operacion(conexion_memoria);
 	if(cod_msj == OKI_ESCRIBIR) {
 		log_debug(cpu_logger, "Se pudo escribir en memoria");

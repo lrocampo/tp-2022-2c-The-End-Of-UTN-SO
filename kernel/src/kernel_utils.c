@@ -19,6 +19,7 @@ t_queue* cola_ready_RR_pcbs;
 sem_t procesos_ready;
 sem_t procesos_new;
 sem_t multiprogramacion;
+sem_t proceso_page_fault;
 sem_t procesos_finalizados; 
 sem_t interrupcion_quantum;
 sem_t* s_dispositivos_io;
@@ -103,6 +104,7 @@ void corto_plazo_init(){
 	cola_ready_RR_pcbs = queue_create();
 
     sem_init(&procesos_ready,0,0);
+    sem_init(&proceso_page_fault,0,0);
     pthread_mutex_init(&cola_ready_RR_pcbs_mutex, NULL);
 	pthread_mutex_init(&cola_ready_FIFO_pcbs_mutex, NULL);
 
@@ -156,17 +158,23 @@ t_pcb* obtener_proceso_ejecutado(){
 }
 void* manejar_page_fault(void* arg)
 {	
-	t_pcb* pcb = (t_pcb*) arg;
-	enviar_pagina(pcb->pagina_fault, conexion_memoria);
-	cod_mensaje cod_mensaje_memoria = recibir_operacion(conexion_memoria); //consultar si es correcto
-	if(cod_mensaje_memoria == OKI_PAGINA)
-	{
-		log_debug(kernel_logger, "page fault solucionado pid: %d", pcb->pid);
-		pasar_a_ready(pcb);
+	while(1){
+		sem_wait(&proceso_page_fault);
+		t_pcb* pcb = (t_pcb*) arg;
+		log_debug(kernel_logger, "Enviando pagina fault: %d", pcb->pagina_fault->numero_pagina);
+		enviar_pagina(pcb->pagina_fault, conexion_memoria);
+		cod_mensaje cod_mensaje_memoria = recibir_operacion(conexion_memoria); //consultar si es correcto
+		if(cod_mensaje_memoria == OKI_PAGINA)
+		{
+			log_debug(kernel_logger, "page fault solucionado pid: %d", pcb->pid);
+			pasar_a_ready(pcb);
+		}
+		else {
+			error_show("Error en page fault");
+			pthread_exit(NULL);
+		}
 	}
-	else {
-		pthread_exit(NULL);
-	} 
+	 
 }
 
 
@@ -184,6 +192,7 @@ void analizar_contexto_recibido(t_pcb* pcb){
 		log_debug(kernel_logger, "page faulted PCB pid: %d", pcb->pid);
 		pthread_create(&th_manejo_page_fault, NULL, &manejar_page_fault, (void*) pcb);
 		pthread_detach(th_manejo_page_fault);
+		sem_post(&proceso_page_fault);
 	}
 }
 
