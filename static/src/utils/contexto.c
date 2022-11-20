@@ -7,11 +7,39 @@
 
 #include <utils/contexto.h>
 
-void instruccion_destroy(void* arg){
-    instruccion* _instruccion = (instruccion*) arg;
-    free(_instruccion->parametro1);
-    free(_instruccion->parametro2);
-    free(_instruccion);
+/* Creacion */
+
+t_dispositivo* dispositivo_io_create(int indice, char** array_dispositivos, char** array_duraciones){
+    t_dispositivo* new_dispositivo = malloc(sizeof(t_dispositivo));
+    t_queue* cola = queue_create();
+    new_dispositivo->indice = indice;
+    new_dispositivo->nombre = strdup(array_dispositivos[indice]);
+    new_dispositivo->duracion = atoi(array_duraciones[indice]);
+    new_dispositivo->cola = cola;
+    return new_dispositivo;
+}
+
+instruccion* instruccion_create(cod_operacion operacion, char* parametro1, char* parametro2) {
+    instruccion *estructura = malloc(sizeof(instruccion));
+    estructura->operacion = operacion;
+    if(parametro1 != NULL && parametro2 != NULL){
+        estructura->parametro1 = strdup(parametro1);
+        estructura->parametro2 = strdup(parametro2);
+    } else
+    {
+        estructura->parametro1 = strdup("");
+        estructura->parametro2 = strdup("");
+    }
+
+    return estructura;
+}
+
+t_segmento* segmento_create(int nro, int indice_tabla, int tamanio){
+    t_segmento* segmento = malloc(sizeof(t_segmento));
+    segmento->nro_segmento = nro;
+    segmento->tamanio_segmento = tamanio;
+    segmento->indice_tabla_paginas = indice_tabla;
+    return segmento;
 }
 
 t_pcb* pcb_create(t_proceso* proceso, int pid, int socket){
@@ -55,6 +83,29 @@ t_marco* marco_create(int pid, int numero_marco){
     return marco;
 }
 
+t_proceso* proceso_create(t_list* instrucciones, t_list* segmentos){
+	t_proceso* proceso = malloc(sizeof(t_proceso));
+	proceso->instrucciones = instrucciones;
+	proceso->segmentos = segmentos;
+	return proceso;
+}
+
+/* Destruccion */
+
+void dispositivo_io_destroy(void* arg){
+	t_dispositivo* dispositivo_io = (t_dispositivo*) arg;
+	free(dispositivo_io->nombre);
+	queue_destroy_and_destroy_elements(dispositivo_io->cola,pcb_destroy);
+	free(dispositivo_io);
+}
+
+void instruccion_destroy(void* arg){
+    instruccion* _instruccion = (instruccion*) arg;
+    free(_instruccion->parametro1);
+    free(_instruccion->parametro2);
+    free(_instruccion);
+}
+
 void pcb_destroy(void* arg){
     t_pcb* pcb = (t_pcb*) arg;
     list_destroy_and_destroy_elements(pcb->instrucciones, instruccion_destroy);
@@ -71,6 +122,14 @@ void pcb_memoria_destroy(t_pcb_memoria* pcb){
     }
     free(pcb);
 }
+
+void proceso_destroy(t_proceso* proceso){
+    list_destroy_and_destroy_elements(proceso->instrucciones, instruccion_destroy);
+    list_destroy_and_destroy_elements(proceso->segmentos, free); 
+    free(proceso);
+}
+
+/* Utils */
 
 char* estado_to_string(estado_proceso estado){
     switch (estado)
@@ -231,25 +290,3 @@ void ejecutar_espera(int tiempo){
 	usleep(tiempo * 1000);
 }
 
-instruccion* instruccion_create(cod_operacion operacion, char* parametro1, char* parametro2) {
-    instruccion *estructura = malloc(sizeof(instruccion));
-    estructura->operacion = operacion;
-    if(parametro1 != NULL && parametro2 != NULL){
-        estructura->parametro1 = strdup(parametro1);
-        estructura->parametro2 = strdup(parametro2);
-    } else
-    {
-        estructura->parametro1 = strdup("");
-        estructura->parametro2 = strdup("");
-    }
-
-    return estructura;
-}
-
-t_segmento* segmento_create(int nro, int indice_tabla, int tamanio){
-    t_segmento* segmento = malloc(sizeof(t_segmento));
-    segmento->nro_segmento = nro;
-    segmento->tamanio_segmento = tamanio;
-    segmento->indice_tabla_paginas = indice_tabla;
-    return segmento;
-}

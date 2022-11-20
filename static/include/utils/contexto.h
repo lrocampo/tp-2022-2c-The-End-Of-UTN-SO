@@ -129,6 +129,10 @@ typedef struct {
 	t_list* segmentos;
 } t_pcb_memoria;
 
+t_dispositivo* dispositivo_io_create(int, char**, char**);
+void proceso_destroy(t_proceso*);
+t_proceso* proceso_create(t_list*, t_list*);
+void dispositivo_io_destroy(void*);
 t_pcb* pcb_create(t_proceso*, int, int);
 t_pagina* pagina_create(int indice_tabla_paginas, int numero_pagina);
 t_marco* marco_create(int pid, int numero_marco);
