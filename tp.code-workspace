@@ -40,7 +40,10 @@
 			"fcntl.h": "c",
 			"esquema.h": "c",
 			"tlb.h": "c",
-			"mmu.h": "c"
+			"mmu.h": "c",
+			"planificacion.h": "c",
+			"queue.h": "c",
+			"consola_utils.h": "c"
 		}
 	}
 }
