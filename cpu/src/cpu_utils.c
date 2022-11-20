@@ -301,7 +301,7 @@ void ejecutar_mov_out(t_pcb* pcb, char* parametro1, char* parametro2) {
 }
 
 /* Retardo de instruccion */
-void valor_retardo_instruccion(uint32_t tiempo){
+void valor_retardo_instruccion(int tiempo){
 	ejecutar_espera(tiempo);
 }
 

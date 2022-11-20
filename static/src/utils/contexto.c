@@ -14,7 +14,7 @@ void instruccion_destroy(void* arg){
     free(_instruccion);
 }
 
-t_pcb* pcb_create(t_proceso* proceso, uint32_t pid, int socket){
+t_pcb* pcb_create(t_proceso* proceso, int pid, int socket){
     t_pcb* pcb = malloc(sizeof(t_pcb));
 
     pcb->estado = NEW;
@@ -46,7 +46,7 @@ t_pagina* pagina_create(int indice_tabla_paginas, int numero_pagina){
     return pagina;
 }
 
-t_marco* marco_create(uint32_t pid, int numero_marco){
+t_marco* marco_create(int pid, int numero_marco){
     t_marco* marco = malloc(sizeof(t_marco));
 
     marco->numero_marco = numero_marco;
@@ -130,9 +130,6 @@ char* pcb_to_string(t_pcb* pcb){
         pcb->registros.bx,
         pcb->registros.cx,
         pcb->registros.dx
-        // pcb->tabla.indice_tabla_paginas,
-        // pcb->tabla.nro_segmento,
-        // pcb->tabla.tamanio_segmento
         );
         for(int i = 0; i < cantidad_instrucciones; i++){
             char* instruccion = instruccion_to_string(list_get(pcb->instrucciones, i));
@@ -195,7 +192,7 @@ char* operacion_to_string(cod_operacion operacion) {
 }
 
 void set_valor_registro(t_pcb* pcb, char* parametro1, char* parametro2) {
-    uint32_t valor = (uint32_t) atoi(parametro2);
+    uint32_t valor = atoi(parametro2);
 	if(string_equals_ignore_case(parametro1, "ax")) {
 		pcb->registros.ax = valor;
 	}
@@ -230,6 +227,29 @@ uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
 
 /* TIMMER */
 
-void ejecutar_espera(uint32_t tiempo){
+void ejecutar_espera(int tiempo){
 	usleep(tiempo * 1000);
+}
+
+instruccion* instruccion_create(cod_operacion operacion, char* parametro1, char* parametro2) {
+    instruccion *estructura = malloc(sizeof(instruccion));
+    estructura->operacion = operacion;
+    if(parametro1 != NULL && parametro2 != NULL){
+        estructura->parametro1 = strdup(parametro1);
+        estructura->parametro2 = strdup(parametro2);
+    } else
+    {
+        estructura->parametro1 = strdup("");
+        estructura->parametro2 = strdup("");
+    }
+
+    return estructura;
+}
+
+t_segmento* segmento_create(int nro, int indice_tabla, int tamanio){
+    t_segmento* segmento = malloc(sizeof(t_segmento));
+    segmento->nro_segmento = nro;
+    segmento->tamanio_segmento = tamanio;
+    segmento->indice_tabla_paginas = indice_tabla;
+    return segmento;
 }

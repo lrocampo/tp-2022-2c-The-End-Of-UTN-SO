@@ -38,6 +38,7 @@ typedef enum
 	PAGINA,
 	HANDSHAKE,
 	LIBERAR_ESTRUCTURAS,
+	OKI_LIBERAR_ESTRUCTURAS,
 	PEDIDO_MARCO,
 	OKI_MARCO,
 	PAGE_NOT_FOUND_404,
@@ -94,7 +95,7 @@ t_pagina* deserializar_pagina(int*, void*);
 t_pcb* recibir_pcb(int);
 t_pcb_memoria* recibir_pcb_memoria(int);
 int recibir_valor(int);
-int recibir_datos(int, void *, uint32_t);
+int recibir_datos(int, void *, int);
 t_pagina* recibir_pagina(int);
 
 void enviar_valor_con_codigo(int, cod_mensaje, int);
@@ -109,7 +110,7 @@ void enviar_pagina(t_pagina*, int);
 void enviar_indices_tabla_paginas(t_list*, int);
 void enviar_configuracion_memoria(int, int, int);
 t_pagina_config*  recibir_configuracion_memoria(int);
-int enviar_datos(int , void *, uint32_t);
+int enviar_datos(int , void *, int);
 
 void empaquetar_instrucciones(t_list*, t_paquete*);
 void empaquetar_pcb(t_pcb*, t_paquete*);

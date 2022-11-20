@@ -12,6 +12,7 @@
 #include <commons/collections/queue.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 #include <commons/string.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -63,9 +64,9 @@ typedef struct {
 } t_dispositivo;
 
 typedef struct {
-	uint32_t nro_segmento;
-	uint32_t tamanio_segmento;
-	uint32_t indice_tabla_paginas;
+	int nro_segmento;
+	int tamanio_segmento;
+	int indice_tabla_paginas;
 }t_segmento;
 
 typedef struct 
@@ -83,8 +84,8 @@ typedef struct {
 	int numero_pagina;
 }t_pagina;
 typedef struct {
-	uint32_t pid;
-	uint32_t program_counter;
+	int pid;
+	int program_counter;
 	estado_proceso estado;
 	int socket_consola;
 	bool interrupcion;
@@ -128,19 +129,21 @@ typedef struct {
 	t_list* segmentos;
 } t_pcb_memoria;
 
-t_pcb* pcb_create(t_proceso*, uint32_t, int);
+t_pcb* pcb_create(t_proceso*, int, int);
 t_pagina* pagina_create(int indice_tabla_paginas, int numero_pagina);
-t_marco* marco_create(uint32_t pid, int numero_marco);
+t_marco* marco_create(int pid, int numero_marco);
 cod_operacion string_to_cod_op(char*);
 void pcb_destroy(void*);
 void pcb_memoria_destroy(t_pcb_memoria*);
 char* estado_to_string(estado_proceso);
 char* pcb_to_string(t_pcb*);
+t_segmento* segmento_create(int, int, int);
 char* instruccion_to_string(instruccion*);
+instruccion* instruccion_create(cod_operacion, char*, char*);
 void instruccion_destroy(void*);
 char* operacion_to_string(cod_operacion);
 void set_valor_registro(t_pcb*, char*, char*);
 uint32_t obtener_valor_del_registro(t_pcb*, char*);
-void ejecutar_espera(uint32_t);
+void ejecutar_espera(int);
 
 #endif /* INCLUDE_UTILS_CONTEXTO_H_ */

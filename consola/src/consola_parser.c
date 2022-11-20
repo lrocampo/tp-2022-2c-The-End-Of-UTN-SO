@@ -31,6 +31,7 @@
         free(param2);
         param1 = NULL;
         param2 = NULL;
+        if(cod_op == EXIT) break;
     }
     string_array_destroy(instructions_array);
     free(instructions_string);
@@ -65,19 +66,4 @@ char *leer_archivo_pseudocodigo (char *ruta)
 
 	fclose(archivo);
     return arrayDinamico;
-}
-
-instruccion* instruccion_create(cod_operacion operacion, char* parametro1, char* parametro2) {
-    instruccion *estructura = malloc(sizeof(instruccion));
-    estructura->operacion = operacion;
-    if(parametro1 != NULL && parametro2 != NULL){
-        estructura->parametro1 = strdup(parametro1);
-        estructura->parametro2 = strdup(parametro2);
-    } else
-    {
-        estructura->parametro1 = strdup("");
-        estructura->parametro2 = strdup("");
-    }
-
-    return estructura;
 }

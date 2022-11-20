@@ -70,7 +70,7 @@ void ejecutar_mov_in(t_pcb*, char*, char*);
 void ejecutar_mov_out(t_pcb*, char*, char*);
 
 /* Retardo instruccion */
-void valor_retardo_instruccion(uint32_t);
+void valor_retardo_instruccion(int);
 
 /* Conexiones con Kernel */
 void* atender_kernel_dispatch(void*);

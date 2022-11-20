@@ -38,9 +38,9 @@ void* ejecucion_io(void* arg){
 	while(1){
 		sem_wait(&s_dispositivos_io[idx]);
 		log_debug(kernel_logger, "dispositivo solicitado: %s", dispositivo->nombre);
-		t_pcb* pcb = safe_pcb_pop(cola_de_atencion, cola_dispositivo_mutex[idx]);
+		t_pcb* pcb = safe_pcb_pop(cola_de_atencion, &cola_dispositivo_mutex[idx]);
 		instruccion* ultima_instruccion = obtener_ultima_instruccion(pcb);
-		uint32_t unidades_tiempo = (uint32_t) (atoi(ultima_instruccion->parametro2) * dispositivo->duracion);
+		int unidades_tiempo = (atoi(ultima_instruccion->parametro2) * dispositivo->duracion);
 		ejecutar_espera(unidades_tiempo);
 		log_debug(kernel_logger, "Tiempo esperado: %d", unidades_tiempo);
 		pasar_a_ready(pcb);
@@ -49,7 +49,7 @@ void* ejecucion_io(void* arg){
 
 void solicitar_dispositivo(t_pcb* pcb, instruccion* ultima_instruccion){
 	t_dispositivo* dispositivo = obtener_dispositivo_por_nombre(ultima_instruccion->parametro1);
-	safe_pcb_push(dispositivo->cola, pcb, cola_dispositivo_mutex[dispositivo->indice]);
+	safe_pcb_push(dispositivo->cola, pcb, &cola_dispositivo_mutex[dispositivo->indice]);
 	sem_post(&s_dispositivos_io[dispositivo->indice]);	
 }
 

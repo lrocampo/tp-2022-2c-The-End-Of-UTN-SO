@@ -89,7 +89,6 @@ void marcos_memoria_principal_init() {
 
 void marcos_init(t_list* lista_marcos, int tamanio_memoria, int tamanio_pagina){
 	int cantidad_de_marcos = tamanio_memoria / tamanio_pagina;
-	log_debug(memoria_logger, "Cargando %d marcos", cantidad_de_marcos);
 	for(int i = 0; i < cantidad_de_marcos; i++) {
 		t_marco *marco = malloc(sizeof(t_marco));
 		marco->numero_marco = i;
@@ -113,9 +112,9 @@ void solicitudes_a_memoria_init() {
 
 void atender_pedido_de_marco() {
 	cod_mensaje mensaje;
-	log_debug(memoria_logger, "Recibiendo pedido de marco");
+	log_debug(memoria_logger, "CPU - Recibiendo pedido de marco");
 	t_pagina* pagina = recibir_pagina(cliente_cpu_fd);
-	log_debug(memoria_logger, "Pagina solicitada: %d", pagina->numero_pagina);
+	log_debug(memoria_logger, "CPU - Pagina solicitada: %d", pagina->numero_pagina);
 	int marco = obtener_numero_de_marco(pagina);
 	if(marco == PAGE_FAULT) {
 		mensaje = PAGE_NOT_FOUND_404;
@@ -133,14 +132,13 @@ void atender_pedido_de_lectura() {
 	int valor;
 	cod_mensaje mensaje;
 
-	log_debug(memoria_logger, "Se pidio leer");
+	log_debug(memoria_logger, "CPU - Recibiendo pedido de lectura");
 	ejecutar_espera(memoria_config->retardo_memoria);
 	direccion_fisica = recibir_valor(cliente_cpu_fd);
 	valor = leer_en_memoria_principal(direccion_fisica);
 	mensaje = OKI_LEER;
-	log_debug(memoria_logger, "dir fisica: %d, valor leido: %d", direccion_fisica, valor);
+	log_debug(memoria_logger, "CPU - dir fisica: %d, valor leido: %d", direccion_fisica, valor);
 	enviar_valor_con_codigo(valor, mensaje, cliente_cpu_fd);
-	log_debug(memoria_logger, "Valor enviado");
 }
 
 void atender_pedido_de_escritura() {
@@ -148,13 +146,12 @@ void atender_pedido_de_escritura() {
 	int valor;
 	cod_mensaje mensaje;
 
-	log_debug(memoria_logger, "Se pidio escribir");
+	log_debug(memoria_logger, "CPU - Recibiendo pedido de escritura");
 	ejecutar_espera(memoria_config->retardo_memoria);
 	recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int));
 	recibir_datos(cliente_cpu_fd, &valor, sizeof(int));
-	log_debug(memoria_logger, "dir fisica: %d, valor a escribir: %d", direccion_fisica, valor);
+	log_debug(memoria_logger, "CPU - dir fisica: %d, valor a escribir: %d", direccion_fisica, valor);
 	escribir_en_memoria_principal(direccion_fisica, valor);
-	log_debug(memoria_logger, "Valor escrito");
 	mensaje = OKI_ESCRIBIR;
 	enviar_datos(cliente_cpu_fd, &mensaje, sizeof(mensaje));
 }
@@ -165,7 +162,7 @@ void* atender_cpu(void* args){
 		pthread_exit(NULL);
 	}
 	cliente_cpu_fd = esperar_cliente(memoria_server_cpu_fd);
-	log_debug(memoria_logger,"Se conecto un CPU a MEMORIA.");
+	log_debug(memoria_logger,"CPU se conecto a MEMORIA.");
 
 	enviar_configuracion_memoria(memoria_config->tamanio_pagina, memoria_config->entradas_por_tabla, cliente_cpu_fd);
 
@@ -184,7 +181,7 @@ void* atender_cpu(void* args){
 			atender_pedido_de_escritura();
 			break;
 		default:
-			log_debug(memoria_logger,"Se desconecto el cliente.");
+			log_debug(memoria_logger,"CPU se desconecto.");
 			pthread_exit(NULL);
 			break;
 		}
@@ -198,55 +195,68 @@ void* atender_kernel(void* args) {
 		pthread_exit(NULL);
 	}
  	cliente_kernel_fd = esperar_cliente(memoria_server_kernel_fd);
- 	log_debug(memoria_logger,"Se conecto un Kernel a MEMORIA.");
+ 	log_debug(memoria_logger,"KERNEL se conecto a MEMORIA.");
 	while(1){
 		cod_mensaje mensaje = recibir_operacion(cliente_kernel_fd);
 		switch (mensaje)
 		{
 		case ESTRUCTURAS:
-			t_pcb_memoria* pcb = recibir_pcb_memoria(cliente_kernel_fd);
-			log_debug(memoria_logger, "Recibi pcb con pid: %d",pcb->pid);
-			crear_tablas_de_pagina(pcb);
-			t_list* indices = obtener_indices_tablas_de_pagina(pcb);
-			mensaje = OKI_ESTRUCTURAS;
-			log_debug(memoria_logger, "llegue aca, por eviar cosas");
- 			enviar_indices_tabla_paginas(indices, cliente_kernel_fd);
-			list_destroy_and_destroy_elements(indices, free);
-			pcb_memoria_destroy(pcb);
+			atender_pedido_de_estructuras();
 			break;
 		case LIBERAR_ESTRUCTURAS:
-			int pid = recibir_valor(cliente_kernel_fd);
-			liberar_memoria_de_proceso(pid);
+			atender_liberar_estructuras();
 			break;
 		case PAGINA:
-			t_pagina* pagina = recibir_pagina(cliente_kernel_fd);
-			t_marco* marco_libre;
-			log_debug(memoria_logger, "pagina page fault: %d", pagina->numero_pagina);
-			pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
-			t_tabla_de_paginas* tabla_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
-			pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
-			log_debug(memoria_logger, "Tabla de paginas: %d", pagina->indice_tabla_de_pagina);
-			int cantidad_marcos_cargados = cantidad_de_marcos_en_memoria_proceso(tabla_paginas->pid);
-			log_debug(memoria_logger, "Cantidad de marcos en memoria del proceso: %d", cantidad_marcos_cargados);
-			if(cantidad_marcos_cargados == memoria_config->marcos_por_proceso){
-				t_entrada_tp* entrada_a_reemplazar = obtener_victima_a_reemplazar(tabla_paginas->pid);
-				rajar_pagina(entrada_a_reemplazar);				
-				marco_libre = list_get(lista_de_marcos, entrada_a_reemplazar->marco);
-			}
-			else{
-				marco_libre = obtener_marco_libre(lista_de_marcos);
-			}
-			cargar_pagina_en_memoria_principal(pagina, marco_libre, tabla_paginas->pid);
-			mensaje = OKI_PAGINA;
- 			enviar_datos(cliente_kernel_fd, &mensaje, sizeof(cod_mensaje));
-			free(pagina);		
+			atender_pedido_de_pagina_fault();		
 			break;
 		default:
-			log_debug(memoria_logger,"Se desconecto el cliente.");
+			log_debug(memoria_logger,"KERNEL se desconecto.");
 			pthread_exit(NULL);
 		}
  	}
  }
+
+void atender_pedido_de_estructuras(){
+	t_pcb_memoria* pcb = recibir_pcb_memoria(cliente_kernel_fd);
+	log_debug(memoria_logger, "KERNEL- Recibi pcb con pid: %d",pcb->pid);
+	crear_tablas_de_pagina(pcb);
+	t_list* indices = obtener_indices_tablas_de_pagina(pcb);
+	enviar_indices_tabla_paginas(indices, cliente_kernel_fd);
+	list_destroy_and_destroy_elements(indices, free);
+	pcb_memoria_destroy(pcb);
+}
+
+void atender_pedido_de_pagina_fault(){
+	t_pagina* pagina = recibir_pagina(cliente_kernel_fd);
+	t_marco* marco_libre;
+	log_debug(memoria_logger, "pagina page fault: %d", pagina->numero_pagina);
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
+	t_tabla_de_paginas* tabla_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
+	log_debug(memoria_logger, "Tabla de paginas: %d", pagina->indice_tabla_de_pagina);
+	int cantidad_marcos_cargados = cantidad_de_marcos_en_memoria_proceso(tabla_paginas->pid);
+	log_debug(memoria_logger, "Cantidad de marcos en memoria del proceso: %d", cantidad_marcos_cargados);
+	if(cantidad_marcos_cargados == memoria_config->marcos_por_proceso){
+		t_entrada_tp* entrada_a_reemplazar = obtener_victima_a_reemplazar(tabla_paginas->pid);
+		rajar_pagina(entrada_a_reemplazar);				
+		marco_libre = list_get(lista_de_marcos, entrada_a_reemplazar->marco);
+	}
+	else{
+		marco_libre = obtener_marco_libre(lista_de_marcos);
+	}
+	cargar_pagina_en_memoria_principal(pagina, marco_libre, tabla_paginas->pid);
+	cod_mensaje mensaje = OKI_PAGINA;
+	enviar_datos(cliente_kernel_fd, &mensaje, sizeof(cod_mensaje));
+	free(pagina);
+}
+
+void atender_liberar_estructuras(){
+	int pid = recibir_valor(cliente_kernel_fd);
+	log_debug(memoria_logger, "KERNEL - Recibiendo pedido de liberar estructuras PID: %d",pid);
+	liberar_memoria_de_proceso(pid);
+	cod_mensaje mensaje = OKI_LIBERAR_ESTRUCTURAS;
+	enviar_datos(cliente_kernel_fd, &mensaje, sizeof(mensaje));
+}
 
 void escribir_en_memoria_principal(int direccion_fisica, int valor) {
 	pthread_mutex_lock(&memoria_usuario_mutex);
@@ -277,7 +287,7 @@ int leer_en_memoria_principal(int direccion_fisica) {
 		}
 	}
 	list_destroy(tablas);
-	log_debug(memoria_logger, "Memoria liberada con exito. Vuelvas prontos.");
+	log_debug(memoria_logger, "Memoria liberada con exito PID: %d. Vuelvas prontos.", pid);
  }
 
  void liberar_marco_memoria(t_entrada_tp* entrada){
@@ -304,18 +314,17 @@ int leer_en_memoria_principal(int direccion_fisica) {
 	t_entrada_tp* entrada_pagina = obtener_entrada_tp(pagina);
 
 	if(entrada_pagina->presencia) {
-		log_debug(memoria_logger, "Presencia de marco: %d", entrada_pagina->marco);
+		log_debug(memoria_logger, "PRESENCIA de marco: %d", entrada_pagina->marco);
 		return entrada_pagina->marco;
 	}
 	else {
-		log_debug(memoria_logger, "PAGE FAULT");
+		log_debug(memoria_logger, "PAGE FAULT: %d", pagina->numero_pagina);
 		// actualizar bit de uso a 1?
 		return PAGE_FAULT;
 	}
  }
 
 t_marco* obtener_marco_libre(t_list* marcos){
-	log_debug(memoria_logger, "Obteniendo marco libre");
 	return list_find(marcos,  (void*) marco_libre);
 }
 

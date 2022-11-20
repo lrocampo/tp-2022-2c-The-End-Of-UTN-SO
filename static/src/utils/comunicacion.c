@@ -75,7 +75,7 @@ void recibir_mensaje(t_log* logger, int socket_cliente)
 	free(buffer);
 }
 
-int recibir_datos(int socket_fd, void *dest, uint32_t size) {
+int recibir_datos(int socket_fd, void *dest, int size) {
 	return recv(socket_fd, dest, size, 0); // cuantos bytes a recibir y a donde los quiero recibir
 }
 
@@ -130,7 +130,7 @@ void enviar_valor_ingresado(int valor, int socket_cliente){
 	enviar_valor_con_codigo(valor, OKI_TECLADO, socket_cliente);
 }
 
-int enviar_datos(int socket_fd, void *source, uint32_t size) {
+int enviar_datos(int socket_fd, void *source, int size) {
 	return send(socket_fd, source, size, 0);
 }
 
@@ -444,14 +444,14 @@ void* deserializar_segmento(void* buffer, int* desplazamiento)
 {
 	t_segmento* nuevo_segmento = malloc(sizeof(t_segmento)); 
 
-	memcpy(&(nuevo_segmento->nro_segmento), buffer + *desplazamiento, sizeof(uint32_t));
-	*desplazamiento += sizeof(uint32_t);
+	memcpy(&(nuevo_segmento->nro_segmento), buffer + *desplazamiento, sizeof(int));
+	*desplazamiento += sizeof(int);
 
-	memcpy(&(nuevo_segmento->tamanio_segmento), buffer + *desplazamiento, sizeof(uint32_t));
-	*desplazamiento += sizeof(uint32_t);
+	memcpy(&(nuevo_segmento->tamanio_segmento), buffer + *desplazamiento, sizeof(int));
+	*desplazamiento += sizeof(int);
 
-	memcpy(&(nuevo_segmento->indice_tabla_paginas), buffer + *desplazamiento, sizeof(uint32_t));
-	*desplazamiento += sizeof(uint32_t);
+	memcpy(&(nuevo_segmento->indice_tabla_paginas), buffer + *desplazamiento, sizeof(int));
+	*desplazamiento += sizeof(int);
 
 	return nuevo_segmento;
 }

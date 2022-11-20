@@ -51,7 +51,7 @@ extern sem_t procesos_finalizados;
 extern sem_t interrupcion_quantum;
 extern sem_t* s_dispositivos_io;
 
-extern uint32_t pid_actual;
+extern int pid_actual;
 extern t_algoritmo algoritmo;
 
 extern pthread_mutex_t pid_mutex;
@@ -98,8 +98,8 @@ void push_ready_pcb(t_pcb*);
 t_pcb* pop_ready_pcb();
 
 /* Utils */
-void safe_pcb_push(t_queue*, t_pcb*, pthread_mutex_t);
-t_pcb* safe_pcb_pop(t_queue*, pthread_mutex_t);
+void safe_pcb_push(t_queue*, t_pcb*, pthread_mutex_t*);
+t_pcb* safe_pcb_pop(t_queue*, pthread_mutex_t*);
 instruccion* obtener_ultima_instruccion(t_pcb* pcb);
 
 #endif /* KERNEL_INCLUDE_KERNEL_UTILS_H_ */
