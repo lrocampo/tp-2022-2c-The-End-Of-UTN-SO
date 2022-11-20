@@ -7,7 +7,15 @@
 
 #include <memoria.h>
 
+void sighandler(int s){
+	log_debug(memoria_logger, "Termino memoria\n");
+	terminar_modulo();
+    exit(0);
+}
+
 int main(void){
+
+	signal(SIGINT, sighandler);
 
 	/* LOGGER DE ENTREGA */
 	/* cpu_logger = iniciar_logger(RUTA_LOGGER_CPU, NOMBRE_MODULO, 1, LOG_LEVEL_INFO); */
