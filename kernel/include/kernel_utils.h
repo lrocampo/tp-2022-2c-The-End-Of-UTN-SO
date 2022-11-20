@@ -13,6 +13,7 @@
 #include <semaphore.h>
 #include <stdlib.h>
 #include <kernel.h>
+#include <planificacion.h>
 #include <io.h>
 
 typedef struct {
@@ -49,6 +50,7 @@ extern sem_t procesos_new;
 extern sem_t multiprogramacion;
 extern sem_t procesos_finalizados; 
 extern sem_t interrupcion_quantum;
+extern sem_t proceso_page_fault;
 extern sem_t* s_dispositivos_io;
 
 extern int pid_actual;
@@ -68,31 +70,20 @@ extern pthread_t th_transiciones_ready;
 extern pthread_t th_rajar_pcb;
 extern pthread_t th_manejo_page_fault;
 
-/* Largo plazo */
-void largo_plazo_init();
-void* atender_nueva_consola(void*);
-void solicitar_creacion_estructuras_administrativas(t_pcb*);
-void* rajar_pcb(void*);
+/* Conexiones */
+void esperar_conexiones();
+void iniciar_conexiones_con_cpu();
+void iniciar_conexion_con_memoria();
 
-/* Corto plazo */
-void corto_plazo_init();
-void* planificar_ejecucion(void*);
-t_pcb* seleccionar_pcb();
-void planificar_interrupcion(t_pcb*);
-t_pcb* obtener_proceso_ejecutado();
-void analizar_contexto_recibido(t_pcb*);
-void dirigir_proceso_ejecutado(t_pcb*);
-void* transicion_proceso_a_ready(void*); // transicion_new_a_ready
-void* manejar_page_fault(void*);
-
-t_list* crear_tabla_segmentos(t_list*, t_list*);
+/* Configuracion */
+t_list* config_get_io_list(t_config*);
+void * configurar_kernel(t_config*);
+void kernel_config_destroy();
+void terminar_modulo();
 
 /* Planificacion Utils */
 void cambiar_estado(t_pcb*, estado_proceso);
 void pasar_a_ready(t_pcb*);
-void solicitar_finalizacion(t_pcb*);
-void iniciar_interrupcion();
-void* enviar_interrupt(void*);
 u_int32_t siguiente_pid();
 void push_ready_pcb(t_pcb*);
 t_pcb* pop_ready_pcb();

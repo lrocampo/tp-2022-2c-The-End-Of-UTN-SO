@@ -30,6 +30,22 @@ void solicitar_io(t_pcb* pcb, instruccion* ultima_instruccion) {
 	}
 }
 
+void solicitar_dispositivo(t_pcb* pcb, instruccion* ultima_instruccion){
+	t_dispositivo* dispositivo = obtener_dispositivo_por_nombre(ultima_instruccion->parametro1);
+	safe_pcb_push(dispositivo->cola, pcb, &cola_dispositivo_mutex[dispositivo->indice]);
+	sem_post(&s_dispositivos_io[dispositivo->indice]);	
+}
+
+t_dispositivo* obtener_dispositivo_por_nombre(char* nombre){
+	int i = 0;
+	t_dispositivo* dispositivo = list_get(dispositivos_io, i); 
+	while(!string_equals_ignore_case(dispositivo->nombre, nombre) && i < cantidad_dispositivos){
+		dispositivo = list_get(dispositivos_io, i);
+		i++; 
+	}
+	return dispositivo;
+}
+
 void* ejecucion_io(void* arg){
 	t_dispositivo* dispositivo = (t_dispositivo*) arg;
 	int idx = dispositivo->indice;
@@ -45,22 +61,6 @@ void* ejecucion_io(void* arg){
 		log_debug(kernel_logger, "Tiempo esperado: %d", unidades_tiempo);
 		pasar_a_ready(pcb);
 	}
-}
-
-void solicitar_dispositivo(t_pcb* pcb, instruccion* ultima_instruccion){
-	t_dispositivo* dispositivo = obtener_dispositivo_por_nombre(ultima_instruccion->parametro1);
-	safe_pcb_push(dispositivo->cola, pcb, &cola_dispositivo_mutex[dispositivo->indice]);
-	sem_post(&s_dispositivos_io[dispositivo->indice]);	
-}
-
-t_dispositivo* obtener_dispositivo_por_nombre(char* nombre){
-	int i = 0;
-	t_dispositivo* dispositivo = list_get(dispositivos_io, i); 
-	while(!string_equals_ignore_case(dispositivo->nombre, nombre) && i < cantidad_dispositivos){
-		dispositivo = list_get(dispositivos_io, i);
-		i++; 
-	}
-	return dispositivo;
 }
 
 void* solicitar_io_consola(void *arg){
