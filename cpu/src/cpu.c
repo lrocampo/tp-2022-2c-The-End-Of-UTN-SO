@@ -7,7 +7,8 @@
 #include <cpu.h>
 
 void sighandler(int s){
-    terminar_modulo();
+    log_debug(cpu_logger,"termino cpu\n");
+	terminar_modulo();
     exit(0);
 }
 
@@ -31,10 +32,6 @@ int main(void){
 	ciclo_de_instruccion_init();
 
 	esperar_conexiones();
-
-	log_debug(cpu_logger,"termino cpu\n");
-
-	terminar_modulo();
 
 	return EXIT_SUCCESS;
 }
