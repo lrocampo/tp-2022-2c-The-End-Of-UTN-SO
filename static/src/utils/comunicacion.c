@@ -290,8 +290,6 @@ void enviar_proceso(t_proceso* proceso, int socket_cliente){
 
 	enviar_paquete(paquete, socket_cliente);
 	eliminar_paquete(paquete);
-	list_destroy_and_destroy_elements(proceso->instrucciones, instruccion_destroy);
-	list_destroy_and_destroy_elements(proceso->segmentos, free);
 }
 
 void empaquetar_proceso(t_proceso* proceso,t_paquete* paquete){

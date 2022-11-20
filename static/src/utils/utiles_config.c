@@ -30,8 +30,8 @@ bool validar_configuracion(t_config* config) {
 	return (config_keys_amount(config) > 0);
 }
 
-t_algoritmo config_get_algoritmo_enum(t_config* config){
-	char* algoritmo_string = strdup(config_get_string_value(config,"ALGORITMO_PLANIFICACION"));
+t_algoritmo config_get_algoritmo_enum(t_config* config, char* algoritmo_type){
+	char* algoritmo_string = strdup(config_get_string_value(config, algoritmo_type));
 	t_algoritmo algoritmo = FIFO; // default por si hay errores, sacar en algun momento(?
 	if(string_equals_ignore_case(algoritmo_string,"FIFO")){
 		algoritmo = FIFO;
@@ -41,6 +41,9 @@ t_algoritmo config_get_algoritmo_enum(t_config* config){
 	}
 	else if(string_equals_ignore_case(algoritmo_string,"FEEDBACK")){
 		algoritmo = FEEDBACK;
+	}
+	else if(string_equals_ignore_case(algoritmo_string,"LRU")){
+		algoritmo = LRU;
 	}
 	free(algoritmo_string);
 	return algoritmo;

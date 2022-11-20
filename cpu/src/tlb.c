@@ -1,55 +1,71 @@
 #include<tlb.h>
 
-t_list* tabla_tlb;
+int buscar_en_tlb(int pid, int numero_pagina, int segmento) {
 
-int buscar_en_tlb(int pid, int numero_pagina) {
-    return -1;
-    // t_entrada_tlb entrada = list_get(tabla_tlb, numero_pagina);
-    // bool contiene_pagina = list_any_satisfy(tabla_tlb, (void*)_numero_pagina_solicitado(numero_pagina, pid));
-    // if(contiene_pagina){
-    //     actualizar_instante_de_ultima_referencia(entrada);
-    //     return entrada->marco;
-    // }
-    // else{
-    //     return -1;
-    // }
+    bool where_entrada_and_pid_is(t_entrada_tlb* entrada){
+		return entrada->pid == pid && entrada->pagina == numero_pagina && entrada->segmento == segmento;
+	}
+
+    t_entrada_tlb* entrada = list_find(tabla_tlb, (void*) where_entrada_and_pid_is);
+
+    if(entrada == NULL){
+        log_debug(cpu_logger, "TLB MISS");
+        return -1;
+    }
+    log_debug(cpu_logger, "TLB HIT");
+    instante_de_referencia_actual++;
+    entrada->instante_de_ultima_referencia = instante_de_referencia_actual;
+    return entrada->marco;
 }
-/*if(tabla_tlb >= tlb_config->entradas_tlb){
-            switch(tlb_config->reemplazo_tlb) {
-		case LRU:
-			fifo(entrada);
-			break;
-		case FIFO:
-			lru(entrada);
-			break;
-		default:
-			error_show("Error, algoritmo desconocido.");												
-	        }
-        }*/
 
+void actualizar_tlb(int pid, int numero_pagina, int segmento, int marco){
+    t_entrada_tlb* nueva_entrada = malloc(sizeof(t_entrada_tlb));
+    int cantidad_entradas_actual = list_size(tabla_tlb);
+    instante_de_referencia_actual++;
+    nueva_entrada->instante_de_ultima_referencia = instante_de_referencia_actual;
+    nueva_entrada->pid = pid;
+    nueva_entrada->pagina = numero_pagina;
+    nueva_entrada->segmento = segmento;
+    nueva_entrada->marco = marco;
+    if(cantidad_entradas_actual == cpu_config->entradas_tlb){
+        log_debug(cpu_logger, "Reemplazando pagina");
+        ejecutar_reemplazo();
+    }
+    log_debug(cpu_logger, "Entrada agregada tlb");
+    list_add(tabla_tlb, nueva_entrada);
+}
 
-// void* lru(t_entrada_tlb entrada_nueva){
-//     // t_entrada_tlb* entrada_menos_usada = (t_entrada_tlb*) list_get_minimum(tabla_tlb, (void*)_menor_instante_entre_dos);
-//     // list_remove(tabla_tlb, );
-//     // list_add(table_tlb, entrada_nueva);
-// }
+void ejecutar_reemplazo(){
+    t_entrada_tlb* entrada_a_reemplazar = obtener_victima_a_reemplazar();
+    log_debug(cpu_logger, "entrada a reemplazar con pid %d, pag: %d, seg: %d", entrada_a_reemplazar->pid, entrada_a_reemplazar->pagina, entrada_a_reemplazar->segmento);
+    rajar_entrada(entrada_a_reemplazar);				
+}
 
-// // static void* _menor_instante_entre_dos(t_entrada* e1, t_entrada* e2){
-// //     return e1->instante_de_ultima_referencia <= e2->instante_de_ultima_referencia ? e1 : e2;  
-// // }
+void rajar_entrada(t_entrada_tlb* entrada_a_rajar){
 
+    bool where_instante_is(t_entrada_tlb* entrada){
+    return entrada->instante_de_ultima_referencia == entrada_a_rajar->instante_de_ultima_referencia;
+}
 
+    list_remove_and_destroy_by_condition(tabla_tlb, (void*) where_instante_is, free);
+}
 
+t_entrada_tlb* obtener_victima_a_reemplazar(){
+    switch (cpu_config->reemplazo_tlb)
+    {
+    case FIFO:
+        return list_get(tabla_tlb, 0);
+    case LRU:
+        return list_get_minimum(tabla_tlb, (void*) minimo_instante_de_referencia);
+    default:
+        error_show("Algoritmo tlb desconocido");
+        exit(EXIT_FAILURE);
+        break;
+    }
+}
 
-
-// bool actualizar_tlb(int pid, int numero_pagina, int segmento) {
-//     return true;
-// }
-// bool _numero_pagina_solicitado(int numero_pagina, int pid, void* entrada){
-//     return ((t_entrada_tlb*)entrada)->pagina == numero_pagina && ((t_entrada_tlb*)entrada)->pid == pid;
-// }
-
-// void* fifo(t_entrada_tlb entrada_nueva){
-//     // list_remove(tabla_tlb, 0);
-//     // list_add(table_tlb, entrada_nueva);
-// }
+ void* minimo_instante_de_referencia(t_entrada_tlb* entrada1, t_entrada_tlb* entrada2) {
+    return entrada1->instante_de_ultima_referencia <= entrada2->instante_de_ultima_referencia
+        ? entrada1
+        : entrada2; 
+}

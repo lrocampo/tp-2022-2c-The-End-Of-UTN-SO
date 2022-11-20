@@ -14,6 +14,6 @@
 
 void* cargar_configuracion(char*, void* (*)(t_config*));
 bool validar_configuracion(t_config*);
-t_algoritmo config_get_algoritmo_enum(t_config*);
+t_algoritmo config_get_algoritmo_enum(t_config*, char*);
 
 #endif /* INCLUDE_UTILS_UTILES_CONFIG_H_ */

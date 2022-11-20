@@ -36,7 +36,7 @@ typedef enum{
 } estado_proceso;
 
 typedef enum {
-	FIFO, RR, FEEDBACK, CLOCK, CLOCK_M
+	FIFO, RR, FEEDBACK, CLOCK, CLOCK_M, LRU
 } t_algoritmo;
 
 typedef enum{
@@ -97,6 +97,7 @@ typedef struct {
 	bool con_desalojo;
 	bool page_fault;
 	bool segmentation_fault;
+	int direccion_fisica;
 }t_pcb;
 
 typedef struct {
@@ -128,6 +129,14 @@ typedef struct {
 	int pid;
 	t_list* segmentos;
 } t_pcb_memoria;
+
+typedef struct {
+    int pid;
+    int segmento;
+    int pagina;
+    int marco;
+    int instante_de_ultima_referencia;
+} t_entrada_tlb;
 
 t_dispositivo* dispositivo_io_create(int, char**, char**);
 void proceso_destroy(t_proceso*);

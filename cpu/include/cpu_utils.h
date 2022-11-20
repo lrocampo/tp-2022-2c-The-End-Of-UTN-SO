@@ -10,12 +10,12 @@
 #include <pthread.h>
 #include <tlb.h>
 #include <mmu.h>
-//#include <memoria_utils.h>
 
 #define RUTA_LOGGER_CPU "./cpu.log"
 #define RUTA_LOGGER_DEBUG_CPU "./cpu_db.log"
 #define NOMBRE_MODULO "CPU"
 #define RUTA_CPU_CONFIG "./src/cpu.config"
+
 
 typedef struct {
 	char* ip_cpu;
@@ -25,17 +25,9 @@ typedef struct {
 	char* puerto_escucha_dispatch;
 	char* puerto_escucha_interrupt;
 	int   retardo_intruccion;
+	int   entradas_tlb;
+    t_algoritmo reemplazo_tlb;
 }t_cpu_config;
-
-typedef struct {
-	int entradas_tlb;
-    char* reemplazo_tlb;
-	int retardo_instruccion;
-	char* ip_memoria;
-	int puerto_memoria;
-	int puerto_escucha_dispatch;
-	int puerto_escucha_interrupt;
-}t_tlb_config;
 
 extern t_log *cpu_logger;
 extern t_cpu_config* cpu_config;
@@ -43,9 +35,9 @@ extern int server_fd_dispatch;
 extern int cliente_fd_dispatch;
 extern int conexion_memoria;
 extern bool interrupcion;
+extern int instante_de_referencia_actual;
 extern t_pagina_config* pagina_config;
-
-
+extern t_list* tabla_tlb;
 extern pthread_t th_kernel_dispatch;
 extern pthread_t th_kernel_interrupt;
 
@@ -66,8 +58,8 @@ cod_operacion decode(t_pcb*, instruccion*);
 void ejecutar_instruccion(t_pcb*, cod_operacion, instruccion*);
 void ejecutar_set(t_pcb*, char*, char*);
 void ejecutar_add(t_pcb*, char*, char*);
-void ejecutar_mov_in(t_pcb*, char*, char*);
-void ejecutar_mov_out(t_pcb*, char*, char*);
+void ejecutar_mov_in(t_pcb*, char*, int);
+void ejecutar_mov_out(t_pcb*, int, char*);
 
 /* Retardo instruccion */
 void valor_retardo_instruccion(int);
