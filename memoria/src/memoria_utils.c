@@ -125,6 +125,7 @@ void atender_pedido_de_marco() {
 		mensaje = OKI_MARCO;
 		enviar_valor_con_codigo(marco, mensaje, cliente_cpu_fd);
 	}
+	free(pagina);
 }
 
 void atender_pedido_de_lectura() {
@@ -237,7 +238,8 @@ void* atender_kernel(void* args) {
 			}
 			cargar_pagina_en_memoria_principal(pagina, marco_libre, tabla_paginas->pid);
 			mensaje = OKI_PAGINA;
- 			enviar_datos(cliente_kernel_fd, &mensaje, sizeof(cod_mensaje));		
+ 			enviar_datos(cliente_kernel_fd, &mensaje, sizeof(cod_mensaje));
+			free(pagina);		
 			break;
 		default:
 			log_debug(memoria_logger,"Se desconecto el cliente.");
@@ -270,16 +272,11 @@ int leer_en_memoria_principal(int direccion_fisica) {
 		t_tabla_de_paginas* tabla = list_get(tablas, i); 
 		for(j = 0; j < list_size(tabla->entradas); j++) {
 			t_entrada_tp* entrada = list_get(tabla->entradas, j);
-			// if(entrada->presencia) {
-			// 	t_marco* marco = list_get(lista_de_marcos, entrada->marco);
-			// 	marco->pid = -1;
-			// }
 			liberar_marco_memoria(entrada);
 			liberar_marco_swap(entrada);
-			// t_marco* marco_swap = list_get(lista_de_marcos_swap, entrada->posicion_swap / memoria_config->tamanio_pagina);
-			// marco_swap->pid = -1;
 		}
 	}
+	list_destroy(tablas);
 	log_debug(memoria_logger, "Memoria liberada con exito. Vuelvas prontos.");
  }
 

@@ -168,6 +168,7 @@ void* manejar_page_fault(void* arg)
 		{
 			log_debug(kernel_logger, "page fault solucionado pid: %d", pcb->pid);
 			pasar_a_ready(pcb);
+			pthread_exit(NULL);
 		}
 		else {
 			error_show("Error en page fault");
@@ -188,12 +189,7 @@ void analizar_contexto_recibido(t_pcb* pcb){
 		pcb->interrupcion = false;
 		pcb->con_desalojo = false;
 	}
-	if(pcb->page_fault){
-		log_debug(kernel_logger, "page faulted PCB pid: %d", pcb->pid);
-		pthread_create(&th_manejo_page_fault, NULL, &manejar_page_fault, (void*) pcb);
-		pthread_detach(th_manejo_page_fault);
-		sem_post(&proceso_page_fault);
-	}
+
 }
 
 
@@ -202,6 +198,10 @@ void dirigir_proceso_ejecutado(t_pcb* pcb){ // corto plazo // tener en cuenta pa
 	if(pcb->segmentation_fault) solicitar_finalizacion(pcb);
 	if(pcb->page_fault) {
 		cambiar_estado(pcb, BLOCK);
+		log_debug(kernel_logger, "page faulted PCB pid: %d", pcb->pid);
+		pthread_create(&th_manejo_page_fault, NULL, &manejar_page_fault, (void*) pcb);
+		pthread_detach(th_manejo_page_fault);
+		sem_post(&proceso_page_fault);
 	}
 	else {
 		switch(ultima_instruccion->operacion){

@@ -332,13 +332,22 @@ void enviar_pagina(t_pagina* pagina, int socket_cliente){
 }
 
 void empaquetar_pagina(t_paquete* paquete, t_pagina* pagina){
+	int indice_tabla;
+	int numero_pagina;
 	if(pagina == NULL){
 		pagina = malloc(sizeof(t_pagina));
 		pagina->indice_tabla_de_pagina = -1;
 		pagina->numero_pagina = -1;
+		indice_tabla = pagina->indice_tabla_de_pagina;
+		numero_pagina = pagina->numero_pagina;
+		free(pagina);
 	}
-	agregar_valor_a_paquete(paquete, &(pagina->indice_tabla_de_pagina), sizeof(int));
-	agregar_valor_a_paquete(paquete, &(pagina->numero_pagina), sizeof(int));
+	else{
+		indice_tabla = pagina->indice_tabla_de_pagina;
+		numero_pagina = pagina->numero_pagina;
+	}
+	agregar_valor_a_paquete(paquete, &(indice_tabla), sizeof(int));
+	agregar_valor_a_paquete(paquete, &(numero_pagina), sizeof(int));
 }
 
 t_pagina* recibir_pagina(int socket_cliente){

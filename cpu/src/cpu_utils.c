@@ -29,19 +29,6 @@ void * configurar_cpu(t_config* config){
 	return cpu_config;
 }
 
-// void* configurar_tlb(t_config* config){
-// 	t_tlb_config* tlb_config;
-// 	tlb_config = malloc(sizeof(t_tlb_config));
-// 	tlb_config-> entradas_tlb = strdup(config_get_string_value(config, "ENTRADAS_TLB"));
-//     tlb_config-> reemplazo_tlb = strdup(config_get_string_value(config, "REEMPLAZO_TLB"));
-// 	tlb_config-> retardo_instruccion = strdup(config_get_string_value(config, "RETARDO_INSTRUCCION"));
-// 	tlb_config-> ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
-// 	tlb_config-> puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
-// 	tlb_config-> puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
-// 	tlb_config-> puerto_escucha_interrupt = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
-// 	return tlb_config;
-// }
-
 //Hacer malloc tanto de pagina como de marco
 
 void iniciar_conexion_con_memoria() {
@@ -84,9 +71,11 @@ void terminar_modulo(){
 void set_dir_fisica_a_instruccion(instruccion* instruccion, int dir_fisica) {
 	cod_operacion operacion = instruccion->operacion;
 	if(operacion == MOV_IN) {
+		free(instruccion->parametro2);
 		instruccion->parametro2 = string_itoa(dir_fisica);
 	}
 	if(operacion == MOV_OUT) {
+		free(instruccion->parametro1);
 		instruccion->parametro1 = string_itoa(dir_fisica);
 	}
 }
@@ -123,7 +112,7 @@ void iniciar_ciclo_de_instruccion(t_pcb* pcb_to_exec) {
 		// decode()
 		operacion_a_ejecutar = decode(pcb_to_exec, instruccion);
 
-		if(pcb_to_exec->segmentation_fault || pcb_to_exec->page_fault) break;
+		if(operacion_a_ejecutar == ERROR_MEMORIA) break;
 
 		// execute()
 		ejecutar_instruccion(pcb_to_exec, operacion_a_ejecutar, instruccion);
@@ -175,6 +164,7 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 		//Si hay segmentation fault, envio mensaje a kernel con el pcb sin actualizar el pc
 		if(desplazamiento_segmento > segmento->tamanio_segmento){
 			pcb_to_exec->segmentation_fault = true;
+			free(pagina);
 			return ERROR_MEMORIA;
 		}
 
@@ -197,7 +187,9 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 			else if(cod_msj == PAGE_NOT_FOUND_404) {
 				log_debug(cpu_logger, "Memoria no encontro el numero de marco. PAGE FAULT. Pagina: %d", pagina->numero_pagina);
 				pcb_to_exec->page_fault = true;
-				pcb_to_exec->pagina_fault = pagina;
+				pcb_to_exec->pagina_fault->indice_tabla_de_pagina = pagina->indice_tabla_de_pagina;
+				pcb_to_exec->pagina_fault->numero_pagina = pagina->numero_pagina;
+				free(pagina);
 				return ERROR_MEMORIA;
 			}
 	    }
@@ -211,7 +203,7 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 		direccion_fisica = nro_marco + desplazamiento_pagina;
 		set_dir_fisica_a_instruccion(instruccion_a_decodificar, direccion_fisica);
 	}
-	
+	free(pagina);
 	return operacion;
 }
 
@@ -333,13 +325,13 @@ void* atender_kernel_dispatch(void* arg) {
 	log_debug(cpu_logger,"Se conecto un cliente a DISPATCH");
 
 	while(1) {
-		t_pcb* pcb_to_exec;
 		int cod_op = recibir_operacion(cliente_fd_dispatch);
 		switch (cod_op) {
 		case MENSAJE:
 			recibir_mensaje(cpu_logger, cliente_fd_dispatch);
 			break;
 		case PCB:
+			t_pcb* pcb_to_exec;
 			pcb_to_exec = recibir_pcb(cliente_fd_dispatch);
 			log_debug(cpu_logger, "Recibi pcb con pid: %d",pcb_to_exec->pid);
 			// Fetch -> Decode -> Execute -> Check Interrupt

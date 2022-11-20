@@ -61,6 +61,7 @@ void pcb_destroy(void* arg){
     if(pcb->tabla_de_segmentos != NULL){
         list_destroy_and_destroy_elements(pcb->tabla_de_segmentos, free);
     }
+    free(pcb->pagina_fault);
     free(pcb);
 }
 
