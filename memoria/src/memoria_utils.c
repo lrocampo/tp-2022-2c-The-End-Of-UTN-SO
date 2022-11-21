@@ -150,6 +150,7 @@ void atender_pedido_de_lectura() {
 	mensaje = OKI_LEER;
 	log_debug(memoria_logger, "CPU - dir fisica: %d, valor leido: %d", direccion_fisica, valor);
 	enviar_valor_con_codigo(valor, mensaje, cliente_cpu_fd);
+	free(pagina);
 }
 
 void atender_pedido_de_escritura() {
@@ -175,6 +176,7 @@ void atender_pedido_de_escritura() {
 	entrada_pagina->uso = true;
 	mensaje = OKI_ESCRIBIR;
 	enviar_datos(cliente_cpu_fd, &mensaje, sizeof(mensaje));
+	free(pagina);
 }
 
 void* atender_cpu(void* args){
