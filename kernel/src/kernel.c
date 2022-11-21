@@ -13,9 +13,16 @@ void sighandler(int s){
     exit(0);
 }
 
-int main(void){
+int main(int argc, char **argv){
 
 	signal(SIGINT, sighandler);
+
+	if(argc != 2){
+		error_show("Error de argumentos");
+		return EXIT_FAILURE;
+	}
+
+	char* ruta_config = strdup(argv[1]);
 
 	/* LOGGER DE ENTREGA */
 	//kernel_logger = iniciar_logger(RUTA_LOGGER_KERNEL, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
@@ -25,8 +32,10 @@ int main(void){
 
 	log_debug(kernel_logger,"Arrancando kernel...");
 
-	kernel_config = cargar_configuracion(RUTA_KERNEL_CONFIG, configurar_kernel);
+	kernel_config = cargar_configuracion(ruta_config, configurar_kernel);
 	log_debug(kernel_logger,"Configuracion cargada correctamente");
+
+	free(ruta_config);
 
 	kernel_server_fd = iniciar_servidor(kernel_config->puerto_escucha);
 

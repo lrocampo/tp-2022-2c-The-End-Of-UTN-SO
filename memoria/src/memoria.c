@@ -13,9 +13,16 @@ void sighandler(int s){
     exit(0);
 }
 
-int main(void){
+int main(int argc, char **argv){
 
 	signal(SIGINT, sighandler);
+
+	if(argc != 2){
+		error_show("Error de argumentos");
+		return EXIT_FAILURE;
+	}
+
+	char* ruta_config = strdup(argv[1]);
 
 	/* LOGGER DE ENTREGA */
 	/* cpu_logger = iniciar_logger(RUTA_LOGGER_CPU, NOMBRE_MODULO, 1, LOG_LEVEL_INFO); */
@@ -25,7 +32,9 @@ int main(void){
 
 	log_debug(memoria_logger,"Arrancando memoria\n");
 
-	memoria_config = cargar_configuracion(RUTA_MEMORIA_CONFIG, &configurar_memoria);
+	memoria_config = cargar_configuracion(ruta_config, &configurar_memoria);
+
+	free(ruta_config);
 
 	memoria_principal_init();
 
