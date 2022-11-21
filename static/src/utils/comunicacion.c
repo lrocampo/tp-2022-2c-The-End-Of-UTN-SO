@@ -581,6 +581,7 @@ t_pcb* recibir_pcb(int socket_cliente){
 	nueva_pcb->instrucciones = lista_instrucciones;
 	nueva_pcb->tabla_de_segmentos = tabla_segmentos;
 	nueva_pcb->pagina_fault = pagina;
+	nueva_pcb->tamanio_segmentos = NULL;
 
 	free(buffer);
 	return nueva_pcb;

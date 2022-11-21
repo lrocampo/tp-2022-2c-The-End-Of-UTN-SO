@@ -83,8 +83,9 @@ void terminar_modulo();
 
 /* Planificacion Utils */
 void cambiar_estado(t_pcb*, estado_proceso);
-void pasar_a_ready(t_pcb*);
+void log_cola_ready();
 u_int32_t siguiente_pid();
+void log_por_algoritmo(char*, t_queue*);
 void push_ready_pcb(t_pcb*);
 t_pcb* pop_ready_pcb();
 

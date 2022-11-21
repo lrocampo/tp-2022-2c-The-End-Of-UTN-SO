@@ -112,6 +112,9 @@ void pcb_destroy(void* arg){
     if(pcb->tabla_de_segmentos != NULL){
         list_destroy_and_destroy_elements(pcb->tabla_de_segmentos, free);
     }
+    if(pcb->tamanio_segmentos != NULL){
+        list_destroy_and_destroy_elements(pcb->tamanio_segmentos, free);
+    }
     free(pcb->pagina_fault);
     free(pcb);
 }
@@ -250,6 +253,25 @@ char* operacion_to_string(cod_operacion operacion) {
 	}
 }
 
+char* algoritmo_to_string(t_algoritmo operacion) {
+	switch(operacion) {
+		case FIFO:
+			return "FIFO";
+		case FEEDBACK:
+			return "FEEDBACK";
+		case RR:
+			return "RR";
+		case LRU:
+			return "LRU";
+		case CLOCK:
+			return "CLOCK";
+		case CLOCK_M:
+			return "CLOCK-M";
+		default:
+			return "Operador invalido";
+	}
+}
+
 void set_valor_registro(t_pcb* pcb, char* parametro1, char* parametro2) {
     uint32_t valor = atoi(parametro2);
 	if(string_equals_ignore_case(parametro1, "ax")) {
@@ -282,6 +304,30 @@ uint32_t obtener_valor_del_registro(t_pcb* pcb, char* parametro1) {
 	}
 
 	return valor_de_registro;
+}
+
+t_list* pcb_queue_to_pid_list(t_queue* queue){
+    t_list* lista = list_create();
+    for(int i = 0; i < queue_size(queue); i++){
+        t_pcb* pcb = (t_pcb*) queue_pop(queue);
+        int* valor = &pcb->pid;
+        list_add(lista, valor);
+        queue_push(queue, pcb);
+    }
+    return lista;
+}
+
+char* list_to_string(t_list* list){
+    char* string = string_new();
+    for(int i = 0; i < list_size(list); i++){
+        int* num = (int*) list_get(list, i);
+        if(i < list_size(list)-1) {
+            string_append_with_format(&string, "%d,", *num);
+        } else {
+            string_append_with_format(&string, "%d", *num);
+        }
+    }
+    return string;
 }
 
 /* TIMMER */

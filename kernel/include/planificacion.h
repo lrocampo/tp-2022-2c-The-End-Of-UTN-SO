@@ -16,6 +16,7 @@ void* rajar_pcb(void*);
 
 /* Corto plazo */
 void corto_plazo_init();
+void pasar_a_ready(t_pcb*);
 void* planificar_ejecucion(void*);
 t_pcb* seleccionar_pcb();
 void planificar_interrupcion(t_pcb*);

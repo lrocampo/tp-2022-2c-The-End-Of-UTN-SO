@@ -126,10 +126,30 @@ void cambiar_estado(t_pcb* pcb, estado_proceso nuevo_estado){
 	free(nuevo_estado_string);
 }
 
-void pasar_a_ready(t_pcb* pcb){
-    push_ready_pcb(pcb);
-    cambiar_estado(pcb, READY);
-    sem_post(&procesos_ready);
+void log_cola_ready(){
+	char* algoritmo_s = algoritmo_to_string(algoritmo);
+	log_debug(kernel_logger, "Intentando loguear");
+
+	pthread_mutex_lock(&cola_ready_RR_pcbs_mutex);
+	pthread_mutex_lock(&cola_ready_FIFO_pcbs_mutex);
+	if(algoritmo == FEEDBACK || algoritmo == RR){
+		log_por_algoritmo(algoritmo_s, cola_ready_RR_pcbs);
+	}
+	if(algoritmo == FEEDBACK || algoritmo == FIFO){
+		log_por_algoritmo(algoritmo_s, cola_ready_FIFO_pcbs);
+	}
+	pthread_mutex_unlock(&cola_ready_RR_pcbs_mutex);
+	pthread_mutex_unlock(&cola_ready_FIFO_pcbs_mutex);
+	
+	//free(algoritmo_s);
+}
+
+void log_por_algoritmo(char* algoritmo_s, t_queue* cola){
+	t_list* lista_a_loguear = pcb_queue_to_pid_list(cola);
+	char* lista = list_to_string(lista_a_loguear);
+	log_info(kernel_logger, "Cola Ready %s: [%s]",algoritmo_s, lista);
+	list_destroy(lista_a_loguear);
+	free(lista);
 }
 
 u_int32_t siguiente_pid(){

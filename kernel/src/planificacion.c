@@ -140,6 +140,13 @@ void corto_plazo_init(){
 	pthread_detach(th_ejecucion);
 }
 
+void pasar_a_ready(t_pcb* pcb){
+    push_ready_pcb(pcb);
+    cambiar_estado(pcb, READY);
+	log_cola_ready();
+    sem_post(&procesos_ready);
+}
+
 void* planificar_ejecucion(void* arg){ 
 	while(1){
 		t_pcb *pcb = seleccionar_pcb();
