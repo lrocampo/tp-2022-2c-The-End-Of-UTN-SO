@@ -174,6 +174,7 @@ void atender_pedido_de_escritura() {
 	log_info(memoria_logger, "PID: %d - Acción: ESCRIBIR - Dirección física: %d", pid, direccion_fisica);
 	log_info(memoria_logger, "PID: %d - Página: %d - Marco: %d", pid, pagina->numero_pagina, entrada_pagina->marco);
 	entrada_pagina->uso = true;
+	entrada_pagina->modificado = true;
 	mensaje = OKI_ESCRIBIR;
 	enviar_datos(cliente_cpu_fd, &mensaje, sizeof(mensaje));
 	free(pagina);

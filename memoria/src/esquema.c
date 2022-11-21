@@ -138,6 +138,7 @@ void test_clock() {
 t_entrada_tp* obtener_victima_a_reemplazar(int pid){
 	t_tabla_de_paginas* primer_tabla = obtener_primer_tabla_pid(pid);
 	t_cursor* cursor = obtener_cursor_por_pid(pid);
+	int indice_limite = primer_tabla->indice_tabla_de_pagina + cursor->cantidad_tablas;
 	bool hay_victima = false;
 	t_entrada_tp* victima;
 	int numero_vuelta = 1;
@@ -146,11 +147,11 @@ t_entrada_tp* obtener_victima_a_reemplazar(int pid){
 		switch (memoria_config->algoritmo_reemplazo)
 		{
 		case CLOCK:
-			victima = ejecutar_clock(cursor, &hay_victima);
+			victima = ejecutar_clock(cursor, &hay_victima, indice_limite);
 			break;
 		
 		case CLOCK_M:
-			victima = ejecutar_clock_m(cursor, &hay_victima, numero_vuelta);
+			victima = ejecutar_clock_m(cursor, &hay_victima, numero_vuelta, indice_limite);
 			break;
 		default:
 			error_show("algoritmo desconocido");
@@ -166,14 +167,13 @@ t_entrada_tp* obtener_victima_a_reemplazar(int pid){
 	return victima;
 }
 
-t_entrada_tp* ejecutar_clock(t_cursor* cursor, bool* hay_victima){
+t_entrada_tp* ejecutar_clock(t_cursor* cursor, bool* hay_victima, int indice_limite){
 	t_entrada_tp* victima;
 	int indice_base_tabla = cursor->indice_tabla_de_paginas;
-	int offset_tabla = cursor->cantidad_tablas;
 	int indice_base_entrada = cursor->entrada_tp;
 	int offset_entrada = memoria_config->entradas_por_tabla;
 	log_debug(memoria_logger, "Comenzando Iteracion");
-	for(int i = indice_base_tabla; i < (indice_base_tabla + offset_tabla); i++){
+	for(int i = indice_base_tabla; i < indice_limite; i++){
 		log_debug(memoria_logger, "Tabla: %d", i);
 		t_tabla_de_paginas* tabla_aux = list_get(lista_de_tablas_de_paginas, i);
 		for(int j = indice_base_entrada; j < indice_base_entrada + offset_entrada; j++){
@@ -195,14 +195,13 @@ t_entrada_tp* ejecutar_clock(t_cursor* cursor, bool* hay_victima){
 	return victima;
 }
 
-t_entrada_tp* ejecutar_clock_m(t_cursor* cursor, bool* hay_victima, int numero_vuelta){
+t_entrada_tp* ejecutar_clock_m(t_cursor* cursor, bool* hay_victima, int numero_vuelta, int indice_limite){
 	t_entrada_tp* victima;
 	int indice_base_tabla = cursor->indice_tabla_de_paginas;
-	int offset_tabla = cursor->cantidad_tablas;
 	int indice_base_entrada = cursor->entrada_tp;
 	int offset_entrada = memoria_config->entradas_por_tabla;
 	log_debug(memoria_logger, "Comenzando Iteracion");
-	for(int i = indice_base_tabla; i < (indice_base_tabla + offset_tabla); i++){
+	for(int i = indice_base_tabla; i < indice_limite; i++){//chequear
 		log_debug(memoria_logger, "Tabla: %d", i);
 		t_tabla_de_paginas* tabla_aux = list_get(lista_de_tablas_de_paginas, i);
 		for(int j = indice_base_entrada; j < indice_base_entrada + offset_entrada; j++){
