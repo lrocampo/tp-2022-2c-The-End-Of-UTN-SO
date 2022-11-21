@@ -107,6 +107,8 @@ typedef struct {
 	bool modificado;
 	bool uso;
 	int posicion_swap;
+	int pagina;
+	int indice_tabla;
 }t_entrada_tp;
 
 typedef struct {

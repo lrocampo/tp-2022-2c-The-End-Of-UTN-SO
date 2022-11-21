@@ -329,6 +329,15 @@ void enviar_pagina(t_pagina* pagina, int socket_cliente){
 	eliminar_paquete(paquete);
 }
 
+void enviar_pagina_con_codigo(t_pagina* pagina, cod_mensaje mensaje,int socket_cliente){
+	t_paquete *paquete = new_paquete_con_codigo_de_operacion(mensaje);
+
+	empaquetar_pagina(paquete, pagina);
+
+	enviar_paquete(paquete, socket_cliente);
+	eliminar_paquete(paquete);
+}
+
 void empaquetar_pagina(t_paquete* paquete, t_pagina* pagina){
 	int indice_tabla;
 	int numero_pagina;

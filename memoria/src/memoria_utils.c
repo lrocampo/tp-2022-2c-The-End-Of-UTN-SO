@@ -136,8 +136,17 @@ void atender_pedido_de_lectura() {
 
 	log_debug(memoria_logger, "CPU - Recibiendo pedido de lectura");
 	ejecutar_espera(memoria_config->retardo_memoria);
-	direccion_fisica = recibir_valor(cliente_cpu_fd);
+	t_pagina* pagina = recibir_pagina(cliente_cpu_fd);
+	direccion_fisica = recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int));//recibir_valor(cliente_cpu_fd);
 	valor = leer_en_memoria_principal(direccion_fisica);
+	t_entrada_tp* entrada_pagina = obtener_entrada_tp(pagina);
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
+	t_tabla_de_paginas* tabla_de_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
+	int pid = tabla_de_paginas->pid;
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
+	log_info(memoria_logger, "PID: %d - Acción: LEER - Dirección física: %d", pid, direccion_fisica);
+	log_info(memoria_logger, "PID: %d - Página: %d - Marco: %d", pid, pagina->numero_pagina, entrada_pagina->marco);
+	entrada_pagina->uso = true;
 	mensaje = OKI_LEER;
 	log_debug(memoria_logger, "CPU - dir fisica: %d, valor leido: %d", direccion_fisica, valor);
 	enviar_valor_con_codigo(valor, mensaje, cliente_cpu_fd);
@@ -150,10 +159,20 @@ void atender_pedido_de_escritura() {
 
 	log_debug(memoria_logger, "CPU - Recibiendo pedido de escritura");
 	ejecutar_espera(memoria_config->retardo_memoria);
+	t_pagina* pagina = recibir_pagina(cliente_cpu_fd);
 	recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int));
 	recibir_datos(cliente_cpu_fd, &valor, sizeof(int));
+	log_debug(memoria_logger, "pagina: %d", pagina->numero_pagina);
 	log_debug(memoria_logger, "CPU - dir fisica: %d, valor a escribir: %d", direccion_fisica, valor);
 	escribir_en_memoria_principal(direccion_fisica, valor);
+	t_entrada_tp* entrada_pagina = obtener_entrada_tp(pagina);
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
+	t_tabla_de_paginas* tabla_de_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
+	int pid = tabla_de_paginas->pid;
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
+	log_info(memoria_logger, "PID: %d - Acción: ESCRIBIR - Dirección física: %d", pid, direccion_fisica);
+	log_info(memoria_logger, "PID: %d - Página: %d - Marco: %d", pid, pagina->numero_pagina, entrada_pagina->marco);
+	entrada_pagina->uso = true;
 	mensaje = OKI_ESCRIBIR;
 	enviar_datos(cliente_cpu_fd, &mensaje, sizeof(mensaje));
 }
@@ -230,18 +249,21 @@ void atender_pedido_de_estructuras(){
 
 void atender_pedido_de_pagina_fault(){
 	t_pagina* pagina = recibir_pagina(cliente_kernel_fd);
+	t_entrada_tp* entrada = obtener_entrada_tp(pagina);
 	t_marco* marco_libre;
 	log_debug(memoria_logger, "pagina page fault: %d", pagina->numero_pagina);
+	log_debug(memoria_logger, "Tabla de paginas: %d", pagina->indice_tabla_de_pagina);
 	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	t_tabla_de_paginas* tabla_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
 	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
-	log_debug(memoria_logger, "Tabla de paginas: %d", pagina->indice_tabla_de_pagina);
 	int cantidad_marcos_cargados = cantidad_de_marcos_en_memoria_proceso(tabla_paginas->pid);
 	log_debug(memoria_logger, "Cantidad de marcos en memoria del proceso: %d", cantidad_marcos_cargados);
 	if(cantidad_marcos_cargados == memoria_config->marcos_por_proceso){
 		t_entrada_tp* entrada_a_reemplazar = obtener_victima_a_reemplazar(tabla_paginas->pid);
 		rajar_pagina(entrada_a_reemplazar);				
 		marco_libre = list_get(lista_de_marcos, entrada_a_reemplazar->marco);
+		log_info(memoria_logger, "PID: %d - Página: %d - Marco: %d", tabla_paginas->pid, entrada_a_reemplazar->pagina, entrada_a_reemplazar->marco);
+		log_info(memoria_logger, "REEMPLAZO - PID: %d - Marco: %d - Page Out: %d | %d - Page In: %d | %d", marco_libre->pid, marco_libre->numero_marco, entrada_a_reemplazar->segmento, entrada_a_reemplazar->pagina, entrada->segmento, pagina->numero_pagina);
 	}
 	else{
 		marco_libre = obtener_marco_libre(lista_de_marcos);
@@ -287,6 +309,7 @@ int leer_en_memoria_principal(int direccion_fisica) {
 			liberar_marco_memoria(entrada);
 			liberar_marco_swap(entrada);
 		}
+		log_info(memoria_logger, "PID: %d - Segmento: %d - TAMAÑO: %d paginas", pid, i, memoria_config->entradas_por_tabla);
 	}
 	list_destroy(tablas);
 	log_debug(memoria_logger, "Memoria liberada con exito PID: %d. Vuelvas prontos.", pid);
@@ -314,8 +337,13 @@ int leer_en_memoria_principal(int direccion_fisica) {
 
  int obtener_numero_de_marco(t_pagina* pagina) {
 	t_entrada_tp* entrada_pagina = obtener_entrada_tp(pagina);
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
+	t_tabla_de_paginas* tabla_de_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
+	int pid = tabla_de_paginas->pid;
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 
 	if(entrada_pagina->presencia) {
+		log_info(memoria_logger, "PID: %d - Página: %d - Marco: %d", pid, pagina->numero_pagina, entrada_pagina->marco);
 		log_debug(memoria_logger, "PRESENCIA de marco: %d", entrada_pagina->marco);
 		return entrada_pagina->marco;
 	}

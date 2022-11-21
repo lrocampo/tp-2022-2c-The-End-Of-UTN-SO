@@ -107,6 +107,7 @@ void enviar_pcb(t_pcb*, int);
 void enviar_pcb_memoria(t_pcb_memoria*, int);
 void enviar_proceso(t_proceso*, int);
 void enviar_pagina(t_pagina*, int);
+void enviar_pagina_con_codigo(t_pagina*, cod_mensaje,int);
 void enviar_indices_tabla_paginas(t_list*, int);
 void enviar_configuracion_memoria(int, int, int);
 t_pagina_config*  recibir_configuracion_memoria(int);

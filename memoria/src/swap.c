@@ -45,25 +45,32 @@ void ocupar_posicion_swap(int pid, int posicion){
 void escribir_pagina_en_swap(t_entrada_tp* entrada_pagina){
 	log_debug(memoria_logger,"Escribiendo pagina en swap \n");
 	int posicion = entrada_pagina->marco * memoria_config->tamanio_pagina;
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
+    t_tabla_de_paginas* tabla_paginas = list_get(lista_de_tablas_de_paginas, entrada_pagina->indice_tabla);
+	int pid = tabla_paginas->pid;
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
     void* source = espacio_memoria + posicion;
     void* dest = swap + entrada_pagina->posicion_swap;
     // actualizar posicion en swap, actualizar bit de presencia a 0
+	log_info(memoria_logger, "SWAP OUT -  PID: %d - Marco: %d - Page Out: %d | %d", pid, entrada_pagina->marco, entrada_pagina->segmento, entrada_pagina->pagina);
     escribir_en_memoria(dest, source);
     log_debug(memoria_logger,"Se escribio pagina en swap \n");
 }
 
-void cargar_pagina_en_memoria_principal(t_pagina* pagina, t_marco* marco, int pid/*t_entrada_tp* entrada_pagina*/){
+void cargar_pagina_en_memoria_principal(t_pagina* pagina, t_marco* marco, int pid){
 	log_debug(memoria_logger,"Escribiendo pagina en memoria principal \n");
 	t_entrada_tp* entrada_a_cargar = obtener_entrada_tp(pagina);
 	entrada_a_cargar->marco = marco->numero_marco;
     int posicion = entrada_a_cargar->marco * memoria_config->tamanio_pagina;
 	void* dest = espacio_memoria + posicion;
     void* source = swap + entrada_a_cargar->posicion_swap;
+	log_info(memoria_logger, "SWAP IN -  PID: %d - Marco: %d - Page In: %d | %d", pid, marco->numero_marco, entrada_a_cargar->segmento, entrada_a_cargar->pagina);
     escribir_en_memoria(dest, source);
     entrada_a_cargar->presencia = true;
 	entrada_a_cargar->uso = true;
 	marco->pid = pid;
     // actualizar bit de presencia a 1
+	log_info(memoria_logger, "PID: %d - Página: %d - Marco: %d", pid, pagina->numero_pagina, entrada_a_cargar->marco);
 	log_debug(memoria_logger,"Se escribio pagina en memoria principal \n");
 }
 

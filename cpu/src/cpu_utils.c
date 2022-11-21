@@ -173,13 +173,12 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 
 		nro_pagina = obtener_nro_pagina(dir_logica, tam_max_segmento, pagina_config->tamanio_pagina);
 	    resultado_pedir_marco = buscar_en_tlb(pcb_to_exec->pid, nro_pagina, segmento->nro_segmento);
-		
+		pagina->numero_pagina = nro_pagina;
+		pagina->indice_tabla_de_pagina = segmento->indice_tabla_paginas;
 	    // si la tlb no encontró la pagina, envia mensaje a memoria solicitando el marco
 	    if (resultado_pedir_marco == -1) {
 			// TLB MISS
     		log_info(cpu_logger, "PID: %d - TLB MISS - Segmento: %d - Pagina: %d", pcb_to_exec->pid, segmento->nro_segmento, nro_pagina);
-			pagina->numero_pagina = nro_pagina;
-			pagina->indice_tabla_de_pagina = segmento->indice_tabla_paginas;
 			log_debug(cpu_logger, "enviando pagina: %d", pagina->numero_pagina);
 			enviar_pagina(pagina, conexion_memoria);
 
@@ -207,8 +206,10 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 		desplazamiento_pagina = obtener_desplazamiento_pagina(dir_logica, tam_max_segmento, pagina_config->tamanio_pagina);
 		direccion_fisica = nro_marco + desplazamiento_pagina;
 		pcb_to_exec->direccion_fisica = direccion_fisica;
+		cod_mensaje msj = (operacion == MOV_IN) ? LEER: ESCRIBIR;
 		char* accion = (operacion == MOV_IN) ? "LEER": "ESCRIBIR";
 		log_info(cpu_logger, "PID: %d - Acción: %s - Segmento: %d - Pagina: %d - Dirección Fisica: %d", pcb_to_exec->pid, accion, segmento->nro_segmento, nro_pagina, direccion_fisica);
+		enviar_pagina_con_codigo(pagina, msj, conexion_memoria);
 	}
 	free(pagina);
 	return operacion;
@@ -282,7 +283,8 @@ void ejecutar_add(t_pcb* pcb, char* parametro1, char* parametro2) {
 
 void ejecutar_mov_in(t_pcb* pcb, char* parametro1, int dir_fisica) {
 	log_debug(cpu_logger,"MOV_IN: finalmente laburo como una persona digna");
-	enviar_valor_con_codigo(dir_fisica, LEER, conexion_memoria);
+	//enviar_valor_con_codigo(dir_fisica, LEER, conexion_memoria);
+	enviar_datos(conexion_memoria, &dir_fisica, sizeof(dir_fisica));
 	cod_mensaje cod_msj = recibir_operacion(conexion_memoria);
 	if(cod_msj == OKI_LEER) {
 		int valor = recibir_valor(conexion_memoria);
@@ -293,9 +295,9 @@ void ejecutar_mov_in(t_pcb* pcb, char* parametro1, int dir_fisica) {
 
 void ejecutar_mov_out(t_pcb* pcb, int dir_fisica, char* parametro2) {
 	log_debug(cpu_logger,"MOV_OUT: finalmente laburo como una persona digna");
-	cod_mensaje mensaje = ESCRIBIR;
+	//cod_mensaje mensaje = ESCRIBIR;
 	int valor = obtener_valor_del_registro(pcb, parametro2);
-	enviar_datos(conexion_memoria, &mensaje, sizeof(mensaje));
+	//enviar_datos(conexion_memoria, &mensaje, sizeof(mensaje));
 	enviar_datos(conexion_memoria, &dir_fisica, sizeof(dir_fisica));
 	enviar_datos(conexion_memoria, &valor, sizeof(valor));
 	cod_mensaje cod_msj = recibir_operacion(conexion_memoria);

@@ -3,6 +3,7 @@
 void crear_tablas_de_pagina(t_pcb_memoria* pcb) {
 	int i = 0;
 	int j = 0;
+	int segmento_idx = 0;
 	int indice_base = list_size(lista_de_tablas_de_paginas);
 	int cantidad_de_segmentos = list_size(pcb->segmentos);
 	int cantidad_de_paginas = memoria_config->entradas_por_tabla;
@@ -10,10 +11,15 @@ void crear_tablas_de_pagina(t_pcb_memoria* pcb) {
 	for(i = indice_base; i < indice_base + cantidad_de_segmentos; i++) {
 		t_tabla_de_paginas* tabla_de_paginas = tabla_de_paginas_create(i, pcb->pid);
 		for(j = 0; j < cantidad_de_paginas; j++) {
-			t_entrada_tp* nueva_entrada_pagina = entrada_tp_create(pcb->pid);	
+			t_entrada_tp* nueva_entrada_pagina = entrada_tp_create(pcb->pid);
+			nueva_entrada_pagina->pagina = j;	
+			nueva_entrada_pagina->indice_tabla = i;	
+			nueva_entrada_pagina->segmento = segmento_idx;
 			list_add(tabla_de_paginas->entradas, nueva_entrada_pagina);
 		}
 		list_add(lista_de_tablas_de_paginas, tabla_de_paginas);
+		log_info(memoria_logger, "PID: %d - Segmento: %d - TAMAÑO: %d paginas", pcb->pid, segmento_idx, memoria_config->entradas_por_tabla);
+		segmento_idx++;
 	}
 	list_add(cursores, cursor);
 }
@@ -62,15 +68,6 @@ void rajar_pagina(t_entrada_tp* entrada_a_rajar){
 	entrada_a_rajar->presencia = 0;
 	log_debug(memoria_logger, "Victima rajada.");
 }
-
-// void cargar_pagina(t_pagina* pagina, t_marco* marco, int pid){
-// 	t_entrada_tp* entrada_a_cargar = obtener_entrada_tp(pagina);
-// 	poner_pagina_en_memoria_principal(pagina, marco, pid);
-// 	entrada_a_cargar->presencia = true;
-// 	entrada_a_cargar->marco = marco->numero_marco;
-// 	entrada_a_cargar->uso = true;
-// 	marco->pid = pid;
-// }
 
 void actualizar_cursor(int pid){
 	t_cursor* cursor = obtener_cursor_por_pid(pid);
