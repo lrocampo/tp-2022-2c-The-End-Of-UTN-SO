@@ -170,7 +170,6 @@ t_pcb* seleccionar_pcb(){
 
 void planificar_interrupcion(t_pcb* pcb){
     if(pcb->con_desalojo){
-        log_debug(kernel_logger, "Preparando interrupcion");
         iniciar_interrupcion();
         sem_post(&interrupcion_quantum);
     }
@@ -185,11 +184,8 @@ void* enviar_interrupt(void* arg){
 	while(1) {
 		sem_wait(&interrupcion_quantum);
 		cod_mensaje mensaje = INTERRUPCION;
-		log_debug(kernel_logger,"Hola! Soy hilo cpu interrupt");
 		ejecutar_espera(kernel_config->quantum_RR);
-		log_debug(kernel_logger,"Finalizo Espera");
 		enviar_datos(conexion_cpu_interrupt,&mensaje, sizeof(mensaje));
-		log_debug(kernel_logger, "Se envia mensaje de interrupcion a cpu \n");
 	}
 }
 
@@ -218,7 +214,6 @@ void analizar_contexto_recibido(t_pcb* pcb){
 	}
 	if(pcb->page_fault) {
 		cambiar_estado(pcb, BLOCK);
-		log_debug(kernel_logger, "page faulted PCB pid: %d", pcb->pid);
 		pthread_create(&th_manejo_page_fault, NULL, &manejar_page_fault, (void*) pcb);
 		pthread_detach(th_manejo_page_fault);
 		sem_post(&proceso_page_fault);
@@ -231,6 +226,11 @@ void* manejar_page_fault(void* arg)
 	while(1){
 		sem_wait(&proceso_page_fault);
 		t_pcb* pcb = (t_pcb*) arg;
+		bool segmento_by_pagina(t_segmento* segmento){
+			return segmento->indice_tabla_paginas == pcb->pagina_fault->indice_tabla_de_pagina;
+		}
+		t_segmento* segmento_page_fault = list_find(pcb->tabla_de_segmentos, (void*) segmento_by_pagina);
+		log_info(kernel_logger, "Page Fault PID: %d - Segmento: %d - Pagina: %d", pcb->pid, segmento_page_fault->nro_segmento, pcb->pagina_fault->numero_pagina);
 		log_debug(kernel_logger, "Enviando pagina fault: %d", pcb->pagina_fault->numero_pagina);
 		enviar_pagina(pcb->pagina_fault, conexion_memoria);
 		cod_mensaje cod_mensaje_memoria = recibir_operacion(conexion_memoria); //consultar si es correcto

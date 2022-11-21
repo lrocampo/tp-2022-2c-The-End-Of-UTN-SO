@@ -50,11 +50,10 @@ void* ejecucion_io(void* arg){
 	t_dispositivo* dispositivo = (t_dispositivo*) arg;
 	int idx = dispositivo->indice;
 	t_queue* cola_de_atencion = dispositivo->cola;
-	//char* nombre = dispositivo->nombre; TODO: log
 	while(1){
 		sem_wait(&s_dispositivos_io[idx]);
-		log_debug(kernel_logger, "dispositivo solicitado: %s", dispositivo->nombre);
 		t_pcb* pcb = safe_pcb_pop(cola_de_atencion, &cola_dispositivo_mutex[idx]);
+		log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb->pid, dispositivo->nombre);
 		instruccion* ultima_instruccion = obtener_ultima_instruccion(pcb);
 		int unidades_tiempo = (atoi(ultima_instruccion->parametro2) * dispositivo->duracion);
 		ejecutar_espera(unidades_tiempo);
@@ -76,6 +75,7 @@ void solicitud(instruccion* instruccionIO, t_pcb *pcb) {
 	char* dispositivo = instruccionIO->parametro1;
 	char *registro = instruccionIO->parametro2;
 	int consola_fd =  pcb->socket_consola;
+	log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb->pid, dispositivo);
 	if(string_equals_ignore_case(dispositivo,"TECLADO")) {
 		cod_msj = TECLADO;
 		enviar_datos(consola_fd,&cod_msj,sizeof(cod_msj));

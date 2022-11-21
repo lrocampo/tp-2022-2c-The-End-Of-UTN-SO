@@ -33,6 +33,14 @@ void actualizar_tlb(int pid, int numero_pagina, int segmento, int marco){
     }
     log_debug(cpu_logger, "Entrada agregada tlb");
     list_add(tabla_tlb, nueva_entrada);
+    log_tlb();
+}
+
+void log_tlb(){
+    for(int i = 0; i < list_size(tabla_tlb); i++){
+    t_entrada_tlb* entrada = list_get(tabla_tlb, i);
+    log_info(cpu_logger," %d |PID: %d |SEGMENTO: %d |PAGINA: %d |MARCO: %d", i, entrada->pid, entrada->segmento, entrada->pagina, entrada->marco);
+    }
 }
 
 void ejecutar_reemplazo(){

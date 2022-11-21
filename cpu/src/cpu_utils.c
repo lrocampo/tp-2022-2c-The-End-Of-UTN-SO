@@ -177,6 +177,7 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 	    // si la tlb no encontró la pagina, envia mensaje a memoria solicitando el marco
 	    if (resultado_pedir_marco == -1) {
 			// TLB MISS
+    		log_info(cpu_logger, "PID: %d - TLB MISS - Segmento: %d - Pagina: %d", pcb_to_exec->pid, segmento->nro_segmento, nro_pagina);
 			pagina->numero_pagina = nro_pagina;
 			pagina->indice_tabla_de_pagina = segmento->indice_tabla_paginas;
 			log_debug(cpu_logger, "enviando pagina: %d", pagina->numero_pagina);
@@ -189,7 +190,7 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 				actualizar_tlb(pcb_to_exec->pid, nro_pagina, segmento->nro_segmento, nro_marco);
 			}
 			else if(cod_msj == PAGE_NOT_FOUND_404) {
-				log_debug(cpu_logger, "Memoria no encontro el numero de marco. PAGE FAULT. Pagina: %d", pagina->numero_pagina);
+				log_info(cpu_logger, "Page Fault PID: %d - Segmento: %d - Pagina: %d", pcb_to_exec->pid, segmento->nro_segmento, nro_pagina);
 				pcb_to_exec->page_fault = true;
 				pcb_to_exec->pagina_fault->indice_tabla_de_pagina = pagina->indice_tabla_de_pagina;
 				pcb_to_exec->pagina_fault->numero_pagina = pagina->numero_pagina;
@@ -199,12 +200,15 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 	    }
 		else {
 			// TLB HIT
+    		log_info(cpu_logger, "PID: %d - TLB HIT - Segmento: %d - Pagina: %d", pcb_to_exec->pid, segmento->nro_segmento, nro_pagina);
 			nro_marco = resultado_pedir_marco;
 		} 
 
 		desplazamiento_pagina = obtener_desplazamiento_pagina(dir_logica, tam_max_segmento, pagina_config->tamanio_pagina);
 		direccion_fisica = nro_marco + desplazamiento_pagina;
 		pcb_to_exec->direccion_fisica = direccion_fisica;
+		char* accion = (operacion == MOV_IN) ? "LEER": "ESCRIBIR";
+		log_info(cpu_logger, "PID: %d - Acción: %s - Segmento: %d - Pagina: %d - Dirección Fisica: %d", pcb_to_exec->pid, accion, segmento->nro_segmento, nro_pagina, direccion_fisica);
 	}
 	free(pagina);
 	return operacion;
