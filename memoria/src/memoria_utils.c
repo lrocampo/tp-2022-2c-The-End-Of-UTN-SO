@@ -43,6 +43,7 @@ void * configurar_memoria(t_config* config){
 	memoria_config->path_swap =  strdup(config_get_string_value(config, "PATH_SWAP"));
 	memoria_config->retardo_memoria =  config_get_int_value(config, "RETARDO_MEMORIA");
 	memoria_config->marcos_por_proceso =  config_get_int_value(config, "MARCOS_POR_PROCESO");
+	memoria_config->algoritmo_reemplazo = config_get_algoritmo_enum(config, "ALGORITMO_REEMPLAZO");
 	return memoria_config;
 }
 
@@ -79,6 +80,9 @@ void memoria_principal_init() {
 	marcos_memoria_principal_init();
 
 	lista_de_tablas_de_paginas = list_create();
+
+	
+
 }
 
 void marcos_memoria_principal_init() {

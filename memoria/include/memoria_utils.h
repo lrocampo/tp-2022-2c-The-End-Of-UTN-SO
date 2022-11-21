@@ -27,7 +27,7 @@ typedef struct {
 	int tamanio_pagina;
 	int entradas_por_tabla;
 	int retardo_memoria;
-	/* char* algoritmo_reemplazo; */
+	t_algoritmo algoritmo_reemplazo;
 	int marcos_por_proceso;
 	int retardo_swap;
 	int tamanio_swap;
@@ -62,7 +62,6 @@ void memoria_principal_init();
 void marcos_memoria_principal_init();
 t_marco* obtener_marco_libre(t_list*);
 void marcos_init(t_list*, int, int);
-void algoritmo_init();
 void solicitudes_a_memoria_init();
 void atender_pedido_de_marco();
 void atender_pedido_de_lectura();

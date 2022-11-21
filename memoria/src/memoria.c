@@ -31,8 +31,6 @@ int main(void){
 
 	swap_init();
 
-	//algoritmo_init(); descomentar cuando exista
-
 	solicitudes_a_memoria_init();
 
 	esperar_conexiones();

@@ -91,42 +91,144 @@ void actualizar_cursor(int pid){
 	}
 }
 
+void armar_contexto(){
+	int pid = 1;
+	int contador = 6;
+	int contador_marcos = 0;
+	for(int i = 0; i < 4; i++){
+		t_tabla_de_paginas* tabla = tabla_de_paginas_create(i, pid);
+		for(int j = 0; j < memoria_config->entradas_por_tabla; j++){
+			t_entrada_tp* nueva = entrada_tp_create(pid);
+			nueva->marco = contador_marcos;
+			contador_marcos++;
+			if(contador > 0){
+				nueva->presencia = 1;
+				nueva->uso = 0;
+				nueva->modificado = 1;
+				contador--;
+			}
+			list_add(tabla->entradas, nueva);
+		}
+		list_add(lista_de_tablas_de_paginas, tabla);
+	}
+	t_cursor* cursor = cursor_create(pid, 0, 4);
+
+	list_add(cursores, cursor);
+
+	t_tabla_de_paginas* tabla_victima = list_get(lista_de_tablas_de_paginas, 0);
+	t_entrada_tp* entrada_victima = list_get(tabla_victima->entradas, 0);
+	
+	entrada_victima->uso = 0;
+	entrada_victima->marco = 1234;
+	entrada_victima->modificado = 0;
+	entrada_victima->presencia = 1;
+
+	puts("Contexto creado");
+
+}
+
+void test_clock() {
+	armar_contexto();
+
+	t_entrada_tp* entrada_obtenida = obtener_victima_a_reemplazar(1);
+	t_entrada_tp* esperada = entrada_tp_create(1);	
+	esperada->marco = 1234;
+
+	log_debug(memoria_logger, "entrada esperada --> marco: %d", esperada->marco);
+	log_debug(memoria_logger, "entrada obtenida --> marco: %d", entrada_obtenida->marco);
+}
+
 t_entrada_tp* obtener_victima_a_reemplazar(int pid){
-//	t_list* tablas_proceso = obtener_tablas_por_pid(pid);
-//	t_tabla_de_paginas* primer_tabla = list_get(tablas_proceso, 0);
 	t_tabla_de_paginas* primer_tabla = obtener_primer_tabla_pid(pid);
 	t_cursor* cursor = obtener_cursor_por_pid(pid);
+	bool hay_victima = false;
+	t_entrada_tp* victima;
+	int numero_vuelta = 1;
+	
+	while(!hay_victima){
+		switch (memoria_config->algoritmo_reemplazo)
+		{
+		case CLOCK:
+			victima = ejecutar_clock(cursor, &hay_victima);
+			break;
+		
+		case CLOCK_M:
+			victima = ejecutar_clock_m(cursor, &hay_victima, numero_vuelta);
+			break;
+		default:
+			error_show("algoritmo desconocido");
+			break;
+		}
+		if(!hay_victima){
+			cursor->indice_tabla_de_paginas = primer_tabla->indice_tabla_de_pagina;
+			cursor->entrada_tp = 0;
+			numero_vuelta++;
+		}
+	}
+	actualizar_cursor(pid);
+	return victima;
+}
+
+t_entrada_tp* ejecutar_clock(t_cursor* cursor, bool* hay_victima){
+	t_entrada_tp* victima;
 	int indice_base_tabla = cursor->indice_tabla_de_paginas;
 	int offset_tabla = cursor->cantidad_tablas;
 	int indice_base_entrada = cursor->entrada_tp;
 	int offset_entrada = memoria_config->entradas_por_tabla;
-	bool hay_victima = false;
-	t_entrada_tp* victima;
-	int i,j;
-	
-	while(!hay_victima){
-		for(i = indice_base_tabla; i < indice_base_tabla + offset_tabla; i++){
-			t_tabla_de_paginas* tabla_aux = list_get(lista_de_tablas_de_paginas, i);
-			for(j = indice_base_entrada; j < indice_base_entrada + offset_entrada; j++){
-				t_entrada_tp* entrada_aux = list_get(tabla_aux->entradas, j);
-				if(!entrada_aux->presencia) continue;
-				if(!entrada_aux->uso){
-					hay_victima = true;
-					victima = entrada_aux;
-					cursor->indice_tabla_de_paginas = i;
-					cursor->entrada_tp = j;
-					break;
-				}
-				entrada_aux->uso = false;
+	log_debug(memoria_logger, "Comenzando Iteracion");
+	for(int i = indice_base_tabla; i < (indice_base_tabla + offset_tabla); i++){
+		log_debug(memoria_logger, "Tabla: %d", i);
+		t_tabla_de_paginas* tabla_aux = list_get(lista_de_tablas_de_paginas, i);
+		for(int j = indice_base_entrada; j < indice_base_entrada + offset_entrada; j++){
+			t_entrada_tp* entrada_aux = list_get(tabla_aux->entradas, j);
+			if(!entrada_aux->presencia) continue;
+			log_debug(memoria_logger, "Entrada: %d  USO --> (%d)", j, entrada_aux->uso);
+			if(!entrada_aux->uso){
+				log_debug(memoria_logger, "Encontre víctima! --> entrada %d de tabla %d con marco %d", j, i, entrada_aux->marco);
+				*hay_victima = true;
+				victima = entrada_aux;
+				cursor->indice_tabla_de_paginas = i;
+				cursor->entrada_tp = j;
+				break;
 			}
-			if(hay_victima) break;
+			entrada_aux->uso = false;
 		}
-		indice_base_tabla = primer_tabla->indice_tabla_de_pagina;
-		indice_base_entrada = 0;
+		if(*hay_victima) break;
 	}
-	//list_destroy(tablas_proceso);
-	actualizar_cursor(pid);
 	return victima;
+}
+
+t_entrada_tp* ejecutar_clock_m(t_cursor* cursor, bool* hay_victima, int numero_vuelta){
+	t_entrada_tp* victima;
+	int indice_base_tabla = cursor->indice_tabla_de_paginas;
+	int offset_tabla = cursor->cantidad_tablas;
+	int indice_base_entrada = cursor->entrada_tp;
+	int offset_entrada = memoria_config->entradas_por_tabla;
+	log_debug(memoria_logger, "Comenzando Iteracion");
+	for(int i = indice_base_tabla; i < (indice_base_tabla + offset_tabla); i++){
+		log_debug(memoria_logger, "Tabla: %d", i);
+		t_tabla_de_paginas* tabla_aux = list_get(lista_de_tablas_de_paginas, i);
+		for(int j = indice_base_entrada; j < indice_base_entrada + offset_entrada; j++){
+			t_entrada_tp* entrada_aux = list_get(tabla_aux->entradas, j);
+			if(!entrada_aux->presencia) continue;
+			log_debug(memoria_logger, "Entrada: %d  USO --> (%d) MODIFICADO --> (%d)", j, entrada_aux->uso, entrada_aux->modificado);
+			if(cumple_clock_m_condicion_victima(entrada_aux, numero_vuelta)){
+				log_debug(memoria_logger, "Encontre víctima! --> entrada %d de tabla %d con marco %d", j, i, entrada_aux->marco);
+				*hay_victima = true;
+				victima = entrada_aux;
+				cursor->indice_tabla_de_paginas = i;
+				cursor->entrada_tp = j;
+				break;
+			}
+			if(numero_vuelta == 2) entrada_aux->uso = false;
+		}
+		if(*hay_victima) break;
+	}
+	return victima;
+}
+
+bool cumple_clock_m_condicion_victima(t_entrada_tp* entrada, int numero_vuelta){
+	return !entrada->uso && ((!entrada->modificado && (numero_vuelta == 1 || numero_vuelta == 3)) || (entrada->modificado && numero_vuelta == 2));
 }
 
 t_list* obtener_tablas_por_pid(int pid){
