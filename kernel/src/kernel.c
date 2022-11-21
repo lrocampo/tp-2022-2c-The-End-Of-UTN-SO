@@ -28,7 +28,7 @@ int main(void){
 	kernel_config = cargar_configuracion(RUTA_KERNEL_CONFIG, configurar_kernel);
 	log_debug(kernel_logger,"Configuracion cargada correctamente");
 
-	kernel_server_fd = iniciar_servidor(kernel_config->ip_kernel, kernel_config->puerto_escucha);
+	kernel_server_fd = iniciar_servidor(kernel_config->puerto_escucha);
 
 	iniciar_conexiones_con_cpu();
 

@@ -71,7 +71,6 @@ void * configurar_kernel(t_config* config){
 	t_kernel_config* kernel_config;
 	kernel_config = malloc(sizeof(t_kernel_config));
 	kernel_config->ip_cpu = strdup(config_get_string_value(config, "IP_CPU"));
-	kernel_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
 	kernel_config->puerto_escucha = strdup(config_get_string_value(config, "PUERTO_ESCUCHA"));
 	kernel_config->puerto_cpu_dispatch = strdup(config_get_string_value(config, "PUERTO_CPU_DISPATCH"));
 	kernel_config->puerto_cpu_interrupt = strdup(config_get_string_value(config, "PUERTO_CPU_INTERRUPT"));
@@ -111,7 +110,6 @@ void kernel_config_destroy(){
 	free(kernel_config->puerto_cpu_interrupt);
 	free(kernel_config->puerto_escucha);
 	free(kernel_config->ip_cpu);
-	free(kernel_config->ip_kernel);
 	free(kernel_config->ip_memoria);
 	list_destroy_and_destroy_elements(kernel_config->dispositivos_io,dispositivo_io_destroy);
 	free(kernel_config);

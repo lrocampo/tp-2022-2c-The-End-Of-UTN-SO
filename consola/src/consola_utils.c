@@ -13,8 +13,8 @@ char* ruta_instrucciones;
 void * configurar_consola(t_config* config){
 	t_consola_config* consola_config;
 	consola_config = malloc(sizeof(t_consola_config));
-	consola_config->ip = strdup(config_get_string_value(config, "IP"));
-	consola_config->puerto = strdup(config_get_string_value(config, "PUERTO"));
+	consola_config->ip = strdup(config_get_string_value(config, "IP_KERNEL"));
+	consola_config->puerto = strdup(config_get_string_value(config, "PUERT0_KERNEL"));
 	consola_config->tiempo_pantalla = config_get_int_value(config, "TIEMPO_PANTALLA");
 	consola_config->segmentos = config_get_segmentos_list(config);
 	return consola_config;

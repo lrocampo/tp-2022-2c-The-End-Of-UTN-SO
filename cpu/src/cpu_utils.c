@@ -22,7 +22,6 @@ t_list* tabla_tlb;
 void * configurar_cpu(t_config* config){
 	t_cpu_config* cpu_config;
 	cpu_config = malloc(sizeof(t_cpu_config));
-	cpu_config->ip_cpu = strdup(config_get_string_value(config, "IP_CPU"));
 	cpu_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
 	cpu_config->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
 	cpu_config->puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
@@ -54,7 +53,6 @@ void iniciar_conexion_con_memoria() {
 }
 
 void cpu_config_destroy(){
-	free(cpu_config->ip_cpu);
 	free(cpu_config->ip_kernel);
 	free(cpu_config->ip_memoria);
 	free(cpu_config->puerto_escucha_dispatch);
@@ -310,7 +308,7 @@ void valor_retardo_instruccion(int tiempo){
 
 /* Conexiones con Kernel */
 void* atender_kernel_dispatch(void* arg) {
-	server_fd_dispatch = iniciar_servidor(cpu_config->ip_cpu, cpu_config->puerto_escucha_dispatch);
+	server_fd_dispatch = iniciar_servidor(cpu_config->puerto_escucha_dispatch);
 	
 	if(server_fd_dispatch == -1){
 		log_error(cpu_logger, "Hubo un error inicializando el servidor.");
@@ -351,7 +349,7 @@ void* atender_kernel_dispatch(void* arg) {
 }
 
 void* atender_kernel_interrupt(void* arg) {
-	int server_fd_interrupt = iniciar_servidor(cpu_config->ip_cpu, cpu_config->puerto_escucha_interrupt);
+	int server_fd_interrupt = iniciar_servidor(cpu_config->puerto_escucha_interrupt);
 	int cliente_fd_interrupt = esperar_cliente(server_fd_interrupt);
 	log_debug(cpu_logger,"Se conecto un cliente a INTERRUPT");
 

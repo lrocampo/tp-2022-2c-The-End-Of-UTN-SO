@@ -12,7 +12,7 @@
 
 int crear_conexion( char* , char* );
 void liberar_conexion(int);
-int iniciar_servidor(char*, char*);
+int iniciar_servidor(char*);
 int esperar_cliente(int);
 void liberar_conexion(int);
 
