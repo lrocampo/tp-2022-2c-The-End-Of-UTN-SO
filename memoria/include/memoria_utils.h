@@ -57,6 +57,8 @@ extern pthread_mutex_t memoria_swap_mutex;
 extern pthread_mutex_t memoria_usuario_mutex;
 extern pthread_mutex_t lista_de_tablas_de_paginas_mutex;
 extern pthread_mutex_t lista_de_tablas_de_paginas_swap_mutex;
+extern pthread_mutex_t lista_de_marcos_mutex;
+extern pthread_mutex_t lista_de_marcos_swap_mutex;
 
 void memoria_principal_init();
 void marcos_memoria_principal_init();

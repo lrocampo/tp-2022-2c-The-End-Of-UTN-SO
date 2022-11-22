@@ -11,7 +11,7 @@ void swap_init(){
 void marcos_swap_init() {
     log_debug(memoria_logger, "Cargando marcos swap...");
 	lista_de_marcos_swap = list_create();
-
+	pthread_mutex_init(&lista_de_marcos_swap_mutex, NULL);
 	marcos_init(lista_de_marcos_swap, memoria_config->tamanio_swap, memoria_config->tamanio_pagina);
 }
 
