@@ -8,15 +8,7 @@
 #include <commons/string.h>
 #include <commons/error.h>
 
-
-t_list* obtener_pseudocodigo(char*);
-char *leer_archivo_pseudocodigo (char*);
+t_list *obtener_pseudocodigo(char *);
+char *leer_archivo_pseudocodigo(char *);
 
 #endif /* CONSOLA_PARSER_INCLUDE_CONSOLA_H_ */
-
-
-
-
-
-
-
