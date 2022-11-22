@@ -16,13 +16,14 @@
 #define NOMBRE_MODULO "MEMORIA"
 #define RUTA_MEMORIA_CONFIG "./src/memoria.config"
 
-typedef struct {
-	char* ip_memoria;
-	char* ip_cpu;
-    char* ip_kernel;
-	char* puerto_escucha_cpu;
-	char* puerto_escucha_kernel;
-	char* path_swap; 
+typedef struct
+{
+	char *ip_memoria;
+	char *ip_cpu;
+	char *ip_kernel;
+	char *puerto_escucha_cpu;
+	char *puerto_escucha_kernel;
+	char *path_swap;
 	int tamanio_memoria;
 	int tamanio_pagina;
 	int entradas_por_tabla;
@@ -31,24 +32,24 @@ typedef struct {
 	int marcos_por_proceso;
 	int retardo_swap;
 	int tamanio_swap;
-}t_memoria_config;
+} t_memoria_config;
 
 extern t_log *memoria_logger;
-extern t_memoria_config* memoria_config;
+extern t_memoria_config *memoria_config;
 
 extern int memoria_server_cpu_fd;
 extern int memoria_server_kernel_fd;
 extern int cliente_kernel_fd;
 extern int cliente_cpu_fd;
 
-extern t_list* lista_de_marcos;
-extern t_list* lista_de_marcos_swap;
-extern t_list* lista_de_tablas_de_paginas;  
+extern t_list *lista_de_marcos;
+extern t_list *lista_de_marcos_swap;
+extern t_list *lista_de_tablas_de_paginas;
 
-extern void* espacio_memoria;
-extern void* swap;
+extern void *espacio_memoria;
+extern void *swap;
 
-extern t_list* cursores;
+extern t_list *cursores;
 
 extern pthread_t th_atender_cpu;
 extern pthread_t th_atender_kernel;
@@ -62,27 +63,27 @@ extern pthread_mutex_t lista_de_marcos_swap_mutex;
 
 void memoria_principal_init();
 void marcos_memoria_principal_init();
-t_marco* obtener_marco_libre(t_list*);
-void marcos_init(t_list*, int, int);
+t_marco *obtener_marco_libre(t_list *);
+void marcos_init(t_list *, int, int);
 void solicitudes_a_memoria_init();
 void atender_pedido_de_marco();
 void atender_pedido_de_lectura();
 void atender_pedido_de_escritura();
-void* atender_cpu(void*);
+void *atender_cpu(void *);
 void atender_pedido_de_pagina_fault();
 void atender_pedido_de_estructuras();
 void atender_liberar_estructuras();
-void* atender_kernel(void*);
-int obtener_numero_de_marco(t_pagina*);
-void * configurar_memoria(t_config*);
-t_entrada_tp* obtener_entrada_tp(t_pagina*);
+void *atender_kernel(void *);
+int obtener_numero_de_marco(t_pagina *);
+void *configurar_memoria(t_config *);
+t_entrada_tp *obtener_entrada_tp(t_pagina *);
 void esperar_conexiones();
 void terminar_modulo();
-void liberar_marco_memoria(t_entrada_tp*);
-void liberar_marco_swap(t_entrada_tp*);
-void escribir_en_memoria(void*, void*);
+void liberar_marco_memoria(t_entrada_tp *);
+void liberar_marco_swap(t_entrada_tp *);
+void escribir_en_memoria(void *, void *);
 void memoria_config_destroy();
-bool marco_libre(t_marco*);
+bool marco_libre(t_marco *);
 void escribir_en_memoria_principal(int, int);
 int leer_en_memoria_principal(int);
 void liberar_memoria_de_proceso(int);
