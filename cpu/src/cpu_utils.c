@@ -218,10 +218,10 @@ cod_operacion decode(t_pcb* pcb_to_exec, instruccion* instruccion_a_decodificar)
 void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instruccion* instruccion){
 	char* operacion_string = strdup(operacion_to_string(operacion_a_ejecutar));
 	if(operacion_a_ejecutar != EXIT) {
-		log_info(cpu_logger, "PID: %d - Ejecutando %s - %s %s", pcb->pid, operacion_string, instruccion->parametro1, instruccion->parametro2);
+		log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s", pcb->pid, operacion_string, instruccion->parametro1, instruccion->parametro2);
 	}
 	else {
-		log_info(cpu_logger, "PID: %d - Ejecutando %s", pcb->pid, operacion_string);
+		log_info(cpu_logger, "PID: %d - Ejecutando: %s", pcb->pid, operacion_string);
 	}
 
 	switch(operacion_a_ejecutar) {
