@@ -7,9 +7,9 @@
 
 #include <utils/socket.h>
 
-t_log* logger;
+t_log *logger;
 
-int iniciar_servidor(char* puerto)
+int iniciar_servidor(char *puerto)
 {
 	int socket_servidor;
 
@@ -19,16 +19,17 @@ int iniciar_servidor(char* puerto)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
-			//null
+	// null
 	getaddrinfo(NULL, puerto, &hints, &servinfo);
 
 	// Creamos el socket de escucha del servidor
-	socket_servidor =  socket(servinfo->ai_family,
-            				  servinfo->ai_socktype,
-							  servinfo->ai_protocol);
+	socket_servidor = socket(servinfo->ai_family,
+							 servinfo->ai_socktype,
+							 servinfo->ai_protocol);
 
-	if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0){
-    	error_show("setsockopt(SO_REUSEADDR) failed");
+	if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+	{
+		error_show("setsockopt(SO_REUSEADDR) failed");
 	}
 
 	// Asociamos el socket a un puerto
@@ -38,9 +39,7 @@ int iniciar_servidor(char* puerto)
 	listen(socket_servidor, SOMAXCONN);
 
 	freeaddrinfo(servinfo);
-	//log_trace(logger, "Listo para escuchar a mi cliente");
-
-	
+	// log_trace(logger, "Listo para escuchar a mi cliente");
 
 	return socket_servidor;
 }
@@ -49,12 +48,12 @@ int esperar_cliente(int socket_servidor)
 {
 	// Aceptamos un nuevo cliente
 	int socket_cliente = accept(socket_servidor, NULL, NULL);
-	//log_info(logger, "Se conecto un cliente!");
+	// log_info(logger, "Se conecto un cliente!");
 
 	return socket_cliente;
 }
 
-int crear_conexion(char *ip, char* puerto)
+int crear_conexion(char *ip, char *puerto)
 {
 	struct addrinfo hints;
 	struct addrinfo *server_info;
@@ -68,8 +67,8 @@ int crear_conexion(char *ip, char* puerto)
 
 	// Ahora vamos a crear el socket.
 	int socket_cliente = socket(server_info->ai_family,
-            server_info->ai_socktype,
-            server_info->ai_protocol);
+								server_info->ai_socktype,
+								server_info->ai_protocol);
 
 	// Ahora que tenemos el socket, vamos a conectarlo
 	connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
