@@ -57,8 +57,10 @@ t_tabla_de_paginas* tabla_de_paginas_create(int indice, int pid){
 }
 
 int cantidad_de_marcos_en_memoria_proceso(int pid){
+	pthread_mutex_lock(&lista_de_marcos_mutex);
 	t_list* marcos_por_proceso = obtener_marcos_memoria_por_pid(pid);
 	int cantidad = list_size(marcos_por_proceso);
+	pthread_mutex_unlock(&lista_de_marcos_mutex);
 	list_destroy(marcos_por_proceso);
 	return cantidad;
 }
