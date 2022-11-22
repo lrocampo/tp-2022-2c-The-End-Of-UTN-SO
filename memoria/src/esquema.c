@@ -43,7 +43,9 @@ t_entrada_tp* entrada_tp_create(int pid){
 	nueva_entrada_pagina->presencia = false;
 	nueva_entrada_pagina->uso = false;
 	nueva_entrada_pagina->modificado = false;
+	pthread_mutex_lock(&lista_de_marcos_swap_mutex);
 	nueva_entrada_pagina->posicion_swap = obtener_posicion_libre_swap(); // obtener posicion libre swap
+	pthread_mutex_unlock(&lista_de_marcos_swap_mutex);
 	ocupar_posicion_swap(pid, nueva_entrada_pagina->posicion_swap);
 	return nueva_entrada_pagina;
 }

@@ -38,8 +38,10 @@ int obtener_posicion_libre_swap(){
 }
 
 void ocupar_posicion_swap(int pid, int posicion){
+    pthread_mutex_lock(&lista_de_marcos_swap_mutex);
     t_marco* marco_buscado = list_get(lista_de_marcos_swap, posicion / memoria_config->tamanio_pagina);
     marco_buscado->pid = pid;
+    pthread_mutex_unlock(&lista_de_marcos_swap_mutex);
 }
 
 void escribir_pagina_en_swap(t_entrada_tp* entrada_pagina){
