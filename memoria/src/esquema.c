@@ -4,7 +4,9 @@ void crear_tablas_de_pagina(t_pcb_memoria* pcb) {
 	int i = 0;
 	int j = 0;
 	int segmento_idx = 0;
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	int indice_base = list_size(lista_de_tablas_de_paginas);
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 	int cantidad_de_segmentos = list_size(pcb->segmentos);
 	int cantidad_de_paginas = memoria_config->entradas_por_tabla;
 	t_cursor* cursor = cursor_create(pcb->pid, indice_base, cantidad_de_segmentos);
@@ -17,7 +19,9 @@ void crear_tablas_de_pagina(t_pcb_memoria* pcb) {
 			nueva_entrada_pagina->segmento = segmento_idx;
 			list_add(tabla_de_paginas->entradas, nueva_entrada_pagina);
 		}
+		pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 		list_add(lista_de_tablas_de_paginas, tabla_de_paginas);
+		pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 		log_info(memoria_logger, "PID: %d - Segmento: %d - TAMAÑO: %d paginas", pcb->pid, segmento_idx, memoria_config->entradas_por_tabla);
 		segmento_idx++;
 	}
@@ -71,7 +75,9 @@ void rajar_pagina(t_entrada_tp* entrada_a_rajar){
 
 void actualizar_cursor(int pid){
 	t_cursor* cursor = obtener_cursor_por_pid(pid);
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	t_tabla_de_paginas* primer_tabla = obtener_primer_tabla_pid(pid);
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 	int indice_base = primer_tabla->indice_tabla_de_pagina;
 	int indice_limit = indice_base + cursor->cantidad_tablas - 1;
 	if(cursor->entrada_tp == memoria_config->entradas_por_tabla - 1){
@@ -106,13 +112,17 @@ void armar_contexto(){
 			}
 			list_add(tabla->entradas, nueva);
 		}
+		pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 		list_add(lista_de_tablas_de_paginas, tabla);
+		pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 	}
 	t_cursor* cursor = cursor_create(pid, 0, 4);
 
 	list_add(cursores, cursor);
 
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	t_tabla_de_paginas* tabla_victima = list_get(lista_de_tablas_de_paginas, 0);
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 	t_entrada_tp* entrada_victima = list_get(tabla_victima->entradas, 0);
 	
 	entrada_victima->uso = 0;
@@ -175,7 +185,9 @@ t_entrada_tp* ejecutar_clock(t_cursor* cursor, bool* hay_victima, int indice_lim
 	log_debug(memoria_logger, "Comenzando Iteracion");
 	for(int i = indice_base_tabla; i < indice_limite; i++){
 		log_debug(memoria_logger, "Tabla: %d", i);
+		pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 		t_tabla_de_paginas* tabla_aux = list_get(lista_de_tablas_de_paginas, i);
+		pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 		for(int j = indice_base_entrada; j < indice_base_entrada + offset_entrada; j++){
 			t_entrada_tp* entrada_aux = list_get(tabla_aux->entradas, j);
 			if(!entrada_aux->presencia) continue;
@@ -203,7 +215,9 @@ t_entrada_tp* ejecutar_clock_m(t_cursor* cursor, bool* hay_victima, int numero_v
 	log_debug(memoria_logger, "Comenzando Iteracion");
 	for(int i = indice_base_tabla; i < indice_limite; i++){//chequear
 		log_debug(memoria_logger, "Tabla: %d", i);
+		pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 		t_tabla_de_paginas* tabla_aux = list_get(lista_de_tablas_de_paginas, i);
+		pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 		for(int j = indice_base_entrada; j < indice_base_entrada + offset_entrada; j++){
 			t_entrada_tp* entrada_aux = list_get(tabla_aux->entradas, j);
 			if(!entrada_aux->presencia) continue;
@@ -263,7 +277,9 @@ t_list* obtener_indices_tablas_de_pagina(t_pcb_memoria* pcb){
 	t_list* tablas_buscadas;
 	t_list* indices;
 
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	tablas_buscadas = obtener_tablas_por_pid(pcb->pid);
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 
 	char* to_idx(t_tabla_de_paginas* tabla){
 		return string_itoa(tabla->indice_tabla_de_pagina);
