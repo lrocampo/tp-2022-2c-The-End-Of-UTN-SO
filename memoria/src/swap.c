@@ -72,7 +72,6 @@ void cargar_pagina_en_memoria_principal(t_pagina* pagina, t_marco* marco, int pi
 	entrada_a_cargar->uso = true;
 	marco->pid = pid;
     // actualizar bit de presencia a 1
-	log_info(memoria_logger, "PID: %d - Página: %d - Marco: %d", pid, pagina->numero_pagina, entrada_a_cargar->marco);
 	log_debug(memoria_logger,"Se escribio pagina en memoria principal \n");
 }
 
