@@ -77,3 +77,15 @@ t_entrada_tlb* obtener_victima_a_reemplazar(){
         ? entrada1
         : entrada2; 
 }
+
+void limpiar_proceso_de_la_tlb(int pid)
+{
+    bool by_pid(t_entrada_tlb* entrada){
+		return entrada->pid == pid;
+	}
+    log_debug(cpu_logger, "Limpiando registros asociados al proceso %d", pid);
+
+    list_remove_and_destroy_all_by_condition(tabla_tlb, (void*) by_pid, free);
+    log_debug(cpu_logger, "Registros asociados al proceso %d liberados con exito.", pid);
+    log_tlb();
+}

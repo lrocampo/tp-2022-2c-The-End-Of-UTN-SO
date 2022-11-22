@@ -242,6 +242,7 @@ void ejecutar_instruccion(t_pcb* pcb, cod_operacion operacion_a_ejecutar, instru
 		case IO:
 			break;
 		case EXIT:
+			limpiar_proceso_de_la_tlb(pcb->pid);
 			break;
 		default:
 			error_show("Error, instruccion desconocida.");												
