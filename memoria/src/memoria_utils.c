@@ -335,8 +335,10 @@ int leer_en_memoria_principal(int direccion_fisica) {
  }
 
  void liberar_marco_swap(t_entrada_tp* entrada){
+	pthread_mutex_lock(&lista_de_marcos_swap_mutex);
 	t_marco* marco_swap = list_get(lista_de_marcos_swap, entrada->posicion_swap / memoria_config->tamanio_pagina);
 	marco_swap->pid = -1;
+	pthread_mutex_unlock(&lista_de_marcos_swap_mutex);
  }
 
  t_entrada_tp* obtener_entrada_tp(t_pagina* pagina){
