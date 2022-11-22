@@ -266,13 +266,17 @@ void atender_pedido_de_pagina_fault(){
 	log_debug(memoria_logger, "Cantidad de marcos en memoria del proceso: %d", cantidad_marcos_cargados);
 	if(cantidad_marcos_cargados == memoria_config->marcos_por_proceso){
 		t_entrada_tp* entrada_a_reemplazar = obtener_victima_a_reemplazar(tabla_paginas->pid);
-		rajar_pagina(entrada_a_reemplazar);				
+		rajar_pagina(entrada_a_reemplazar);		
+		pthread_mutex_lock(&lista_de_marcos_mutex);
 		marco_libre = list_get(lista_de_marcos, entrada_a_reemplazar->marco);
+		pthread_mutex_unlock(&lista_de_marcos_mutex);
 		log_info(memoria_logger, "PID: %d - Página: %d - Marco: %d", tabla_paginas->pid, entrada_a_reemplazar->pagina, entrada_a_reemplazar->marco);
 		log_info(memoria_logger, "REEMPLAZO - PID: %d - Marco: %d - Page Out: %d | %d - Page In: %d | %d", marco_libre->pid, marco_libre->numero_marco, entrada_a_reemplazar->segmento, entrada_a_reemplazar->pagina, entrada->segmento, pagina->numero_pagina);
 	}
 	else{
+		pthread_mutex_lock(&lista_de_marcos_mutex);
 		marco_libre = obtener_marco_libre(lista_de_marcos);
+		pthread_mutex_unlock(&lista_de_marcos_mutex);
 	}
 	cargar_pagina_en_memoria_principal(pagina, marco_libre, tabla_paginas->pid);
 	cod_mensaje mensaje = OKI_PAGINA;
@@ -323,8 +327,10 @@ int leer_en_memoria_principal(int direccion_fisica) {
 
  void liberar_marco_memoria(t_entrada_tp* entrada){
 	if(entrada->presencia) {
+		pthread_mutex_lock(&lista_de_marcos_mutex);
 		t_marco* marco = list_get(lista_de_marcos, entrada->marco);
 		marco->pid = -1;
+		pthread_mutex_unlock(&lista_de_marcos_mutex);
 	}
  }
 
