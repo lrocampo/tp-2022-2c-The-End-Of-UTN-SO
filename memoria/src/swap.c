@@ -58,6 +58,9 @@ void escribir_pagina_en_swap(t_entrada_tp *entrada_pagina)
     pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
     void *source = espacio_memoria + posicion;
     void *dest = swap + entrada_pagina->posicion_swap;
+    log_debug(memoria_logger, "Posicion a leer en memoria principal: %d", posicion);
+    log_debug(memoria_logger, "Posicion a cargar Swap: %d", entrada_pagina->posicion_swap);
+
     // actualizar posicion en swap, actualizar bit de presencia a 0
     log_info(memoria_logger, "SWAP OUT -  PID: %d - Marco: %d - Page Out: %d | %d", pid, entrada_pagina->marco, entrada_pagina->segmento, entrada_pagina->pagina);
     escribir_en_memoria(dest, source);
@@ -72,6 +75,10 @@ void cargar_pagina_en_memoria_principal(t_pagina *pagina, t_marco *marco, int pi
     int posicion = entrada_a_cargar->marco * memoria_config->tamanio_pagina;
     void *dest = espacio_memoria + posicion;
     void *source = swap + entrada_a_cargar->posicion_swap;
+    
+    log_debug(memoria_logger, "Posicion a cargar en memoria principal: %d", posicion);
+    log_debug(memoria_logger, "Posicion Swap a leer: %d", entrada_a_cargar->posicion_swap);
+    
     log_info(memoria_logger, "SWAP IN -  PID: %d - Marco: %d - Page In: %d | %d", pid, marco->numero_marco, entrada_a_cargar->segmento, entrada_a_cargar->pagina);
     escribir_en_memoria(dest, source);
     entrada_a_cargar->presencia = true;
@@ -86,7 +93,7 @@ void escribir_en_memoria(void *dest, void *source)
     ejecutar_espera(memoria_config->retardo_swap);
     pthread_mutex_lock(&memoria_swap_mutex);
     pthread_mutex_lock(&memoria_usuario_mutex);
-    memcpy(dest, source, sizeof(memoria_config->tamanio_pagina));
+    memcpy(dest, source, memoria_config->tamanio_pagina);
     pthread_mutex_unlock(&memoria_usuario_mutex);
     pthread_mutex_unlock(&memoria_swap_mutex);
     // obtener pagina y actualizar bit de uso en 1?

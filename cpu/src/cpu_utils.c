@@ -183,9 +183,13 @@ cod_operacion decode(t_pcb *pcb_to_exec, instruccion *instruccion_a_decodificar)
 	{
 		dir_logica = obtener_dir_logica(instruccion_a_decodificar);
 
-		t_segmento *segmento = list_get(pcb_to_exec->tabla_de_segmentos, obtener_nro_segmento(dir_logica, tam_max_segmento));
+		log_debug(cpu_logger, "Direccion Logica: %d", dir_logica);
 
+		t_segmento *segmento = list_get(pcb_to_exec->tabla_de_segmentos, obtener_nro_segmento(dir_logica, tam_max_segmento));
+		log_debug(cpu_logger, "tamanio de segmento: %d", segmento->tamanio_segmento);
+		log_debug(cpu_logger, "numero de segmento: %d", segmento->nro_segmento);
 		desplazamiento_segmento = obtener_desplazamiento_segmento(dir_logica, tam_max_segmento);
+		log_debug(cpu_logger, "desplazamiento de segmento: %d", desplazamiento_segmento);
 		// Si hay segmentation fault, envio mensaje a kernel con el pcb sin actualizar el pc
 		if (desplazamiento_segmento > segmento->tamanio_segmento)
 		{
@@ -196,6 +200,7 @@ cod_operacion decode(t_pcb *pcb_to_exec, instruccion *instruccion_a_decodificar)
 		}
 
 		nro_pagina = obtener_nro_pagina(dir_logica, tam_max_segmento, pagina_config->tamanio_pagina);
+		log_debug(cpu_logger, "numero de pagina: %d", nro_pagina);
 		resultado_pedir_marco = buscar_en_tlb(pcb_to_exec->pid, nro_pagina, segmento->nro_segmento);
 		pagina->numero_pagina = nro_pagina;
 		pagina->indice_tabla_de_pagina = segmento->indice_tabla_paginas;
@@ -232,7 +237,8 @@ cod_operacion decode(t_pcb *pcb_to_exec, instruccion *instruccion_a_decodificar)
 		}
 
 		desplazamiento_pagina = obtener_desplazamiento_pagina(dir_logica, tam_max_segmento, pagina_config->tamanio_pagina);
-		direccion_fisica = nro_marco + desplazamiento_pagina;
+		log_debug(cpu_logger, "desplazamiento de pagina: %d", desplazamiento_pagina);
+		direccion_fisica = (nro_marco * pagina_config->tamanio_pagina )+ desplazamiento_pagina;
 		pcb_to_exec->direccion_fisica = direccion_fisica;
 		cod_mensaje msj = (operacion == MOV_IN) ? LEER : ESCRIBIR;
 		char *accion = (operacion == MOV_IN) ? "LEER" : "ESCRIBIR";

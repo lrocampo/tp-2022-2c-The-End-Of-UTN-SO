@@ -126,7 +126,7 @@ void atender_pedido_de_marco()
 	cod_mensaje mensaje;
 	log_debug(memoria_logger, "CPU - Recibiendo pedido de marco");
 	t_pagina *pagina = recibir_pagina(cliente_cpu_fd);
-	log_debug(memoria_logger, "CPU - Pagina solicitada: %d", pagina->numero_pagina);
+	log_debug(memoria_logger, "CPU - Pagina solicitada: %d, segmento: %d", pagina->numero_pagina, pagina->indice_tabla_de_pagina);
 	int marco = obtener_numero_de_marco(pagina);
 	if (marco == PAGE_FAULT)
 	{
@@ -150,7 +150,7 @@ void atender_pedido_de_lectura()
 	log_debug(memoria_logger, "CPU - Recibiendo pedido de lectura");
 	ejecutar_espera(memoria_config->retardo_memoria);
 	t_pagina *pagina = recibir_pagina(cliente_cpu_fd);
-	direccion_fisica = recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int)); // recibir_valor(cliente_cpu_fd);
+	recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int)); // recibir_valor(cliente_cpu_fd);
 	valor = leer_en_memoria_principal(direccion_fisica);
 	t_entrada_tp *entrada_pagina = obtener_entrada_tp(pagina);
 	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
@@ -176,10 +176,10 @@ void atender_pedido_de_escritura()
 	t_pagina *pagina = recibir_pagina(cliente_cpu_fd);
 	recibir_datos(cliente_cpu_fd, &direccion_fisica, sizeof(int));
 	recibir_datos(cliente_cpu_fd, &valor, sizeof(int));
-	log_debug(memoria_logger, "pagina: %d", pagina->numero_pagina);
+	log_debug(memoria_logger, "CPU - Pagina solicitada: %d, segmento: %d", pagina->numero_pagina, pagina->indice_tabla_de_pagina);
 	log_debug(memoria_logger, "CPU - dir fisica: %d, valor a escribir: %d", direccion_fisica, valor);
-	escribir_en_memoria_principal(direccion_fisica, valor);
 	t_entrada_tp *entrada_pagina = obtener_entrada_tp(pagina);
+	escribir_en_memoria_principal(direccion_fisica, valor);
 	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	t_tabla_de_paginas *tabla_de_paginas = list_get(lista_de_tablas_de_paginas, pagina->indice_tabla_de_pagina);
 	int pid = tabla_de_paginas->pid;

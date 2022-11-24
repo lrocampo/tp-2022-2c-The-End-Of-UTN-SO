@@ -110,6 +110,7 @@ void actualizar_cursor(int pid)
 	{
 		cursor->entrada_tp += 1;
 	}
+	log_debug(memoria_logger, "Cursor posicionado en (%d, %d)", cursor->indice_tabla_de_paginas, cursor->entrada_tp);
 }
 
 void armar_contexto()
@@ -209,6 +210,8 @@ t_entrada_tp *ejecutar_clock(t_cursor *cursor, bool *hay_victima, int indice_lim
 	int indice_base_entrada = cursor->entrada_tp;
 	int offset_entrada = memoria_config->entradas_por_tabla;
 	log_debug(memoria_logger, "Comenzando Iteracion");
+	log_debug(memoria_logger, "Indice base Tabla: %d  Indice base entrada: %d  offset entrada: %d", indice_base_tabla, indice_base_entrada, offset_entrada);
+
 	for (int i = indice_base_tabla; i < indice_limite; i++)
 	{
 		log_debug(memoria_logger, "Tabla: %d", i);
@@ -232,6 +235,7 @@ t_entrada_tp *ejecutar_clock(t_cursor *cursor, bool *hay_victima, int indice_lim
 			}
 			entrada_aux->uso = false;
 		}
+		indice_base_entrada = 0;
 		if (*hay_victima)
 			break;
 	}
@@ -269,6 +273,7 @@ t_entrada_tp *ejecutar_clock_m(t_cursor *cursor, bool *hay_victima, int numero_v
 			if (numero_vuelta == 2)
 				entrada_aux->uso = false;
 		}
+		indice_base_entrada = 0;
 		if (*hay_victima)
 			break;
 	}
