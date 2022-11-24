@@ -282,7 +282,7 @@ t_entrada_tp *ejecutar_clock_m(t_cursor *cursor, bool *hay_victima, int numero_v
 
 bool cumple_clock_m_condicion_victima(t_entrada_tp *entrada, int numero_vuelta)
 {
-	return !entrada->uso && ((!entrada->modificado && (numero_vuelta == 1 || numero_vuelta == 3)) || (entrada->modificado && (numero_vuelta == 3 || numero_vuelta == 2)));
+	return !entrada->uso && ((!entrada->modificado && (numero_vuelta == 1 || numero_vuelta == 3)) || (entrada->modificado && (numero_vuelta == 4 || numero_vuelta == 2)));
 }
 
 t_list *obtener_tablas_por_pid(int pid)
