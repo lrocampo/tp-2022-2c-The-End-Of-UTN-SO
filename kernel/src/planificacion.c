@@ -287,8 +287,10 @@ void *manejar_page_fault(void *arg)
 void dirigir_proceso_ejecutado(t_pcb *pcb)
 { // corto plazo // tener en cuenta page default ya que no deberiamos modificar el program counter
 	if (pcb->segmentation_fault)
+	{
 		solicitar_finalizacion(pcb);
-	if (!pcb->page_fault)
+	}
+	else if (!pcb->page_fault)
 	{
 		instruccion *ultima_instruccion = obtener_ultima_instruccion(pcb);
 		switch (ultima_instruccion->operacion)

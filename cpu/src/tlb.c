@@ -23,22 +23,25 @@ int buscar_en_tlb(int pid, int numero_pagina, int segmento)
 
 void actualizar_tlb(int pid, int numero_pagina, int segmento, int marco)
 {
-    t_entrada_tlb *nueva_entrada = malloc(sizeof(t_entrada_tlb));
-    int cantidad_entradas_actual = list_size(tabla_tlb);
-    instante_de_referencia_actual++;
-    nueva_entrada->instante_de_ultima_referencia = instante_de_referencia_actual;
-    nueva_entrada->pid = pid;
-    nueva_entrada->pagina = numero_pagina;
-    nueva_entrada->segmento = segmento;
-    nueva_entrada->marco = marco;
-    if (cantidad_entradas_actual == cpu_config->entradas_tlb)
+    if (cpu_config->entradas_tlb > 0)
     {
-        log_debug(cpu_logger, "Reemplazando pagina");
-        ejecutar_reemplazo();
+        t_entrada_tlb *nueva_entrada = malloc(sizeof(t_entrada_tlb));
+        int cantidad_entradas_actual = list_size(tabla_tlb);
+        instante_de_referencia_actual++;
+        nueva_entrada->instante_de_ultima_referencia = instante_de_referencia_actual;
+        nueva_entrada->pid = pid;
+        nueva_entrada->pagina = numero_pagina;
+        nueva_entrada->segmento = segmento;
+        nueva_entrada->marco = marco;
+        if (cantidad_entradas_actual == cpu_config->entradas_tlb)
+        {
+            log_debug(cpu_logger, "Reemplazando pagina");
+            ejecutar_reemplazo();
+        }
+        log_debug(cpu_logger, "Entrada agregada tlb");
+        list_add(tabla_tlb, nueva_entrada);
+        log_tlb();
     }
-    log_debug(cpu_logger, "Entrada agregada tlb");
-    list_add(tabla_tlb, nueva_entrada);
-    log_tlb();
 }
 
 void log_tlb()

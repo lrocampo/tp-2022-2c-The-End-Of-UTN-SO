@@ -189,6 +189,7 @@ cod_operacion decode(t_pcb *pcb_to_exec, instruccion *instruccion_a_decodificar)
 		// Si hay segmentation fault, envio mensaje a kernel con el pcb sin actualizar el pc
 		if (desplazamiento_segmento > segmento->tamanio_segmento)
 		{
+			log_debug(cpu_logger, "Segmentation fault en instruccion %s", operacion_to_string(operacion));
 			pcb_to_exec->segmentation_fault = true;
 			free(pagina);
 			return ERROR_MEMORIA;

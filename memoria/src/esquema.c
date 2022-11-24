@@ -215,7 +215,7 @@ t_entrada_tp *ejecutar_clock(t_cursor *cursor, bool *hay_victima, int indice_lim
 		pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 		t_tabla_de_paginas *tabla_aux = list_get(lista_de_tablas_de_paginas, i);
 		pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
-		for (int j = indice_base_entrada; j < indice_base_entrada + offset_entrada; j++)
+		for (int j = indice_base_entrada; j < indice_base_entrada + offset_entrada - 1; j++)
 		{
 			t_entrada_tp *entrada_aux = list_get(tabla_aux->entradas, j);
 			if (!entrada_aux->presencia)
@@ -251,7 +251,7 @@ t_entrada_tp *ejecutar_clock_m(t_cursor *cursor, bool *hay_victima, int numero_v
 		pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 		t_tabla_de_paginas *tabla_aux = list_get(lista_de_tablas_de_paginas, i);
 		pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
-		for (int j = indice_base_entrada; j < indice_base_entrada + offset_entrada; j++)
+		for (int j = indice_base_entrada; j < indice_base_entrada + offset_entrada - 1; j++)
 		{
 			t_entrada_tp *entrada_aux = list_get(tabla_aux->entradas, j);
 			if (!entrada_aux->presencia)
@@ -277,7 +277,7 @@ t_entrada_tp *ejecutar_clock_m(t_cursor *cursor, bool *hay_victima, int numero_v
 
 bool cumple_clock_m_condicion_victima(t_entrada_tp *entrada, int numero_vuelta)
 {
-	return !entrada->uso && ((!entrada->modificado && (numero_vuelta == 1 || numero_vuelta == 3)) || (entrada->modificado && numero_vuelta == 2));
+	return !entrada->uso && ((!entrada->modificado && (numero_vuelta == 1 || numero_vuelta == 3)) || (entrada->modificado && (numero_vuelta == 3 || numero_vuelta == 2)));
 }
 
 t_list *obtener_tablas_por_pid(int pid)
