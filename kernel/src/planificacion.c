@@ -71,12 +71,14 @@ void solicitar_creacion_estructuras_administrativas(t_pcb *pcb)
 	t_pcb_memoria *pcb_memoria = malloc(sizeof(t_pcb_memoria));
 	pcb_memoria->pid = pcb->pid;
 	pcb_memoria->segmentos = pcb->tamanio_segmentos;
+	pthread_mutex_lock(&conexion_memoria_mutex);
 	enviar_pcb_memoria(pcb_memoria, conexion_memoria);
 	cod_mensaje mensaje = recibir_operacion(conexion_memoria);
 
 	if (mensaje == OKI_ESTRUCTURAS)
 	{
 		t_list *indices = recibir_indices_tabla_paginas(conexion_memoria);
+		pthread_mutex_unlock(&conexion_memoria_mutex);
 		pcb->tabla_de_segmentos = crear_tabla_segmentos(indices, pcb->tamanio_segmentos); // sacar cuando no se use
 		log_debug(kernel_logger, "Se han creado las estructuras para el proceso %d, %d tablas", pcb->pid, list_size(pcb->tabla_de_segmentos));
 		list_destroy_and_destroy_elements(indices, free);
@@ -84,7 +86,9 @@ void solicitar_creacion_estructuras_administrativas(t_pcb *pcb)
 	}
 	else
 	{
+		pthread_mutex_unlock(&conexion_memoria_mutex);
 		error_show("Error al crear estructuras");
+		pthread_exit(NULL);
 	}
 }
 
@@ -268,10 +272,12 @@ void *manejar_page_fault(void *arg)
 		t_segmento *segmento_page_fault = list_find(pcb->tabla_de_segmentos, (void *)segmento_by_pagina);
 		log_info(kernel_logger, "Page Fault PID: %d - Segmento: %d - Pagina: %d", pcb->pid, segmento_page_fault->nro_segmento, pcb->pagina_fault->numero_pagina);
 		log_debug(kernel_logger, "Enviando pagina fault: %d", pcb->pagina_fault->numero_pagina);
+		pthread_mutex_lock(&conexion_memoria_mutex);
 		enviar_pagina(pcb->pagina_fault, conexion_memoria);
 		cod_mensaje cod_mensaje_memoria = recibir_operacion(conexion_memoria); // consultar si es correcto
 		if (cod_mensaje_memoria == OKI_PAGINA)
 		{
+			pthread_mutex_unlock(&conexion_memoria_mutex);
 			log_debug(kernel_logger, "page fault solucionado pid: %d", pcb->pid);
 			pasar_a_ready(pcb);
 			pthread_exit(NULL);
@@ -279,8 +285,10 @@ void *manejar_page_fault(void *arg)
 		else
 		{
 			error_show("Error en page fault");
+			pthread_mutex_unlock(&conexion_memoria_mutex);
 			pthread_exit(NULL);
 		}
+
 	}
 }
 

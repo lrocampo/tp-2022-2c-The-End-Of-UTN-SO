@@ -63,6 +63,7 @@ extern pthread_mutex_t cola_new_pcbs_mutex;
 extern pthread_mutex_t cola_ready_FIFO_pcbs_mutex;
 extern pthread_mutex_t cola_exit_pcbs_mutex;
 extern pthread_mutex_t *cola_dispositivo_mutex;
+extern pthread_mutex_t conexion_memoria_mutex; 
 
 extern pthread_t th_timer;
 extern pthread_t th_conexiones;

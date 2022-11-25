@@ -33,6 +33,7 @@ pthread_mutex_t cola_ready_RR_pcbs_mutex;
 pthread_mutex_t cola_ready_FIFO_pcbs_mutex;
 pthread_mutex_t cola_exit_pcbs_mutex;
 pthread_mutex_t *cola_dispositivo_mutex;
+pthread_mutex_t conexion_memoria_mutex;
 
 pthread_t th_timer;
 pthread_t th_conexiones;
@@ -59,12 +60,16 @@ void iniciar_conexiones_con_cpu()
 }
 
 void iniciar_conexion_con_memoria()
-{
+{	
 	conexion_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria);
 	if (conexion_memoria != -1)
 	{
 		log_debug(kernel_logger, "Conexion creada correctamente con MEMORIAs");
+	} else{
+		error_show("error de conexion con memoria");
+		exit(EXIT_FAILURE);
 	}
+	pthread_mutex_init(&conexion_memoria_mutex, NULL);
 }
 
 void esperar_conexiones()
