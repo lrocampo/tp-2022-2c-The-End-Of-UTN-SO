@@ -10,7 +10,7 @@ CDEBUG=-g -Wall -DDEBUG
 CRELEASE=-O3 -Wall -DNDEBUG
 
 # Arguments when executing with start, memcheck or helgrind
-ARGS= ./src/consola.config ./src/ej_pseudocodigo.txt
+ARGS= ./src/consola-base.config ./src/ej_pseudocodigo.txt
 
 # Valgrind flags
 MEMCHECK_FLAGS=--track-origins=yes --log-file="memcheck.log"
