@@ -32,7 +32,18 @@
 			"log.h": "c",
 			"utiles_config.h": "c",
 			"kernel_utils.h": "c",
-			"cpu_utils.h": "c"
+			"cpu_utils.h": "c",
+			"memoria_utils.h": "c",
+			"swap.h": "c",
+			"memoria.h": "c",
+			"pthread.h": "c",
+			"fcntl.h": "c",
+			"esquema.h": "c",
+			"tlb.h": "c",
+			"mmu.h": "c",
+			"planificacion.h": "c",
+			"queue.h": "c",
+			"consola_utils.h": "c"
 		}
 	}
 }

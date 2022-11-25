@@ -73,7 +73,7 @@ $(sort $(dir $(BIN) $(OBJS))):
 
 .PHONY: start
 start: all
-	valgrind --tool=none ./$(BIN) $(ARGS)
+	./$(BIN) $(ARGS)
 
 .PHONY: daemon
 daemon:

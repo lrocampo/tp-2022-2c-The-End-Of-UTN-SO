@@ -5,6 +5,8 @@
 #include <utils/utiles_config.h>
 #include <stdlib.h>
 #include <utils/socket.h>
+#include <swap.h>
+#include <esquema.h>
 #include <pthread.h>
 #include <utils/comunicacion.h>
 #include "../../static/include/utils/logger.h"
@@ -14,39 +16,76 @@
 #define NOMBRE_MODULO "MEMORIA"
 #define RUTA_MEMORIA_CONFIG "./src/memoria.config"
 
-typedef struct {
-	char* ip_memoria;
-	char* ip_cpu;
-    char* ip_kernel;
-	char* puerto_escucha_cpu;
-	char* puerto_escucha_kernel;
-	/* int tamanio_memoria; */
-	/* int tamanio_pagina; */
-	/* int entradas_por_pagina; */
-	/* int retardo_memoria; */
-	/* char* algoritmo_reemplazo; */
-	/* int* marcos_por_proceso; */
-	/* int* retardo_swap; */
-	/* int* path_swap; */
-	/* int* tamanio_swap; */
-}t_memoria_config;
+typedef struct
+{
+	char *ip_memoria;
+	char *ip_cpu;
+	char *ip_kernel;
+	char *puerto_escucha_cpu;
+	char *puerto_escucha_kernel;
+	char *path_swap;
+	int tamanio_memoria;
+	int tamanio_pagina;
+	int entradas_por_tabla;
+	int retardo_memoria;
+	t_algoritmo algoritmo_reemplazo;
+	int marcos_por_proceso;
+	int retardo_swap;
+	int tamanio_swap;
+} t_memoria_config;
 
 extern t_log *memoria_logger;
-extern t_memoria_config* memoria_config;
-extern int server_fd_cpu;
-extern int server_fd_kernel;
+extern t_memoria_config *memoria_config;
+
+extern int memoria_server_cpu_fd;
+extern int memoria_server_kernel_fd;
 extern int cliente_kernel_fd;
 extern int cliente_cpu_fd;
 
-extern pthread_t th_atender_pedido_de_memoria;
-extern pthread_t th_atender_pedido_de_estructuras;
+extern t_list *lista_de_marcos;
+extern t_list *lista_de_marcos_swap;
+extern t_list *lista_de_tablas_de_paginas;
 
+extern void *espacio_memoria;
+extern void *swap;
+
+extern t_list *cursores;
+
+extern pthread_t th_atender_cpu;
+extern pthread_t th_atender_kernel;
+
+extern pthread_mutex_t memoria_swap_mutex;
+extern pthread_mutex_t memoria_usuario_mutex;
+extern pthread_mutex_t lista_de_tablas_de_paginas_mutex;
+extern pthread_mutex_t lista_de_tablas_de_paginas_swap_mutex;
+extern pthread_mutex_t lista_de_marcos_mutex;
+extern pthread_mutex_t lista_de_marcos_swap_mutex;
+
+void memoria_principal_init();
+void marcos_memoria_principal_init();
+t_marco *obtener_marco_libre(t_list *);
+void marcos_init(t_list *, int, int);
 void solicitudes_a_memoria_init();
-void* atender_pedido_de_memoria(void*);
-void* atender_pedido_de_estructuras(void*);
-void * configurar_memoria(t_config*);
+void atender_pedido_de_marco();
+void atender_pedido_de_lectura();
+void atender_pedido_de_escritura();
+void *atender_cpu(void *);
+void atender_pedido_de_pagina_fault();
+void atender_pedido_de_estructuras();
+void atender_liberar_estructuras();
+void *atender_kernel(void *);
+int obtener_numero_de_marco(t_pagina *);
+void *configurar_memoria(t_config *);
+t_entrada_tp *obtener_entrada_tp(t_pagina *);
 void esperar_conexiones();
 void terminar_modulo();
+void liberar_marco_memoria(t_entrada_tp *);
+void liberar_marco_swap(t_entrada_tp *);
+void escribir_en_memoria(void *, void *);
 void memoria_config_destroy();
+bool marco_libre(t_marco *);
+void escribir_en_memoria_principal(int, int);
+int leer_en_memoria_principal(int);
+void liberar_memoria_de_proceso(int);
 
-#endif
+#endif /* MEMORIA_INCLUDE_MEMORIA_UTILS_H_ */

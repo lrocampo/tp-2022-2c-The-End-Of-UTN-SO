@@ -5,6 +5,6 @@
 #include <stdlib.h>
 #include <commons/error.h>
 
-t_log* iniciar_logger(char*, char*,int, t_log_level);
+t_log *iniciar_logger(char *, char *, int, t_log_level);
 
 #endif /* INCLUDE_UTILS_LOGGER_H_ */
