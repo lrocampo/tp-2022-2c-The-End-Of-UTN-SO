@@ -158,7 +158,11 @@ void atender_pedido_de_lectura()
 	int pid = tabla_de_paginas->pid;
 	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 	log_info(memoria_logger, "PID: %d - Acción: LEER - Dirección física: %d", pid, direccion_fisica);
+	
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	entrada_pagina->uso = true;
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
+	
 	mensaje = OKI_LEER;
 	log_debug(memoria_logger, "CPU - dir fisica: %d, valor leido: %d", direccion_fisica, valor);
 	enviar_valor_con_codigo(valor, mensaje, cliente_cpu_fd);
@@ -185,8 +189,12 @@ void atender_pedido_de_escritura()
 	int pid = tabla_de_paginas->pid;
 	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 	log_info(memoria_logger, "PID: %d - Acción: ESCRIBIR - Dirección física: %d", pid, direccion_fisica);
+	
+	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	entrada_pagina->uso = true;
 	entrada_pagina->modificado = true;
+	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
+	
 	mensaje = OKI_ESCRIBIR;
 	enviar_datos(cliente_cpu_fd, &mensaje, sizeof(mensaje));
 	free(pagina);
@@ -264,6 +272,7 @@ void atender_pedido_de_estructuras()
 	crear_tablas_de_pagina(pcb);
 	t_list *indices = obtener_indices_tablas_de_pagina(pcb);
 	enviar_indices_tabla_paginas(indices, cliente_kernel_fd);
+	log_debug(memoria_logger, "enviando %d indices", list_size(indices));
 	list_destroy_and_destroy_elements(indices, free);
 	pcb_memoria_destroy(pcb);
 }

@@ -107,7 +107,7 @@ void solicitud(instruccion *instruccionIO, t_pcb *pcb)
 	else
 	{
 		uint32_t valor_registro = obtener_valor_del_registro(pcb, registro);
-		enviar_valor_a_imprimir((int)valor_registro, consola_fd);
+		enviar_valor_a_imprimir(valor_registro, consola_fd);
 		cod_mensaje codigo = recibir_operacion(consola_fd);
 		if (codigo == OKI_PANTALLA)
 		{
