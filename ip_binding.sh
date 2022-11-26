@@ -11,14 +11,14 @@ function main () {
     local -r cpuIP=$3
 
     # Cambiar IP de memoria y cpu en kernel
-    perl -pi -e "s/(?<=IP_MEMORIA=).*/${memoriaIP}/g" kernel/configs/*
-    perl -pi -e "s/(?<=IP_CPU=).*/${cpuIP}/g" kernel/cfg/*
+    perl -pi -e "s/(?<=IP_MEMORIA=).*/${memoriaIP}/g" kernel/src/configs/*
+    perl -pi -e "s/(?<=IP_CPU=).*/${cpuIP}/g" kernel/src/configs/*
 
     # Cambiar IP de memoria en cpu
-    perl -pi -e "s/(?<=IP_MEMORIA=).*/${memoriaIP}/g" cpu/configs/*
+    perl -pi -e "s/(?<=IP_MEMORIA=).*/${memoriaIP}/g" cpu/src/configs/*
 
     # Cambiar IP de kernel en consola
-    perl -pi -e "s/(?<=IP_KERNEL=).*/${kernelIP}/g" consola/configs/*
+    perl -pi -e "s/(?<=IP_KERNEL=).*/${kernelIP}/g" consola/src/configs/*
 }
 
 main "$@"
