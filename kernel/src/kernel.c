@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 
 	free(ruta_config);
 
-	kernel_server_fd = iniciar_servidor(kernel_config->puerto_escucha);
+	kernel_server_fd = iniciar_servidor(kernel_config->ip_kernel, kernel_config->puerto_escucha);
 
 	iniciar_conexiones_con_cpu();
 

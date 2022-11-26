@@ -33,6 +33,7 @@ void *configurar_memoria(t_config *config)
 	t_memoria_config *memoria_config;
 	memoria_config = malloc(sizeof(t_memoria_config));
 	memoria_config->ip_cpu = strdup(config_get_string_value(config, "IP_CPU"));
+	memoria_config->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
 	memoria_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
 	memoria_config->puerto_escucha_cpu = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_CPU"));
 	memoria_config->puerto_escucha_kernel = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_KERNEL"));
@@ -202,7 +203,7 @@ void atender_pedido_de_escritura()
 
 void *atender_cpu(void *args)
 {
-	memoria_server_cpu_fd = iniciar_servidor(memoria_config->puerto_escucha_cpu);
+	memoria_server_cpu_fd = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_cpu);
 	if (memoria_server_cpu_fd == -1)
 	{
 		pthread_exit(NULL);
@@ -237,7 +238,7 @@ void *atender_cpu(void *args)
 
 void *atender_kernel(void *args)
 {
-	memoria_server_kernel_fd = iniciar_servidor(memoria_config->puerto_escucha_kernel);
+	memoria_server_kernel_fd = iniciar_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha_kernel);
 	if (memoria_server_kernel_fd == -1)
 	{
 		pthread_exit(NULL);

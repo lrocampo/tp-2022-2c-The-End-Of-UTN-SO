@@ -10,6 +10,11 @@ function main () {
     local -r memoriaIP=$2
     local -r cpuIP=$3
 
+    # Cambiar IPs propias de cada modulo
+    perl -pi -e "s/(?<=IP_KERNEL=).*/${kernelIP}/g" kernel/src/configs/*
+    perl -pi -e "s/(?<=IP_MEMORIA=).*/${memoriaIP}/g" memoria/src/configs/*
+    perl -pi -e "s/(?<=IP_CPU=).*/${cpuIP}/g" cpu/src/configs/*
+
     # Cambiar IP de memoria y cpu en kernel
     perl -pi -e "s/(?<=IP_MEMORIA=).*/${memoriaIP}/g" kernel/src/configs/*
     perl -pi -e "s/(?<=IP_CPU=).*/${cpuIP}/g" kernel/src/configs/*

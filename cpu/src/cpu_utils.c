@@ -24,6 +24,7 @@ void *configurar_cpu(t_config *config)
 	t_cpu_config *cpu_config;
 	cpu_config = malloc(sizeof(t_cpu_config));
 	cpu_config->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
+	cpu_config->ip_cpu = strdup(config_get_string_value(config, "IP_CPU"));
 	cpu_config->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
 	cpu_config->puerto_memoria = strdup(config_get_string_value(config, "PUERTO_MEMORIA"));
 	cpu_config->puerto_escucha_dispatch = strdup(config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH"));
@@ -365,7 +366,7 @@ void valor_retardo_instruccion(int tiempo)
 /* Conexiones con Kernel */
 void *atender_kernel_dispatch(void *arg)
 {
-	server_fd_dispatch = iniciar_servidor(cpu_config->puerto_escucha_dispatch);
+	server_fd_dispatch = iniciar_servidor(cpu_config->ip_cpu, cpu_config->puerto_escucha_dispatch);
 
 	if (server_fd_dispatch == -1)
 	{
