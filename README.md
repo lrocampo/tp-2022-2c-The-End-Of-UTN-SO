@@ -13,10 +13,16 @@ _YOU SHALL **(NOT)** COMPILE_
 
 ## Cómo buildear el TP
 Seguir los siguientes pasos:
-```
-git clone https://github.com/sisoputnfrba/so-deploy.git
+```sh
+git clone https://github.com/valentinarau/so-deploy-the-end-of-utn-so.git
 
 cd so-deploy
 
 ./deploy.sh -p=kernel -p=memoria -p=cpu -p=consola tp-2022-2c-The-End-Of-UTN-SO
+```
+Configurar los IPs:
+```sh
+cd tp-2022-2c-The-End-Of-UTN-SO
+
+./ip_binding.sh <IP_KERNEL> <IP_MEMORIA> <IP_CPU>
 ```
