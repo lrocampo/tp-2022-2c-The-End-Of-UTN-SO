@@ -288,7 +288,6 @@ void *manejar_page_fault(void *arg)
 			pthread_mutex_unlock(&conexion_memoria_mutex);
 			pthread_exit(NULL);
 		}
-
 	}
 }
 

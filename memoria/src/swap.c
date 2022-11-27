@@ -79,19 +79,19 @@ void cargar_pagina_en_memoria_principal(t_pagina *pagina, t_marco *marco, int pi
     int posicion = entrada_a_cargar->marco * memoria_config->tamanio_pagina;
     void *dest = espacio_memoria + posicion;
     void *source = swap + entrada_a_cargar->posicion_swap;
-    
+
     log_debug(memoria_logger, "Posicion a cargar en memoria principal: %d", posicion);
     log_debug(memoria_logger, "Posicion Swap a leer: %d", entrada_a_cargar->posicion_swap);
-    
+
     log_info(memoria_logger, "SWAP IN -  PID: %d - Marco: %d - Page In: %d | %d", pid, marco->numero_marco, entrada_a_cargar->segmento, entrada_a_cargar->pagina);
     escribir_en_memoria(dest, source);
-    
+
     pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
     entrada_a_cargar->presencia = true;
     entrada_a_cargar->uso = true;
     marco->pid = pid;
     pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
-    
+
     log_debug(memoria_logger, "Se escribio pagina en memoria principal \n");
 }
 

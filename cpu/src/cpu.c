@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	cpu_logger = iniciar_logger(RUTA_LOGGER_CPU, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
 
 	/* LOGGER DE DEBUG */
-	//cpu_logger = iniciar_logger(RUTA_LOGGER_DEBUG_CPU, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
+	// cpu_logger = iniciar_logger(RUTA_LOGGER_DEBUG_CPU, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
 
 	log_debug(cpu_logger, "Arrancando cpu");
 

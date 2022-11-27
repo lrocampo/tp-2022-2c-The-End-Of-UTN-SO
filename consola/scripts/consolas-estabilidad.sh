@@ -5,7 +5,3 @@
 ./bin/consola.out ./src/configs/consola-prueba-estabilidad-D.config ../../geck-pruebas/ESTABILIDAD_4 &
 ./bin/consola.out ./src/configs/consola-prueba-estabilidad-E.config ../../geck-pruebas/ESTABILIDAD_5 &
 ./bin/consola.out ./src/configs/consola-prueba-estabilidad-F.config ../../geck-pruebas/ESTABILIDAD_6 
-
-
-
-

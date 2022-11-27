@@ -52,7 +52,7 @@ t_algoritmo config_get_algoritmo_enum(t_config *config, char *algoritmo_type)
 	{
 		algoritmo = LRU;
 	}
-		else if (string_equals_ignore_case(algoritmo_string, "CLOCK"))
+	else if (string_equals_ignore_case(algoritmo_string, "CLOCK"))
 	{
 		algoritmo = CLOCK;
 	}

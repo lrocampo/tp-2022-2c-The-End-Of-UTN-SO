@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 	kernel_logger = iniciar_logger(RUTA_LOGGER_KERNEL, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
 
 	/* LOGGER DE DEBUG */
-	//kernel_logger = iniciar_logger(RUTA_LOGGER_DEBUG_KERNEL, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
+	// kernel_logger = iniciar_logger(RUTA_LOGGER_DEBUG_KERNEL, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
 
 	log_debug(kernel_logger, "Arrancando kernel...");
 

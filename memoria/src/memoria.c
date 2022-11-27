@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 	memoria_logger = iniciar_logger(RUTA_LOGGER_MEMORIA, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
 
 	/* LOGGER DE DEBUG */
-	//memoria_logger = iniciar_logger(RUTA_LOGGER_DEBUG_MEMORIA, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
+	// memoria_logger = iniciar_logger(RUTA_LOGGER_DEBUG_MEMORIA, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
 
 	log_debug(memoria_logger, "Arrancando memoria\n");
 

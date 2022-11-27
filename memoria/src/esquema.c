@@ -272,7 +272,8 @@ t_entrada_tp *ejecutar_clock_m(t_cursor *cursor, bool *hay_victima, int numero_v
 				cursor->entrada_tp = j;
 				break;
 			}
-			if (numero_vuelta == 2) {
+			if (numero_vuelta == 2)
+			{
 				pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 				entrada_aux->uso = false;
 				pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);

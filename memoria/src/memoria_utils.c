@@ -158,11 +158,11 @@ void atender_pedido_de_lectura()
 	int pid = tabla_de_paginas->pid;
 	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 	log_info(memoria_logger, "PID: %d - Acción: LEER - Dirección física: %d", pid, direccion_fisica);
-	
+
 	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	entrada_pagina->uso = true;
 	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
-	
+
 	mensaje = OKI_LEER;
 	log_debug(memoria_logger, "CPU - dir fisica: %d, valor leido: %d", direccion_fisica, valor);
 	enviar_valor_con_codigo(valor, mensaje, cliente_cpu_fd);
@@ -189,12 +189,12 @@ void atender_pedido_de_escritura()
 	int pid = tabla_de_paginas->pid;
 	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
 	log_info(memoria_logger, "PID: %d - Acción: ESCRIBIR - Dirección física: %d", pid, direccion_fisica);
-	
+
 	pthread_mutex_lock(&lista_de_tablas_de_paginas_mutex);
 	entrada_pagina->uso = true;
 	entrada_pagina->modificado = true;
 	pthread_mutex_unlock(&lista_de_tablas_de_paginas_mutex);
-	
+
 	mensaje = OKI_ESCRIBIR;
 	enviar_datos(cliente_cpu_fd, &mensaje, sizeof(mensaje));
 	free(pagina);
@@ -296,7 +296,7 @@ void atender_pedido_de_pagina_fault()
 		pthread_mutex_lock(&lista_de_marcos_mutex);
 		marco_libre = list_get(lista_de_marcos, entrada_a_reemplazar->marco);
 		pthread_mutex_unlock(&lista_de_marcos_mutex);
-		log_info(memoria_logger, "REEMPLAZO - PID: %d - Marco: %d - Page Out: %d | %d - Page In: %d | %d", marco_libre->pid, marco_libre->numero_marco, entrada_a_reemplazar->segmento, entrada_a_reemplazar->pagina, entrada->segmento, pagina->numero_pagina);
+		log_info(memoria_logger, "REEMPLAZO - PID: %d - Marco: %d - Page Out: %d | %d - Page In: %d | %d", tabla_paginas->pid, marco_libre->numero_marco, entrada_a_reemplazar->segmento, entrada_a_reemplazar->pagina, entrada->segmento, pagina->numero_pagina);
 	}
 	else
 	{

@@ -238,7 +238,7 @@ cod_operacion decode(t_pcb *pcb_to_exec, instruccion *instruccion_a_decodificar)
 
 		desplazamiento_pagina = obtener_desplazamiento_pagina(dir_logica, tam_max_segmento, pagina_config->tamanio_pagina);
 		log_debug(cpu_logger, "desplazamiento de pagina: %d", desplazamiento_pagina);
-		direccion_fisica = (nro_marco * pagina_config->tamanio_pagina )+ desplazamiento_pagina;
+		direccion_fisica = (nro_marco * pagina_config->tamanio_pagina) + desplazamiento_pagina;
 		pcb_to_exec->direccion_fisica = direccion_fisica;
 		cod_mensaje msj = (operacion == MOV_IN) ? LEER : ESCRIBIR;
 		char *accion = (operacion == MOV_IN) ? "LEER" : "ESCRIBIR";

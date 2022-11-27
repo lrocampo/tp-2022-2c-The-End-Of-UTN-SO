@@ -60,12 +60,14 @@ void iniciar_conexiones_con_cpu()
 }
 
 void iniciar_conexion_con_memoria()
-{	
+{
 	conexion_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria);
 	if (conexion_memoria != -1)
 	{
 		log_debug(kernel_logger, "Conexion creada correctamente con MEMORIAs");
-	} else{
+	}
+	else
+	{
 		error_show("error de conexion con memoria");
 		exit(EXIT_FAILURE);
 	}

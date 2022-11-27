@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	consola_logger = iniciar_logger(RUTA_LOGGER_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_INFO);
 
 	/* LOGGER DE DEBUG */
-	//consola_logger = iniciar_logger(RUTA_LOGGER_DEBUG_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
+	// consola_logger = iniciar_logger(RUTA_LOGGER_DEBUG_CONSOLA, NOMBRE_MODULO, 1, LOG_LEVEL_DEBUG);
 	log_debug(consola_logger, "Arrancando consola...");
 
 	consola_config = cargar_configuracion(ruta_config, configurar_consola);
