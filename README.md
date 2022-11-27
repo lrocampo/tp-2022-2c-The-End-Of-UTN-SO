@@ -16,7 +16,7 @@ Seguir los siguientes pasos:
 ```sh
 git clone https://github.com/valentinarau/so-deploy-the-end-of-utn-so.git
 
-cd so-deploy
+cd so-deploy-the-end-of-utn-so
 
 ./deploy.sh -p=kernel -p=memoria -p=cpu -p=consola tp-2022-2c-The-End-Of-UTN-SO
 ```
